@@ -3,7 +3,11 @@
 ## 1. 초기 설정
 
 1. **프런트엔드 워크스페이스 클론**  
-   - Sourcetree에서 프런트엔드 워크스페이스를 클론합니다.
+   - Sourcetree에서 프런트엔드 워크스페이스를 클론
+   - `VSCode`에서 해당 폴더 열고 터미널 경로 확인 후 node_modules 설치
+     ```bash
+     npm i
+     ```
 
 2. **백엔드 워크스페이스 클론 및 Import**  
    - `STS4` 실행 → `yoripick-joripick-api` 워크스페이스 클론  
