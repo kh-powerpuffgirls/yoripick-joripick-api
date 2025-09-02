@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="menumapper">
+
+	<select id = "selectRecipe" resultType="com.kh.ypjp.community.recipe.dto.UserRecipeDto$UserRecipeResponse">
+		SELECT *
+		FROM RECIPE
+		<where>
+			<if test="rcp_mth_no != null and rcp_mth_no !='all'">
+				RCP_MTH_NO = #{rcp_mth_no}
+			</if>
+			<if test="rcp_sta_no != null and rcp_sta_no !='all'">
+				AND RCP_STA_NO = #{rcp_sta_no}
+			</if>
+			<if test="ingredients != null and ingredients.size > 0">
+			<foreach collection="ingredients" item="item" separator=" AND ">
+				AND INGREDIENT LIKE #{ingredients"재료추가 정렬조건"}
+			</foreach>
+		</if>
+		</where>
+	</select>
+	
+	<!--<insert id="insertMenu">
+		<selectKey	keyProperty="id" resultType="int" order="BEFORE">
+			SELECT SEQ_MENU_ID.NEXTVAL FROM DUAL
+		</selectKey>
+		
+		INSERT INTO MENU
+		VALUES(
+			#{id},
+			#{restaurant},
+			#{name},
+			#{price},
+			#{type},
+			#{taste}
+		)
+	</insert>
+	<select id="detailMenu"  resultType="com.kh.menu.model.dto.MenuDto$MenuResponse">
+		SELECT *
+		FROM MENU
+		WHERE ID=#{id}
+	</select>
+	<update id="updateMenu">
+		UPDATE MENU SET
+			RESTAURANT = #{restaurant},
+			NAME = #{name},
+			PRICE = #{price},
+			TYPE = #{type},
+			TASTE = #{taste}
+		WHERE ID = #{id}
+	</update>
+	<delete id="deleteMenu">
+		DELETE FROM MENU
+		WHERE ID=#{id}
+	</delete>-->
+</mapper>
