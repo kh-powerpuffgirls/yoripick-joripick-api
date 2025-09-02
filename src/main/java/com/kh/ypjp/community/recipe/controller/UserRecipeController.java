@@ -21,7 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 public class UserRecipeController {
 	private final UserRecipeService recipeService;
 	
-	@GetMapping("/community/recipe/")
+	@GetMapping("/community/recipe")
 	@CrossOrigin(origins = "http://localhost:5173/", exposedHeaders = "Location")
 	public ResponseEntity<List<UserRecipeDto.UserRecipeResponse>> selectList(
 				@RequestParam HashMap<String,Object> param
