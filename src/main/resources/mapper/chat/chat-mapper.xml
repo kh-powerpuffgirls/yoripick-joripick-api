@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="chat">
+	<resultMap id="chatRoomResultMap" type="com.kh.ypjp.chat.model.dto.ChatDto$ChatRoomDto">
+        <result property="userNo" column="user_no"/>
+        <result property="className" column="class_name"/>
+        <result property="type" column="type"/>
+    </resultMap>
+
+	<select id="findCookingClasses" resultMap="chatRoomResultMap">
+		SELECT cc.class_no,
+               cc.class_name,
+               'chat' AS type
+        FROM cooking_class cc
+        JOIN class_enroll ce ON ce.class_no = cc.class_no
+        WHERE ce.user_no = #{userNo}
+	</select>
+	
+	<select id="findFaqChat" resultType="int">
+		SELECT count(*) FROM CHATBOT
+		WHERE user_no = #{userNo}
+	</select>
+	
+	<select id="findAdminChat" resultType="int">
+		SELECT count(*) FROM CUSTOMER_SERVICE
+		WHERE user_no = #{userNo}
+	</select>
+</mapper>
