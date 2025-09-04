@@ -22,4 +22,19 @@ public class ChatDto {
         private String className;
         private String type;
 	}
+    
+    @Data
+	@NoArgsConstructor
+	@AllArgsConstructor
+	public static class MessagePost {
+    	private String text;
+        private String sender;
+        private Button button;
+        @Data
+    	@NoArgsConstructor
+    	@AllArgsConstructor
+        private class Button {
+        	private String url;
+        }
+	}
 }

@@ -25,4 +25,20 @@
 		SELECT count(*) FROM CUSTOMER_SERVICE
 		WHERE user_no = #{userNo}
 	</select>
+	
+	<delete id="deleteFaqChat">
+		DELETE FROM CHATBOT
+		WEHRE user_no = #{userNo}
+	</delete>
+	
+	<delete id="deleteAdminChatMessage">
+		DELETE FROM MESSAGE
+		WEHRE msg_type = 'CSERVICE'
+			AND user_no = #{userNo}
+	</delete>
+	
+	<delete id="deleteAdminChatSession">
+		DELETE FROM CUSTOMER_SERVICE
+		WEHRE user_no = #{userNo}
+	</delete>
 </mapper>
