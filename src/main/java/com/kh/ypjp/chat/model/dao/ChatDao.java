@@ -7,8 +7,10 @@ import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
+import com.kh.ypjp.chat.model.dto.ChatDto.ChatMsgDto;
 import com.kh.ypjp.chat.model.dto.ChatDto.ChatRoomDto;
-import com.kh.ypjp.chat.model.dto.ChatDto.MessagePost;
+import com.kh.ypjp.chat.model.dto.ChatDto.FaqMsgResDto;
+import com.kh.ypjp.chat.model.dto.ChatDto.MessageDto;
 
 @Repository
 public class ChatDao {
@@ -24,7 +26,7 @@ public class ChatDao {
 		return session.selectOne("chat.findFaqChat", userNo);
 	}
 
-	public int findAdminChat(Long userNo) {
+	public Long findAdminChat(Long userNo) {
 		return session.selectOne("chat.findAdminChat", userNo);
 	}
 
@@ -40,8 +42,16 @@ public class ChatDao {
 		return session.delete("chat.deleteAdminChatSession", userNo);
 	}
 
-	public int insertMessage(Map<String, Object> param) {
-		return session.insert("chat.insertMessage", param);
+	public int insertChatBot(Map<String, Object> param) {
+		return session.insert("chat.insertChatBot", param);
+	}
+
+	public List<ChatMsgDto> getMessagesByRoom(Long classNo) {
+		return session.selectList("chat.getMessagesByRoom", classNo);
+	}
+
+	public List<FaqMsgResDto> getFaqByUser(Long userNo) {
+		return session.selectList("chat.getFaqByUser", userNo);
 	}
 
 }

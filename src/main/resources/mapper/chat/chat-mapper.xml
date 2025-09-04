@@ -22,23 +22,61 @@
 	</select>
 	
 	<select id="findAdminChat" resultType="int">
-		SELECT count(*) FROM CUSTOMER_SERVICE
+		SELECT cs_no FROM CUSTOMER_SERVICE
 		WHERE user_no = #{userNo}
+	</select>
+	
+	<select id="getMessagesByRoom" resultType="com.kh.ypjp.chat.model.dto.ChatDto$ChatMsgDto">
+		SELECT
+			M.message_no,
+			M.msg_type,
+			M.ref_no,
+			M.time,
+			M.hidden,
+			M.image_no,
+			C.message_no as lastMsgNo,
+			U.username
+		FROM CLASS_ENROLL C
+		JOIN MESSAGE M on C.class_no = M.ref_no
+		JOIN USERS U using (user_no)
+		WHERE C.class_no = #{classNo}
+		ORDER BY time
+	</select>
+	
+	<resultMap id="faqResultMap" type="com.kh.ypjp.chat.model.dto.ChatDto$FaqMsgResDto">
+	    <constructor>
+	        <arg column="username" javaType="string"/>
+	        <arg column="content" javaType="string"/>
+	        <!--arg column="url" javaType="string"/-->
+	        <arg column="created_at" javaType="java.util.Date"/>
+	    </constructor>
+	</resultMap>
+	
+	<select id="getFaqByUser" resultMap="faqResultMap">
+	    SELECT username, content, created_at<!--, url-->
+	    FROM CHATBOT
+	    JOIN USERS using (user_no)
+	    WHERE user_no = #{userNo}
 	</select>
 	
 	<delete id="deleteFaqChat">
 		DELETE FROM CHATBOT
-		WEHRE user_no = #{userNo}
+		WHERE user_no = #{userNo}
 	</delete>
 	
 	<delete id="deleteAdminChatMessage">
 		DELETE FROM MESSAGE
-		WEHRE msg_type = 'CSERVICE'
+		WHERE msg_type = 'CSERVICE'
 			AND user_no = #{userNo}
 	</delete>
 	
 	<delete id="deleteAdminChatSession">
 		DELETE FROM CUSTOMER_SERVICE
-		WEHRE user_no = #{userNo}
+		WHERE user_no = #{userNo}
 	</delete>
+	
+	<insert id="insertChatBot">
+		INSERT INTO CHATBOT (chatbot_no, user_no, role, content) 
+		VALUES (SEQ_CHATBOT_NO.NEXTVAL, #{userNo}, #{role}, #{content})
+	</insert>
 </mapper>
