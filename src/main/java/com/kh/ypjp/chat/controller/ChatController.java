@@ -18,6 +18,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kh.ypjp.chat.model.dto.ChatDto.ChatRoomDto;
 import com.kh.ypjp.chat.model.dto.ChatDto.FaqMsgResDto;
 import com.kh.ypjp.chat.model.dto.ChatDto.MessageDto;
@@ -76,7 +78,12 @@ public class ChatController {
 	public ResponseEntity<Void> insertMessage(
 			@PathVariable Long userNo,
 			@RequestBody FaqMsgResDto message
-		){
+		) throws JsonProcessingException{
+		
+		ObjectMapper mapper = new ObjectMapper();
+	    String json = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(message);
+	    System.out.println(json);
+	    
 		if (userNo == null) {
 	        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null); //401
 	    }
