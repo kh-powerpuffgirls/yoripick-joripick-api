@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kh.ypjp.community.challenge.dao.ChallengeDao">
+
+    <select id="findAll" resultType="com.kh.ypjp.community.challenge.dto.ChallengeDto">
+	    SELECT
+	        C.challenge_no,
+	        C.user_no,
+	        U.username,
+	        CI.title,
+	        I.SERVER_NAME AS postImageUrl,
+	        CI.image_url AS imageUrl,
+	        C.video_url,
+	        C.views,
+	        (SELECT COUNT(*) FROM LIKES L WHERE L.ref_no = C.challenge_no AND L.ref_type = 'CHALLENGE') AS likes,
+	        C.created_at
+	    FROM CHALLENGE C
+	    JOIN CHALLENGE_INFO CI ON C.ch_info_no = CI.ch_info_no
+	    JOIN USERS U ON C.user_no = U.user_no
+	    LEFT JOIN IMAGE I ON C.image_no = I.image_no
+	    WHERE SYSDATE BETWEEN CI.START_DATE AND CI.END_DATE
+	    ORDER BY C.created_at DESC
+	</select>
+	    
+    <select id="findById" resultType="com.kh.ypjp.community.challenge.dto.ChallengeDto">
+        SELECT
+            C.challenge_no,
+            C.user_no,
+            U.username,
+            CI.title,
+            I.SERVER_NAME AS postImageUrl,
+            CI.image_url AS imageUrl,
+            C.video_url,
+            C.views,
+            CI.likes,
+            C.created_at
+        FROM CHALLENGE C
+        JOIN CHALLENGE_INFO CI ON C.ch_info_no = CI.ch_info_no
+        JOIN USERS U ON C.user_no = U.user_no
+        LEFT JOIN IMAGE I ON C.image_no = I.image_no
+        WHERE C.challenge_no = #{id}
+    </select>
+
+    <insert id="saveChallenge" parameterType="com.kh.ypjp.community.challenge.dto.ChallengeDto">
+        <selectKey keyProperty="challengeNo" resultType="Long" order="BEFORE">
+            SELECT CHALLENGE_SEQ.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO CHALLENGE (challenge_no, user_no, ch_info_no, video_url, created_at, image_no)
+        VALUES (#{challengeNo}, #{userNo}, #{chInfoNo}, #{videoUrl}, SYSDATE, #{imageNo})
+    </insert>
+
+    <update id="update" parameterType="com.kh.ypjp.community.challenge.dto.ChallengeDto">
+        UPDATE CHALLENGE
+        SET video_url = #{videoUrl}, image_no = #{imageNo}
+        WHERE challenge_no = #{challengeNo}
+    </update>
+    
+    <update id="updateImageNo" parameterType="map">
+        UPDATE CHALLENGE
+        SET image_no = #{imageNo}
+        WHERE challenge_no = #{challengeNo}
+    </update>
+
+    <delete id="delete">
+        DELETE FROM CHALLENGE WHERE challenge_no = #{id}
+    </delete>
+
+    <update id="incrementViews">
+        UPDATE CHALLENGE SET views = views + 1 WHERE challenge_no = #{id}
+    </update>
+
+    <select id="checkIfLiked" resultType="int">
+        SELECT COUNT(*)
+        FROM LIKES
+        WHERE user_no = #{userId} AND ref_type = 'CHALLENGE' AND ref_no = #{challengeId}
+    </select>
+
+	<insert id="insertLike">
+	    INSERT INTO LIKES (user_no, ref_type, ref_no)
+	    VALUES (#{userId}, 'CHALLENGE', #{challengeId})
+	</insert>
+	
+	<delete id="deleteLike">
+	    DELETE FROM LIKES
+	    WHERE user_no = #{userId} AND ref_type = 'CHALLENGE' AND ref_no = #{challengeId}
+	</delete>
+
+    <update id="incrementLikes">
+        UPDATE CHALLENGE_INFO
+        SET likes = likes + 1
+        WHERE ch_info_no = (SELECT ch_info_no FROM CHALLENGE WHERE challenge_no = #{challengeId})
+    </update>
+
+    <update id="decrementLikes">
+        UPDATE CHALLENGE_INFO
+        SET likes = likes - 1
+        WHERE ch_info_no = (SELECT ch_info_no FROM CHALLENGE WHERE challenge_no = #{challengeId})
+    </update>
+
+	<select id="getLikesCount" resultType="int">
+	    SELECT COUNT(*) FROM LIKES
+	    WHERE ref_no = #{challengeId} AND ref_type = 'CHALLENGE'
+	</select>
+
+    <select id="findActiveChallengeInfo" resultType="com.kh.ypjp.community.challenge.dto.ChallengeDto">
+        SELECT
+            CH_INFO_NO,
+            TITLE
+        FROM CHALLENGE_INFO
+        WHERE SYSDATE BETWEEN START_DATE AND END_DATE
+        AND ROWNUM = 1
+    </select>
+    
+    <delete id="deleteExpiredChallenges">
+        DELETE FROM CHALLENGE_INFO
+        WHERE END_DATE + 7 <![CDATA[ < ]]> SYSDATE
+    </delete>
+
+    <select id="selectRepliesByRefNo" resultType="com.kh.ypjp.community.challenge.dto.ChallengeReplyDto">
+        SELECT 
+            R.REPLY_NO,
+            R.PARENT_REPLY_NO,
+            R.REF_NO,
+            R.USER_NO,
+            U.USERNAME,
+            U.SIK_BTI,
+            R.CONTENT,
+            R.CREATED_AT,
+            I.SERVER_NAME AS profileImageServerName
+        FROM REPLY R
+        JOIN USERS U ON R.USER_NO = U.USER_NO
+        LEFT JOIN IMAGE I ON U.IMAGE_NO = I.IMAGE_NO
+        WHERE R.REF_TYPE = 'CHALLENGE' AND R.REF_NO = #{refNo}
+        ORDER BY R.CREATED_AT ASC
+    </select>
+
+    <insert id="insertReply" parameterType="com.kh.ypjp.community.challenge.dto.ChallengeReplyDto">
+        <selectKey keyProperty="replyNo" resultType="int" order="BEFORE">
+            SELECT REPLY_SEQ.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO REPLY (
+            REPLY_NO,
+            PARENT_REPLY_NO,
+            REF_NO,
+            REF_TYPE,
+            USER_NO,
+            CONTENT,
+            CREATED_AT
+        ) VALUES (
+            #{replyNo},
+            #{parentReplyNo},
+            #{refNo},
+            'CHALLENGE',
+            #{userNo},
+            #{content},
+            SYSDATE
+        )
+    </insert>
+</mapper>

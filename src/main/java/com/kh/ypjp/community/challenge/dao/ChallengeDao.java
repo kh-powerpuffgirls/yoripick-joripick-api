@@ -1,69 +1,56 @@
 package com.kh.ypjp.community.challenge.dao;
 
 import com.kh.ypjp.community.challenge.dto.ChallengeDto;
-import lombok.RequiredArgsConstructor;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Repository;
-
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.time.LocalDateTime;
+import com.kh.ypjp.community.challenge.dto.ChallengeReplyDto;
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 import java.util.List;
-import java.util.Optional;
 
-@Repository
-@RequiredArgsConstructor
-public class ChallengeDao {
-    private final JdbcTemplate jdbcTemplate;
+@Mapper
+public interface ChallengeDao {
 
-    private ChallengeDto mapRowToChallengeDto(ResultSet rs, int rowNum) throws SQLException {
-        ChallengeDto dto = new ChallengeDto();
-        dto.setId(rs.getLong("id"));
-        dto.setTitle(rs.getString("title"));
-        dto.setContent(rs.getString("content"));
-        dto.setImageUrl(rs.getString("image_url"));
-        dto.setAuthor(rs.getString("author"));
-        dto.setCreatedDate(rs.getObject("created_date", LocalDateTime.class));
-        dto.setModifiedDate(rs.getObject("modified_date", LocalDateTime.class));
-        dto.setViews(rs.getInt("views"));
-        dto.setLikes(rs.getInt("likes"));
-        return dto;
-    }
+    // Retrieves all active user challenge posts (filtered by date)
+    List<ChallengeDto> findAll();
 
-    public List<ChallengeDto> findAll() {
-        String sql = "SELECT * FROM challenge ORDER BY created_date DESC";
-        return jdbcTemplate.query(sql, this::mapRowToChallengeDto);
-    }
+    // Retrieves a specific user challenge post
+    ChallengeDto findById(Long id);
 
-    public Optional<ChallengeDto> findById(Long id) {
-        String sql = "SELECT * FROM challenge WHERE id = ?";
-        List<ChallengeDto> results = jdbcTemplate.query(sql, this::mapRowToChallengeDto, id);
-        return results.stream().findFirst();
-    }
+    // Updates a user challenge post
+    int update(ChallengeDto dto);
 
-    public ChallengeDto save(ChallengeDto dto) {
-        String sql = "INSERT INTO challenge (title, content, image_url, author, created_date, modified_date, views, likes) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-        jdbcTemplate.update(sql, dto.getTitle(), dto.getContent(), dto.getImageUrl(), dto.getAuthor(), LocalDateTime.now(), LocalDateTime.now(), 0, 0);
-        return dto;
-    }
+    // Deletes a user challenge post
+    int delete(Long id);
 
-    public int update(Long id, ChallengeDto dto) {
-        String sql = "UPDATE challenge SET title = ?, content = ?, image_url = ?, modified_date = ? WHERE id = ?";
-        return jdbcTemplate.update(sql, dto.getTitle(), dto.getContent(), dto.getImageUrl(), LocalDateTime.now(), id);
-    }
+    // Increments view count
+    void incrementViews(Long id);
 
-    public int delete(Long id) {
-        String sql = "DELETE FROM challenge WHERE id = ?";
-        return jdbcTemplate.update(sql, id);
-    }
+    // Checks if a user has liked a post
+    int checkIfLiked(@Param("userId") Long userId, @Param("challengeId") Long challengeId);
 
-    public void incrementViews(Long id) {
-        String sql = "UPDATE challenge SET views = views + 1 WHERE id = ?";
-        jdbcTemplate.update(sql, id);
-    }
+    // Inserts a like record
+    int insertLike(@Param("userId") Long userId, @Param("challengeId") Long challengeId);
+
+    // Deletes a like record
+    int deleteLike(@Param("userId") Long userId, @Param("challengeId") Long challengeId);
+
+    // Retrieves the single currently active challenge (based on date)
+    ChallengeDto findActiveChallengeInfo();
+
+    // Saves a new challenge info record (for admins)
+    int saveChallengeInfo(ChallengeDto dto);
+
+    // Saves a new user challenge post
+    int saveChallenge(@Param("dto") ChallengeDto dto);
+
+    // Deletes expired challenge info and user posts
+    int deleteExpiredChallenges();
+
+    // Retrieves all replies for a challenge post
+    List<ChallengeReplyDto> selectRepliesByRefNo(Long refNo);
+
+    // Inserts a new reply
+    int insertReply(ChallengeReplyDto replyDto);
     
-    public void incrementLikes(Long id) {
-        String sql = "UPDATE challenge SET likes = likes + 1 WHERE id = ?";
-        jdbcTemplate.update(sql, id);
-    }
+    // Deletes an image record
+    int deleteImage(@Param("imageNo") Integer imageNo);
 }

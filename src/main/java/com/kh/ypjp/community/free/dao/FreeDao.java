@@ -1,83 +1,63 @@
 package com.kh.ypjp.community.free.dao;
 
 import com.kh.ypjp.community.free.dto.FreeDto;
-import org.springframework.stereotype.Repository;
+import com.kh.ypjp.community.free.dto.LikesDto;
+import com.kh.ypjp.community.free.dto.ReplyDto;
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
-import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
+import java.util.Map;
 
-/**
- * 게시글 데이터를 관리하는 DAO 클래스입니다.
- * 현재는 메모리 내에서 데이터를 저장하고 처리합니다.
- */
-@Repository
-public class FreeDao {
-    private final List<FreeDto> posts = new ArrayList<>();
-    private final AtomicInteger counter = new AtomicInteger();
+@Mapper
+public interface FreeDao {
+    List<FreeDto> selectAllBoards();
+    FreeDto selectBoardByNo(int boardNo);
+    int insertBoard(FreeDto freeDto);
+    int insertImage(Map<String, Object> imageInfo);
+    int updateBoard(FreeDto freeDto);
+    int deleteBoard(int boardNo);
+    void incrementViews(int boardNo);
 
-    public FreeDao() {
-        // 초기 데이터 추가
-        posts.add(new FreeDto(counter.incrementAndGet(), "첫 번째 게시글", "첫 번째 게시글 내용입니다.", LocalDateTime.now(), 0));
-        posts.add(new FreeDto(counter.incrementAndGet(), "두 번째 게시글", "두 번째 게시글 내용입니다.", LocalDateTime.now(), 0));
-        posts.add(new FreeDto(counter.incrementAndGet(), "세 번째 게시글", "세 번째 게시글 내용입니다.", LocalDateTime.now(), 0));
-    }
+    Integer selectImageNoByBoardNo(int boardNo);
+    int deleteImageByImageNo(int imageNo);
+    int updateBoardImageNo(int boardNo, int imageNo);
 
-    /**
-     * 모든 게시글을 최신 순으로 정렬하여 반환합니다.
-     * @return 정렬된 게시글 목록
-     */
-    public List<FreeDto> findAll() {
-        return posts.stream()
-                .sorted((p1, p2) -> Integer.compare(p2.getId(), p1.getId()))
-                .collect(Collectors.toList());
-    }
+    int checkUserLiked(LikesDto likesDto);
+    int insertLike(LikesDto likesDto);
+    int deleteLike(LikesDto likesDto);
+    int countLikesByBoardNo(int boardNo);
+
+    // 댓글 관련 메서드
+    List<ReplyDto> selectAllRepliesByBoardNo(int boardNo);
+    int insertReply(ReplyDto replyDto);
+    int updateReply(ReplyDto replyDto); // 추가
+    int deleteReply(int replyNo); // 추가
+    int deleteImage(Integer imageNo); // 추가
 
     /**
-     * 특정 ID의 게시글을 찾아 반환합니다.
-     * @param id 게시글 ID
-     * @return ID에 해당하는 게시글(존재하지 않으면 Optional.empty())
+     * 댓글 수정 시 순환 참조를 확인하는 메서드
+     * @param replyNo 수정하려는 댓글 번호
+     * @param newRefNo 새롭게 지정하려는 부모 댓글 번호
+     * @return 순환 참조가 있으면 1, 없으면 0
      */
-    public Optional<FreeDto> findById(Integer id) {
-        return posts.stream()
-                .filter(post -> post.getId().equals(id))
-                .findFirst();
-    }
+    int checkCircularReference(@Param("replyNo") int replyNo, @Param("newRefNo") int newRefNo);
 
+    // --- 추가된 조회수 관련 메서드 시작 ---
     /**
-     * 새로운 게시글을 저장합니다. ID와 생성 날짜를 자동으로 할당합니다.
-     * @param newPost 저장할 게시글 정보
-     * @return 저장된 게시글
+     * 특정 사용자가 특정 게시글을 이미 조회했는지 확인
+     * @param boardNo 게시글 번호
+     * @param userNo 사용자 번호
+     * @return 조회 기록이 있으면 true, 없으면 false
      */
-    public FreeDto save(FreeDto newPost) {
-        newPost.setId(counter.incrementAndGet());
-        newPost.setCreatedDate(LocalDateTime.now());
-        posts.add(newPost);
-        return newPost;
-    }
-
+    boolean checkUserViewed(@Param("boardNo") int boardNo, @Param("userNo") int userNo);
+    
     /**
-     * 기존 게시글을 업데이트합니다.
-     * @param updatedPost 업데이트된 게시글 정보
-     * @return 업데이트된 게시글(업데이트 실패 시 Optional.empty())
+     * 특정 사용자의 게시글 조회 기록을 남김
+     * @param boardNo 게시글 번호
+     * @param userNo 사용자 번호
+     * @return 성공 시 1 반환
      */
-    public Optional<FreeDto> update(FreeDto updatedPost) {
-        return findById(updatedPost.getId())
-                .map(existingPost -> {
-                    existingPost.setTitle(updatedPost.getTitle());
-                    existingPost.setDescription(updatedPost.getDescription());
-                    return existingPost;
-                });
-    }
-
-    /**
-     * 특정 ID의 게시글을 삭제합니다.
-     * @param id 삭제할 게시글 ID
-     */
-    public void delete(Integer id) {
-        posts.removeIf(post -> post.getId().equals(id));
-    }
+    int insertViewLog(@Param("boardNo") int boardNo, @Param("userNo") int userNo);
+    // --- 추가된 조회수 관련 메서드 끝 ---
 }
