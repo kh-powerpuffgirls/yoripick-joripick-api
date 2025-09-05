@@ -2,7 +2,6 @@ package com.kh.ypjp.chat.controller;
 
 import java.net.URI;
 import java.util.List;
-import java.util.Map;
 
 import lombok.RequiredArgsConstructor;
 
@@ -19,10 +18,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kh.ypjp.chat.model.dto.ChatDto.ChatRoomDto;
-import com.kh.ypjp.chat.model.dto.ChatDto.FaqMsgDto;
 import com.kh.ypjp.chat.model.dto.ChatDto.FaqMsgResDto;
 import com.kh.ypjp.chat.model.dto.ChatDto.MessageDto;
 import com.kh.ypjp.chat.model.service.ChatService;
