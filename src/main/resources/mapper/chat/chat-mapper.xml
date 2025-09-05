@@ -47,13 +47,13 @@
 	    <constructor>
 	        <arg column="username" javaType="string"/>
 	        <arg column="content" javaType="string"/>
-	        <!--arg column="url" javaType="string"/-->
+	        <arg column="linkUrl" javaType="string"/>
 	        <arg column="created_at" javaType="java.util.Date"/>
 	    </constructor>
 	</resultMap>
 	
 	<select id="getFaqByUser" resultMap="faqResultMap">
-	    SELECT username, content, created_at<!--, url-->
+	    SELECT role as username, content, link_url as linkUrl, created_at
 	    FROM CHATBOT
 	    JOIN USERS using (user_no)
 	    WHERE user_no = #{userNo}
@@ -76,7 +76,7 @@
 	</delete>
 	
 	<insert id="insertChatBot">
-		INSERT INTO CHATBOT (chatbot_no, user_no, role, content) 
-		VALUES (SEQ_CHATBOT_NO.NEXTVAL, #{userNo}, #{role}, #{content})
+		INSERT INTO CHATBOT (chatbot_no, user_no, role, content, link_url) 
+		VALUES (SEQ_CHATBOT_NO.NEXTVAL, #{userNo}, #{username}, #{content}, #{button.linkUrl})
 	</insert>
 </mapper>

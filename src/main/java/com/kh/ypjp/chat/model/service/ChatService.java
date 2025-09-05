@@ -11,7 +11,6 @@ import com.kh.ypjp.chat.model.dao.ChatDao;
 import com.kh.ypjp.chat.model.dto.ChatDto.ChatMsgDto;
 import com.kh.ypjp.chat.model.dto.ChatDto.ChatRoomDto;
 import com.kh.ypjp.chat.model.dto.ChatDto.FaqMsgResDto;
-import com.kh.ypjp.chat.model.dto.ChatDto.MessageDto;
 
 @Service
 public class ChatService {
@@ -55,8 +54,8 @@ public class ChatService {
 		return 0;
 	}
 
-	public int insertChatBot(Map<String, Object> param) {
-		return chatDao.insertChatBot(param);
+	public int insertChatBot(FaqMsgResDto message) {
+		return chatDao.insertChatBot(message);
 	}
 
 }

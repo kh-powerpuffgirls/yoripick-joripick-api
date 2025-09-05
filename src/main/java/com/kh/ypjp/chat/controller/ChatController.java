@@ -3,7 +3,6 @@ package com.kh.ypjp.chat.controller;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
-import com.kh.ypjp.security.model.provider.JWTProvider;
 
 import lombok.RequiredArgsConstructor;
 
@@ -20,8 +19,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.kh.ypjp.chat.model.dto.ChatDto.ChatMsgDto;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kh.ypjp.chat.model.dto.ChatDto.ChatRoomDto;
+import com.kh.ypjp.chat.model.dto.ChatDto.FaqMsgDto;
 import com.kh.ypjp.chat.model.dto.ChatDto.FaqMsgResDto;
 import com.kh.ypjp.chat.model.dto.ChatDto.MessageDto;
 import com.kh.ypjp.chat.model.service.ChatService;
@@ -31,7 +32,6 @@ import com.kh.ypjp.chat.model.service.ChatService;
 @RequiredArgsConstructor
 public class ChatController {
 
-	private final JWTProvider jwt;
 	private final SimpMessagingTemplate messagingTemplate;
 	private final ChatService chatService;
 	
@@ -50,30 +50,7 @@ public class ChatController {
 	    }
 		List<ChatRoomDto> chatRoomList = chatService.getUserChatLists(userNo);
 		if (chatRoomList != null) {
-		    for (ChatRoomDto room : chatRoomList) {
-		        System.out.println("==== Room ====");
-		        System.out.println("classNo=" + room.getClassNo());
-		        System.out.println("className=" + room.getClassName());
-		        System.out.println("type=" + room.getType());
-		        if (room.getMessages() != null) {
-		            for (MessageDto m : room.getMessages()) {
-		                if (m instanceof FaqMsgResDto) {
-		                    FaqMsgResDto fm = (FaqMsgResDto) m;
-		                    System.out.println("FAQ -> username=" + fm.getUsername()
-		                        + ", content=" + fm.getContent()
-		                        + ", createdAt=" + fm.getCreatedAt());
-		                } else if (m instanceof ChatMsgDto) {
-		                    ChatMsgDto cm = (ChatMsgDto) m;
-		                    System.out.println("CHAT -> username=" + cm.getUsername()
-		                        + ", content=" + cm.getContent()
-		                        + ", time=" + cm.getTime());
-		                }
-		            }
-		        } else {
-		            System.out.println("messages=null");
-		        }
-		    }
-		    return ResponseEntity.ok().body(chatRoomList); // ✅ forEach/for문 밖으로 이동
+		    return ResponseEntity.ok().body(chatRoomList); //200
 		}
 		return ResponseEntity.notFound().build(); //404
     }
@@ -102,13 +79,13 @@ public class ChatController {
 	@PostMapping("/messages/{userNo}")
 	public ResponseEntity<Void> insertMessage(
 			@PathVariable Long userNo,
-			@RequestBody Map<String, Object> param
+			@RequestBody FaqMsgResDto message
 		){
 		if (userNo == null) {
 	        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null); //401
 	    }
-		param.put("userNo", userNo);
-		int result = chatService.insertChatBot(param);
+		message.setUserNo(userNo);
+		int result = chatService.insertChatBot(message);
 		if (result > 0) {
 			URI location = URI.create("");
 			return ResponseEntity.created(location).build(); //201
