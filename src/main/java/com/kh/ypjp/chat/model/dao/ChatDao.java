@@ -45,12 +45,28 @@ public class ChatDao {
 		return session.insert("chat.insertChatBot", message);
 	}
 
-	public List<ChatMsgDto> getMessagesByRoom(Long classNo) {
-		return session.selectList("chat.getMessagesByRoom", classNo);
+	public List<ChatMsgDto> getMessagesByRoom(Map<String, Object> param) {
+		return session.selectList("chat.getMessagesByRoom", param);
 	}
 
 	public List<FaqMsgResDto> getFaqByUser(Long userNo) {
 		return session.selectList("chat.getFaqByUser", userNo);
+	}
+
+	public Long getCsNoByUserNo(Long userNo) {
+		return session.selectOne("chat.getCsNoByUserNo", userNo);
+	}
+
+	public void insertCservice(Long userNo) {
+		session.insert("chat.insertCservice", userNo);
+	}
+
+	public int insertMessage(Map<String, Object> param) {
+		return session.insert("chat.insertMessage", param);
+	}
+
+	public List<ChatRoomDto> getAllCserviceRooms() {
+		return session.selectList("chat.getAllCserviceRooms");
 	}
 
 }

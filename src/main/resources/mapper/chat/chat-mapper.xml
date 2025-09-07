@@ -2,15 +2,21 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
 <mapper namespace="chat">
 	<resultMap id="chatRoomResultMap" type="com.kh.ypjp.chat.model.dto.ChatDto$ChatRoomDto">
-        <result property="userNo" column="user_no"/>
-        <result property="className" column="class_name"/>
+        <result property="classNo" column="classNo"/>
+        <result property="className" column="className"/>
         <result property="type" column="type"/>
     </resultMap>
+    
+    <select id="getAllCserviceRooms" resultMap="chatRoomResultMap">
+		SELECT cs_no AS classNo,
+               'cservice' AS type
+        FROM CUSTOMER_SERVICE
+	</select>
 
 	<select id="findCookingClasses" resultMap="chatRoomResultMap">
-		SELECT cc.class_no,
-               cc.class_name,
-               'chat' AS type
+		SELECT cc.class_no AS classNo,
+               cc.class_name AS className,
+               'cclass' AS type
         FROM cooking_class cc
         JOIN class_enroll ce ON ce.class_no = cc.class_no
         WHERE ce.user_no = #{userNo}
@@ -21,30 +27,33 @@
 		WHERE user_no = #{userNo}
 	</select>
 	
-	<select id="findAdminChat" resultType="int">
+	<select id="findAdminChat" resultType="long">
 		SELECT cs_no FROM CUSTOMER_SERVICE
 		WHERE user_no = #{userNo}
 	</select>
 	
 	<select id="getMessagesByRoom" resultType="com.kh.ypjp.chat.model.dto.ChatDto$ChatMsgDto">
-		SELECT
-			M.message_no,
-			M.msg_type,
-			M.ref_no,
-			M.time,
-			M.hidden,
-			M.image_no,
-			C.message_no as lastMsgNo,
-			U.username
-		FROM CLASS_ENROLL C
-		JOIN MESSAGE M on C.class_no = M.ref_no
-		JOIN USERS U using (user_no)
-		WHERE C.class_no = #{classNo}
-		ORDER BY time
+	    SELECT
+	        M.message_no,
+	        M.msg_type,
+	        M.ref_no,
+	        M.time as createdAt,
+	        M.hidden,
+	        M.image_no,
+	        M.user_no,
+	        U.username,
+	        M.content
+	    FROM MESSAGE M
+	    JOIN USERS U ON U.user_no = M.user_no
+	    WHERE M.ref_no = #{refNo}
+	    	AND M.msg_type = #{msgType}
+	    ORDER BY M.time
 	</select>
+
 	
 	<resultMap id="faqResultMap" type="com.kh.ypjp.chat.model.dto.ChatDto$FaqMsgResDto">
 	    <constructor>
+	    	<arg column="userNo" javaType="long"/>
 	        <arg column="username" javaType="string"/>
 	        <arg column="content" javaType="string"/>
 	        <arg column="linkUrl" javaType="string"/>
@@ -53,10 +62,11 @@
 	</resultMap>
 	
 	<select id="getFaqByUser" resultMap="faqResultMap">
-	    SELECT role as username, content, link_url as linkUrl, created_at
+	    SELECT user_no as userNo, role as username, content, link_url as linkUrl, created_at
 	    FROM CHATBOT
 	    JOIN USERS using (user_no)
 	    WHERE user_no = #{userNo}
+	    ORDER BY created_at
 	</select>
 	
 	<delete id="deleteFaqChat">
@@ -78,5 +88,20 @@
 	<insert id="insertChatBot">
 		INSERT INTO CHATBOT (chatbot_no, user_no, role, content, link_url) 
 		VALUES (SEQ_CHATBOT_NO.NEXTVAL, #{userNo}, #{username}, #{content}, #{button.linkUrl})
+	</insert>
+	
+	<select id="getCsNoByUserNo" resultType="long">
+		SELECT cs_no FROM CUSTOMER_SERVICE
+		WHERE user_no = #{userNo}
+	</select>
+	
+	<insert id="insertCservice">
+		INSERT INTO CUSTOMER_SERVICE (cs_no, user_no)
+		VALUES (SEQ_CS_NO.NEXTVAL, #{userNo})
+	</insert>
+	
+	<insert id="insertMessage">
+		INSERT INTO MESSAGE (message_no, user_no, msg_type, ref_no, content)
+		VALUES (SEQ_MESSAGE_NO.NEXTVAL, #{message.userNo}, #{msgType}, #{roomId}, #{message.content})
 	</insert>
 </mapper>

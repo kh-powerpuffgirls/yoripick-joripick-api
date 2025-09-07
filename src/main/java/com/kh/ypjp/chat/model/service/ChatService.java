@@ -1,9 +1,12 @@
 package com.kh.ypjp.chat.model.service;
 
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -11,21 +14,25 @@ import com.kh.ypjp.chat.model.dao.ChatDao;
 import com.kh.ypjp.chat.model.dto.ChatDto.ChatMsgDto;
 import com.kh.ypjp.chat.model.dto.ChatDto.ChatRoomDto;
 import com.kh.ypjp.chat.model.dto.ChatDto.FaqMsgResDto;
+import com.kh.ypjp.chat.model.dto.ChatDto.MessageDto;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
+@RequiredArgsConstructor
 public class ChatService {
 	
+	private final SimpMessagingTemplate messagingTemplate;
 	private final ChatDao chatDao;
 
-    public ChatService(ChatDao chatDao) {
-        this.chatDao = chatDao;
-    }
-
     public List<ChatRoomDto> getUserChatLists(Long userNo) {
+    	Map<String, Object> param = new HashMap<>();
         List<ChatRoomDto> rooms = chatDao.findCookingClasses(userNo);
         if (rooms != null) {
             for (ChatRoomDto room : rooms) {
-                List<ChatMsgDto> chatMessages = chatDao.getMessagesByRoom(room.getClassNo());
+            	param.put("refNo", room.getClassNo());
+            	param.put("msgType", "CCLASS");
+                List<ChatMsgDto> chatMessages = chatDao.getMessagesByRoom(param);
                 room.setMessages(new ArrayList<>(chatMessages));
             }
         } else { rooms = new ArrayList<>(); }
@@ -35,9 +42,18 @@ public class ChatService {
         }
         Long csNo = chatDao.findAdminChat(userNo);
         if (csNo != null) {
-            List<ChatMsgDto> adminMessages = chatDao.getMessagesByRoom(csNo);
-            rooms.add(new ChatRoomDto(-1L, "관리자 문의하기", "chat", new ArrayList<>(adminMessages)));
+        	param.put("refNo", csNo);
+        	param.put("msgType", "CSERVICE");
+            List<ChatMsgDto> adminMessages = chatDao.getMessagesByRoom(param);
+            rooms.add(new ChatRoomDto(-1L, "관리자 문의하기", "admin", new ArrayList<>(adminMessages)));
         }
+        rooms.sort((r1, r2) -> {
+            Date r1Latest = r1.getMessages().isEmpty() ? new Date(0) 
+                                : r1.getMessages().get(r1.getMessages().size() - 1).getCreatedAt();
+            Date r2Latest = r2.getMessages().isEmpty() ? new Date(0) 
+                                : r2.getMessages().get(r2.getMessages().size() - 1).getCreatedAt();
+            return r2Latest.compareTo(r1Latest);
+        });
         return rooms;
     }
 
@@ -56,6 +72,31 @@ public class ChatService {
 
 	public int insertChatBot(FaqMsgResDto message) {
 		return chatDao.insertChatBot(message);
+	}
+
+	@Transactional
+	public int insertCservice(MessageDto message) {
+		Long csNo = chatDao.getCsNoByUserNo(message.getUserNo());
+		if (csNo == null) {
+			chatDao.insertCservice(message.getUserNo());
+			csNo = chatDao.getCsNoByUserNo(message.getUserNo());
+			messagingTemplate.convertAndSend("/topic/admin", csNo);
+		}
+		Map<String, Object> param = new HashMap<>();
+		param.put("roomId", csNo);
+		param.put("msgType", "CSERVICE");
+		param.put("message", message);
+		return chatDao.insertMessage(param);
+	}
+
+	public int insertCclass(Map<String, Object> param) {
+		param.put("msgType", "CCLASS");
+		return chatDao.insertMessage(param);
+	}
+
+
+	public List<ChatRoomDto> getAllCserviceRooms() {
+		return chatDao.getAllCserviceRooms();
 	}
 
 }

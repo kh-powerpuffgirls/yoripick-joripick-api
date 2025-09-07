@@ -1,9 +1,9 @@
 package com.kh.ypjp.chat.controller;
 
 import java.net.URI;
+import java.util.HashMap;
 import java.util.List;
-
-import lombok.RequiredArgsConstructor;
+import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,12 +18,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kh.ypjp.chat.model.dto.ChatDto.ChatRoomDto;
 import com.kh.ypjp.chat.model.dto.ChatDto.FaqMsgResDto;
 import com.kh.ypjp.chat.model.dto.ChatDto.MessageDto;
 import com.kh.ypjp.chat.model.service.ChatService;
+
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/chat")
@@ -34,15 +34,37 @@ public class ChatController {
 	private final ChatService chatService;
 	
 	@MessageMapping("/{roomId}")
-    public void sendMessage(@DestinationVariable String roomId, MessageDto message) {
-		// type이 cclass인지 admin인지 확인해서 db에 저장하는 코드 추가해야 함
-		messagingTemplate.convertAndSend("/topic/" + roomId, message);
+    public void sendMessage(@DestinationVariable Long roomId, MessageDto message) {
+	    int result = 0;
+		if (roomId == -1) {
+			result = chatService.insertCservice(message);
+		} else {
+			Map<String, Object> param = new HashMap<>();
+			param.put("roomId", roomId);
+			param.put("message", message);
+			result = chatService.insertCclass(param);
+		}
+		if (result > 0) {
+			messagingTemplate.convertAndSend("/topic/" + roomId, message);
+		}
+    }
+	
+	@GetMapping("/admin/{userNo}")
+    public ResponseEntity<List<ChatRoomDto>> getAdminCserviceRooms(@PathVariable Long userNo) {
+		// userNo가 관리자인지 체크
+		if (userNo == null) {
+	        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null); //401
+	    }
+		List<ChatRoomDto> chatRoomList = chatService.getAllCserviceRooms();
+		System.out.println(chatRoomList);
+		if (chatRoomList != null) {
+		    return ResponseEntity.ok().body(chatRoomList); //200
+		}
+		return ResponseEntity.notFound().build(); //404
     }
 	
 	@GetMapping("/rooms/{userNo}")
-    public ResponseEntity<List<ChatRoomDto>> getChatRooms(
-    		@PathVariable Long userNo
-    	) {
+    public ResponseEntity<List<ChatRoomDto>> getChatRooms(@PathVariable Long userNo) {
 		if (userNo == null) {
 	        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null); //401
 	    }
@@ -65,7 +87,7 @@ public class ChatController {
 		if (type.equals("cservice")) {
 			result = chatService.deleteFaqChat(userNo);
 		}
-		if (type.equals("chat")) {
+		if (type.equals("admin")) {
 			result = chatService.deleteAdminChat(userNo);
 		}
 		if (result > 0) {
@@ -78,12 +100,7 @@ public class ChatController {
 	public ResponseEntity<Void> insertMessage(
 			@PathVariable Long userNo,
 			@RequestBody FaqMsgResDto message
-		) throws JsonProcessingException{
-		
-		ObjectMapper mapper = new ObjectMapper();
-	    String json = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(message);
-	    System.out.println(json);
-	    
+		){
 		if (userNo == null) {
 	        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null); //401
 	    }

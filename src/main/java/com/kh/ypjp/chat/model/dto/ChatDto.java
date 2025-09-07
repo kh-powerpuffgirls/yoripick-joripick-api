@@ -15,6 +15,7 @@ public class ChatDto {
     public static class MessageDto {
         private Long userNo;
         private String content;
+        private Date createdAt;
     }
 
     @Data
@@ -23,13 +24,15 @@ public class ChatDto {
     public static class ChatMsgDto extends MessageDto {
         private Long messageNo;
         private String msgType;
-        private String refNo;
-        private Date time;
+        private Long refNo;
+        private Date createdAt;
         private String hidden;
         private Long imageNo;
-        private Long lastMsgNo;
+        private Long userNo;
         private String username;
+        private String content;
     }
+
 
     @Data
     @NoArgsConstructor
@@ -44,8 +47,8 @@ public class ChatDto {
             private String linkUrl;
         }
         
-        public FaqMsgDto(Long userNo, String content, String linkUrl) {
-            super(userNo, content);
+        public FaqMsgDto(Long userNo, String content, String linkUrl, Date createdAt) {
+            super(userNo, content, createdAt);
             this.button = new Button(linkUrl);
         }
 
@@ -55,12 +58,10 @@ public class ChatDto {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class FaqMsgResDto extends FaqMsgDto {
-        private Date createdAt;
         private String username;
         
-        public FaqMsgResDto(String username, String content, String linkUrl, Date createdAt) {
-            super(null, content, linkUrl);
-            this.createdAt = createdAt;
+        public FaqMsgResDto(Long userNo, String username, String content, String linkUrl, Date createdAt) {
+            super(userNo, content, linkUrl, createdAt);
             this.username = username;
         }
     }
