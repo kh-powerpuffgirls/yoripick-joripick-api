@@ -17,7 +17,7 @@ public class AuthDto {
     public static class LoginRequest {
         private String email;
         private String password;
-        private String nickname;
+        private String username;
     }
 
     @Data
@@ -55,7 +55,7 @@ public class AuthDto {
     @AllArgsConstructor
     @Builder
     public static class UserIdentities {
-        private Long id;
+        private Long username;
         private Long userNo;
         private String accessToken;
         private String provider;

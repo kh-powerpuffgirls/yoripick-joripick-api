@@ -2,6 +2,7 @@ package com.kh.ypjp.security.model.handler;
 
 import java.io.IOException;
 import java.time.Duration;
+import java.util.Map;
 
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
@@ -29,29 +30,46 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler{
 	
 	@Override
 	public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
-			Authentication authentication) throws IOException, ServletException {
-		
-		CustomOAuth2User oauthUser = (CustomOAuth2User) authentication.getPrincipal();
-		Long id = (Long) oauthUser.getUserId();
-		
-		String accessToken = jwt.createAccessToken(id, 30);
-		String refreshToken = jwt.createAccessToken(id, 7);
-		
-		ResponseCookie cookie = ResponseCookie.from(AuthController.REFRESH_COOKIE,refreshToken)
-				.httpOnly(true)
-				.secure(false)
-				.sameSite("Lax")
-				.path("/")
-				.maxAge(Duration.ofDays(7))
-				.build();
-		response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
-		
-		String redirect = UriComponentsBuilder
-				.fromUriString("http://localhost:5173/oauth2/success")
-				.queryParam("accessToken", accessToken)
-				.build().toUriString();
-		
-		response.sendRedirect(redirect);
+	                                    Authentication authentication) throws IOException, ServletException {
+	    CustomOAuth2User oauthUser = (CustomOAuth2User) authentication.getPrincipal();
+
+	    Long id = oauthUser.getUserNo();
+
+	    if (id == null) {
+	        Map<String, Object> kakaoAccount = (Map<String, Object>) oauthUser.getAttributes().get("kakao_account");
+	        String email = kakaoAccount != null ? (String) kakaoAccount.get("email") : null;
+
+	        String providerUserId = String.valueOf(oauthUser.getAttributes().get("id"));
+
+	        String redirect = UriComponentsBuilder
+	                .fromUriString("http://localhost:5173/oauth2/username")
+	                .queryParam("email", email)
+	                .queryParam("provider", "kakao")
+	                .queryParam("providerUserId", providerUserId)
+	                .build().toUriString();
+
+	        response.sendRedirect(redirect);
+	        return;
+	    }
+
+	    String accessToken = jwt.createAccessToken(id, 30);
+	    String refreshToken = jwt.createRefreshToken(id, 7);
+
+	    ResponseCookie cookie = ResponseCookie.from(AuthController.REFRESH_COOKIE, refreshToken)
+	            .httpOnly(true)
+	            .secure(false)
+	            .sameSite("Lax")
+	            .path("/")
+	            .maxAge(Duration.ofDays(7))
+	            .build();
+	    response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+
+	    String redirect = UriComponentsBuilder
+	            .fromUriString("http://localhost:5173/oauth2/success")
+	            .queryParam("accessToken", accessToken)
+	            .build().toUriString();
+
+	    response.sendRedirect(redirect);
 	}
 	
 	

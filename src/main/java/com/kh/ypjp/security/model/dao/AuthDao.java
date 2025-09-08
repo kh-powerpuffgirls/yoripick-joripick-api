@@ -27,8 +27,8 @@ public class AuthDao {
 		return users.isEmpty() ? Optional.empty() : Optional.of(users.get(0));
 	}
 
-	public Optional<User> findUserByUserId(Long userId) {
-		List<User> users = session.selectList("auth.findUserByUserId", userId);
+	public Optional<User> findUserByUserNo(Long userNo) {
+		List<User> users = session.selectList("auth.findUserByUserNo", userNo);
 		return users.isEmpty() ? Optional.empty() : Optional.of(users.get(0));
 	}
 	
@@ -57,12 +57,12 @@ public class AuthDao {
 		session.update("auth.updateUserIdentities", userIdentities);
 	}
 	
-	public Optional<User> findUserByNickname(String nickname) {
-	    List<User> users = session.selectList("auth.findUserByNickname", nickname);
+	public Optional<User> findUserByUsername(String username) {
+	    List<User> users = session.selectList("auth.findUserByUsername", username);
 	    return users.isEmpty() ? Optional.empty() : Optional.of(users.get(0));
 	}
 
-	public String getKakaoAccessToken(Long userId) {
-		return session.selectOne("auth.getKakaoAccessToken", userId);
+	public String getKakaoAccessToken(Long userNo) {
+		return session.selectOne("auth.getKakaoAccessToken", userNo);
 	}
 }

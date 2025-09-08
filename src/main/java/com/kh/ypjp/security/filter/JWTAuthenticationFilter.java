@@ -34,11 +34,11 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter{
          try {
          //2) 토큰에서 userId 추출
          String token = header.substring(7).trim();
-         Long userId = jwt.getUserId(token);
+         Long userNo = jwt.getUserNo(token);
          
-         log.debug("userId : {}",userId);
+         log.debug("userId : {}",userNo);
          UsernamePasswordAuthenticationToken authToken =
-         new UsernamePasswordAuthenticationToken(userId,null,
+         new UsernamePasswordAuthenticationToken(userNo,null,
             List.of(new SimpleGrantedAuthority("ROLE_USER"))
 			// payload에 담아서 같이 보내거나
 			// db에서 가져오거나 성능이 안 좋음

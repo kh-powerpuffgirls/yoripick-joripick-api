@@ -55,7 +55,7 @@ public class JWTProvider {
 				.compact(); // 포장해서 전달
 	}
 	
-	public Long getUserId(String token) {
+	public Long getUserNo(String token) {
 		return Long.valueOf(
 				Jwts.parserBuilder()
 					.setSigningKey(key)
