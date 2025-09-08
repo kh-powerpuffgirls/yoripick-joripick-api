@@ -9,7 +9,7 @@ import org.springframework.stereotype.Repository;
 
 import com.kh.ypjp.chat.model.dto.ChatDto.ChatMsgDto;
 import com.kh.ypjp.chat.model.dto.ChatDto.ChatRoomDto;
-import com.kh.ypjp.chat.model.dto.ChatDto.FaqMsgResDto;
+import com.kh.ypjp.chat.model.dto.ChatDto.FaqMsgDto;
 
 @Repository
 public class ChatDao {
@@ -41,7 +41,7 @@ public class ChatDao {
 		return session.delete("chat.deleteAdminChatSession", userNo);
 	}
 
-	public int insertChatBot(FaqMsgResDto message) {
+	public int insertChatBot(FaqMsgDto message) {
 		return session.insert("chat.insertChatBot", message);
 	}
 
@@ -49,7 +49,7 @@ public class ChatDao {
 		return session.selectList("chat.getMessagesByRoom", param);
 	}
 
-	public List<FaqMsgResDto> getFaqByUser(Long userNo) {
+	public List<FaqMsgDto> getFaqByUser(Long userNo) {
 		return session.selectList("chat.getFaqByUser", userNo);
 	}
 
@@ -57,8 +57,8 @@ public class ChatDao {
 		return session.selectOne("chat.getCsNoByUserNo", userNo);
 	}
 
-	public void insertCservice(Long userNo) {
-		session.insert("chat.insertCservice", userNo);
+	public int insertCservice(Long userNo) {
+		return session.insert("chat.insertCservice", userNo);
 	}
 
 	public int insertMessage(Map<String, Object> param) {
