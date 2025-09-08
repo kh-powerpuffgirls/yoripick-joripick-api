@@ -34,9 +34,7 @@ public class KakaoService {
 		
 		return response.getBody();
 	}
-	/*
-	 * 카카오 액서스 토큰을 만료처리하는 메서드 
-	*/
+	
 	public void logout(String kakaoAccessToken) {
 		String url = "https://kapi.kakao.com/v1/user/logout";
 		

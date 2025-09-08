@@ -141,13 +141,21 @@ public class AuthController {
 	}
 
 	@PostMapping("/send-code")
-	public ResponseEntity<String> sendEmailCode(@RequestBody Map<String, String> req) {
-		String email = req.get("email");
-		if (email == null || email.isEmpty()) {
-			return ResponseEntity.badRequest().body("이메일을 입력하세요.");
-		}
-		emailService.createAndSendCode(email);
-		return ResponseEntity.ok("인증번호 전송 완료");
+	public ResponseEntity<Map<String, Object>> sendEmailCode(@RequestBody Map<String, String> req) {
+	    String email = req.get("email");
+	    Map<String, Object> response = new HashMap<>();
+	    
+	    if (email == null || email.isEmpty()) {
+	        response.put("success", false);
+	        response.put("message", "이메일을 입력하세요.");
+	        return ResponseEntity.badRequest().body(response);
+	    }
+	    
+	    emailService.createAndSendCode(email);
+	    
+	    response.put("success", true);
+	    response.put("message", "인증번호 전송 완료");
+	    return ResponseEntity.ok(response);
 	}
 
 	@PostMapping("/verify-code")
@@ -158,5 +166,22 @@ public class AuthController {
 		Map<String, Boolean> res = new HashMap<>();
 		res.put("verified", verified);
 		return ResponseEntity.ok(res);
+	}
+	
+	@PostMapping("/reset-password")
+	public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> req) {
+	    String email = req.get("email");
+	    String newPassword = req.get("password");
+
+	    if (email == null || newPassword == null) {
+	        return ResponseEntity.badRequest().body("이메일 또는 비밀번호가 누락되었습니다.");
+	    }
+
+	    boolean result = authService.resetPassword(email, newPassword);
+	    if (result) {
+	        return ResponseEntity.ok("비밀번호 변경 완료");
+	    } else {
+	        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("해당 이메일의 사용자를 찾을 수 없습니다.");
+	    }
 	}
 }

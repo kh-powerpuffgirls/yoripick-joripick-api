@@ -169,4 +169,15 @@ public class AuthService {
 		return authDao.findUserByUserNo(userNo);
 	}
 	
+    public boolean resetPassword(String email, String newPassword) {
+        Optional<User> userOpt = authDao.findUserByEmail(email);
+        if (userOpt.isPresent()) {
+            String encodedPassword = encoder.encode(newPassword);
+            UserCredential credential = new UserCredential(userOpt.get().getUserNo(), encodedPassword);
+            authDao.updatePassword(credential);
+            return true;
+        }
+        return false;
+    }
+	
 }

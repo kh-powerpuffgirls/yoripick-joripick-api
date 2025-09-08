@@ -55,7 +55,7 @@ public class AuthDto {
     @AllArgsConstructor
     @Builder
     public static class UserIdentities {
-        private Long username;
+        private String username;
         private Long userNo;
         private String accessToken;
         private String provider;

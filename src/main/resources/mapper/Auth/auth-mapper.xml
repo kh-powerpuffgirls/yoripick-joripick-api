@@ -42,6 +42,13 @@
 		VALUES (#{userNo}, #{password})
 	</insert>
 
+	<update id="updatePassword"
+		parameterType="com.kh.ypjp.security.model.dto.AuthDto$UserCredential">
+		UPDATE CREDENTIAL
+		SET PASSWORD = #{password}
+		WHERE USER_NO = #{userNo}
+	</update>
+
 	<select id="findUserByUserNo" resultMap="UserResult">
 		SELECT
 		U.USER_NO, U.EMAIL, U.USERNAME, U.IMAGE_NO, U.SIK_BTI,

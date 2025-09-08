@@ -44,12 +44,11 @@ public class OAuth2Service implements OAuth2UserService<OAuth2UserRequest, OAuth
             User user;
 
             if (optionalUser.isEmpty()) {
-                // 닉네임 설정 필요
                 return new CustomOAuth2User(
                         oAuth2User.getAuthorities(),
                         attributes,
                         "id",
-                        null // 아직 userNo 없음
+                        null
                 );
             } else {
                 user = optionalUser.get();
@@ -70,7 +69,6 @@ public class OAuth2Service implements OAuth2UserService<OAuth2UserRequest, OAuth
                 );
             }
 
-        // 기타 Provider는 기본 처리
         }
         return new DefaultOAuth2User(oAuth2User.getAuthorities(), attributes, "id");
     }
