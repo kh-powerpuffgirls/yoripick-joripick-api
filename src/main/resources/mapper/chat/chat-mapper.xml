@@ -73,7 +73,8 @@
 	</resultMap>
 	
 	<select id="getFaqByUser" resultMap="faqResultMap">
-	    SELECT c.user_no AS userNo,
+	    SELECT
+	    	c.user_no AS userNo,
 		    CASE 
 				WHEN c.role = 'USER' THEN u.username
 				WHEN c.role = 'BOT'  THEN '요픽'

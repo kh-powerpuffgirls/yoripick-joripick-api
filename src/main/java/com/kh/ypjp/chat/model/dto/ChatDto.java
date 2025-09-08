@@ -13,11 +13,20 @@ public class ChatDto {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class MessageDto {
+		private Long messageNo;
         private Long userNo;
         private String content;
         private Date createdAt;
         private Long roomNo;
         private String username;
+        
+        public MessageDto(Long userNo, String content, Date createdAt, Long roomNo, String username) {
+        	this.userNo = userNo;
+        	this.content = content;
+        	this.createdAt = createdAt;
+        	this.roomNo = roomNo;
+        	this.username = username;
+        }
     }
 
     @Data
@@ -48,7 +57,8 @@ public class ChatDto {
             private String linkUrl;
         }
         
-        public FaqMsgDto(Long userNo, String username, String content, String linkUrl, Date createdAt, Long roomNo) {
+        public FaqMsgDto(Long userNo, String username, String content, 
+        		String linkUrl, Date createdAt, Long roomNo) {
             super(userNo, content, createdAt, roomNo, username);
             this.button = new Button(linkUrl);
         }
