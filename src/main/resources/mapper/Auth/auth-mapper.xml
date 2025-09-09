@@ -27,9 +27,9 @@
 	<insert id="insertUser">
 		<selectKey keyProperty="userNo" resultType="long" order="BEFORE">
 			SELECT SEQ_USER_NO.NEXTVAL FROM DUAL
-		</selectKey> INSERT
-		INTO USERS (USER_NO, EMAIL, USERNAME, IMAGE_NO, STATUS) VALUES
-		(#{userNo}, #{email}, #{username}, 0, 'ACTIVE') </insert>
+		</selectKey> INSERT INTO
+		USERS (USER_NO, EMAIL, USERNAME, IMAGE_NO, STATUS) VALUES (#{userNo},
+		#{email}, #{username}, 0, 'ACTIVE') </insert>
 
 	<insert id="insertUserRole"> INSERT ALL <foreach collection="roles"
 			item="role" separator="">
@@ -42,16 +42,27 @@
 		VALUES (#{userNo}, #{password})
 	</insert>
 
+	<update id="updatePassword"
+		parameterType="com.kh.ypjp.security.model.dto.AuthDto$UserCredential">
+		UPDATE CREDENTIAL
+		SET PASSWORD = #{password}
+		WHERE USER_NO = #{userNo}
+	</update>
+
 	<select id="findUserByUserNo" resultMap="UserResult">
-		SELECT U.USER_NO, U.EMAIL, U.USERNAME, U.IMAGE_NO, C.PASSWORD,
+		SELECT
+		U.USER_NO, U.EMAIL, U.USERNAME, U.IMAGE_NO, U.SIK_BTI,
+		U.MSG_NOTI, U.REPLY_NOTI, U.RVW_NOTI, U.EXP_NOTI,
+		U.STATUS, U.INACTIVE_DATE,
+		C.PASSWORD,
 		A.AUTHORITY
 		FROM USERS U
 		LEFT JOIN CREDENTIAL C ON U.USER_NO = C.USER_NO
 		JOIN AUTHORITY A ON U.USER_NO = A.USER_NO
-		WHERE U.USER_NO = #{id}
+		WHERE U.USER_NO = #{userNo}
 	</select>
 
-	<select id="findUserByNickname" parameterType="string"
+	<select id="findUserByUsername" parameterType="string"
 		resultMap="UserResult">
 		SELECT
 		U.USER_NO, U.EMAIL, U.USERNAME, U.IMAGE_NO, U.SIK_BTI,
@@ -62,44 +73,35 @@
 		FROM USERS U
 		LEFT JOIN CREDENTIAL C ON U.USER_NO = C.USER_NO
 		JOIN AUTHORITY A ON U.USER_NO = A.USER_NO
-		WHERE UPPER(U.USERNAME) = UPPER(#{nickname})
+		WHERE UPPER(U.USERNAME) = UPPER(#{username})
 	</select>
 
 	<insert id="insertUserIdentities">
-		INSERT INTO USER_IDENTITIES (SOCIAL_LOGIN_ID, USER_ID, ACCESS_TOKEN,
-		PROVIDER, PROVIDER_USER_ID)
-		VALUES (SEQ_USER_IDENTITIES_ID.NEXTVAL, #{userId}, #{accessToken},
-		#{provider}, #{providerUserId})
+		INSERT INTO USER_IDENTITIES (
+		SOCIAL_LOGIN_ID, USER_ID, ACCESS_TOKEN,
+		PROVIDER, PROVIDER_USER_ID
+		)
+		VALUES (
+		SEQ_USER_IDENTITIES_ID.NEXTVAL, #{userNo}, #{accessToken},
+		#{provider}, #{providerUserId}
+		)
 	</insert>
-
 	<update id="updateUserIdentities">
 		UPDATE USER_IDENTITIES SET ACCESS_TOKEN = #{accessToken}
 		WHERE PROVIDER = #{provider} AND PROVIDER_USER_ID = #{providerUserId}
 	</update>
 
 	<select id="getKakaoAccessToken" resultType="string">
-		SELECT ACCESS_TOKEN FROM USER_IDENTITIES WHERE USER_ID = #{userId}
+		SELECT ACCESS_TOKEN FROM USER_IDENTITIES WHERE USER_ID = #{userNo}
 	</select>
-	
+
 	<resultMap id="AuthorityResult"
-		type="com.kh.ypjp.security.model.dto.AuthDto$Authority" autoMapping="true">
+		type="com.kh.ypjp.security.model.dto.AuthDto$Authority"
+		autoMapping="true">
 		<id property="userNo" column="USER_NO" />
 		<collection property="roles" ofType="java.lang.String">
 			<result column="AUTHORITY" />
 		</collection>
 	</resultMap>
-	
-	<select id="findUserByUserId" resultMap="UserResult">
-		SELECT
-			U.USER_NO, U.EMAIL, U.USERNAME, U.IMAGE_NO, U.SIK_BTI,
-			U.MSG_NOTI, U.REPLY_NOTI, U.RVW_NOTI, U.EXP_NOTI,
-			U.STATUS, U.INACTIVE_DATE,
-			C.PASSWORD,
-			A.AUTHORITY
-		FROM USERS U
-		LEFT JOIN CREDENTIAL C ON U.USER_NO = C.USER_NO
-		JOIN AUTHORITY A ON U.USER_NO = A.USER_NO
-		WHERE U.USER_NO = #{userNo}
-	</select>
 
 </mapper>

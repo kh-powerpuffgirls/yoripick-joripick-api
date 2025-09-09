@@ -39,12 +39,12 @@ public class EmailService {
 
         long now = Instant.now().toEpochMilli();
         if (now - entry.getCreatedAt() > CODE_EXPIRATION_MILLIS) {
-            emailCodeMap.remove(email); // 만료된 코드 삭제
+            emailCodeMap.remove(email);
             return false;
         }
 
         if (entry.getCode().equals(code)) {
-            emailCodeMap.remove(email); // 검증 성공하면 코드 삭제 (1회용)
+            emailCodeMap.remove(email);
             return true;
         }
         return false;
@@ -64,7 +64,6 @@ public class EmailService {
             message.setText("인증번호는 [ " + code + " ] 입니다. (5분 이내 사용해주세요)");
             mailSender.send(message);
         } catch (Exception e) {
-            // 로깅 처리 필요 시 여기에 작성
             e.printStackTrace();
         }
     }
@@ -75,7 +74,6 @@ public class EmailService {
         emailCodeMap.entrySet().removeIf(entry -> now - entry.getValue().getCreatedAt() > CODE_EXPIRATION_MILLIS);
     }
 
-    // 인증번호와 생성시간을 함께 저장하는 내부 클래스
     private static class CodeEntry {
         private final String code;
         private final long createdAt;
