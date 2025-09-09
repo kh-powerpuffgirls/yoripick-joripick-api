@@ -5,6 +5,7 @@
         <result property="roomNo" column="roomNo"/>
         <result property="className" column="className"/>
         <result property="type" column="type"/>
+        <result property="notification" column="notification"/>
     </resultMap>
     
     <select id="getAllCserviceRooms" resultMap="chatRoomResultMap">
@@ -18,7 +19,8 @@
 	<select id="findCookingClasses" resultMap="chatRoomResultMap">
 		SELECT cc.room_no AS roomNo,
                cc.class_name AS className,
-               'cclass' AS type
+               'cclass' AS type,
+               ce.notification
         FROM cooking_class cc
         JOIN class_enroll ce ON ce.room_no = cc.room_no
         WHERE ce.user_no = #{userNo}
@@ -121,7 +123,22 @@
 	</insert>
 	
 	<insert id="insertMessage">
-		INSERT INTO MESSAGE (message_no, user_no, msg_type, ref_no, content)
-		VALUES (SEQ_MESSAGE_NO.NEXTVAL, #{message.userNo}, #{msgType}, #{roomId}, #{message.content})
+		<selectKey keyProperty="messageNo" resultType="long" order="BEFORE">
+			SELECT SEQ_MESSAGE_NO.NEXTVAL FROM DUAL
+		</selectKey>
+		INSERT INTO MESSAGE (
+			message_no, 
+			user_no, 
+			msg_type, 
+			ref_no, 
+			content
+			<if test="imageNo != null">, image_no</if>)
+		VALUES (
+			#{messageNo}, 
+			#{userNo}, 
+			#{msgType}, 
+			#{roomNo}, 
+			#{content}
+			<if test="imageNo != null">, #{imageNo}</if>)
 	</insert>
 </mapper>

@@ -10,6 +10,7 @@ import org.springframework.stereotype.Repository;
 import com.kh.ypjp.chat.model.dto.ChatDto.ChatMsgDto;
 import com.kh.ypjp.chat.model.dto.ChatDto.ChatRoomDto;
 import com.kh.ypjp.chat.model.dto.ChatDto.FaqMsgDto;
+import com.kh.ypjp.chat.model.dto.ChatDto.MessageDto;
 
 @Repository
 public class ChatDao {
@@ -41,7 +42,7 @@ public class ChatDao {
 		return session.delete("chat.deleteAdminChatSession", userNo);
 	}
 
-	public int insertChatBot(FaqMsgDto message) {
+	public int insertChatBot(MessageDto message) {
 		return session.insert("chat.insertChatBot", message);
 	}
 
@@ -61,8 +62,8 @@ public class ChatDao {
 		return session.insert("chat.insertCservice", userNo);
 	}
 
-	public int insertMessage(Map<String, Object> param) {
-		return session.insert("chat.insertMessage", param);
+	public int insertMessage(MessageDto message) {
+		return session.insert("chat.insertMessage", message);
 	}
 
 	public List<ChatRoomDto> getAllCserviceRooms() {

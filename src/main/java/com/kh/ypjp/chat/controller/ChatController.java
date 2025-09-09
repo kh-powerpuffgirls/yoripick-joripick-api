@@ -1,12 +1,12 @@
 package com.kh.ypjp.chat.controller;
 
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -15,9 +15,11 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -25,6 +27,7 @@ import com.kh.ypjp.chat.model.dto.ChatDto.ChatRoomDto;
 import com.kh.ypjp.chat.model.dto.ChatDto.FaqMsgDto;
 import com.kh.ypjp.chat.model.dto.ChatDto.MessageDto;
 import com.kh.ypjp.chat.model.service.ChatService;
+import com.kh.ypjp.common.UtilService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -34,13 +37,11 @@ import lombok.RequiredArgsConstructor;
 public class ChatController {
 
 	private final SimpMessagingTemplate messagingTemplate;
+	private final UtilService utilService;
 	private final ChatService chatService;
 
 	@MessageMapping("/{roomNo}")
-	public void sendMessage(@DestinationVariable Long roomNo, MessageDto message) throws JsonProcessingException {
-		ObjectMapper mapper = new ObjectMapper();
-		String json = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(message);
-		System.out.println(json);
+	public void sendMessage(@DestinationVariable Long roomNo, MessageDto message) {
 		messagingTemplate.convertAndSend("/topic/" + roomNo, message);
 	}
 
@@ -64,12 +65,12 @@ public class ChatController {
 		ChatRoomDto chatRoom = null;
 		if (type.equals("cservice")) {
 			chatService.deleteFaqChat(userNo);
-			chatRoom = new ChatRoomDto(0L, "FAQ BOT, 요픽", "cservice", new ArrayList<>());
+			chatRoom = new ChatRoomDto(0L, "FAQ BOT, 요픽", "cservice", new ArrayList<>(), null);
 		}
 		if (type.equals("admin")) {
 			chatService.deleteAdminChat(userNo);
 			Long csNo = chatService.newCservice(userNo);
-			chatRoom = new ChatRoomDto(csNo, "관리자 문의하기", "admin", new ArrayList<>());
+			chatRoom = new ChatRoomDto(csNo, "관리자 문의하기", "admin", new ArrayList<>(), null);
 		}
 		if (chatRoom != null) {
 			return ResponseEntity.ok().body(chatRoom); // 201
@@ -77,9 +78,10 @@ public class ChatController {
 		return ResponseEntity.badRequest().build(); // 400
 	}
 
-	@PostMapping("/messages/{type}/{classNo}")
-	public ResponseEntity<Void> insertMessage(@PathVariable Long classNo, @PathVariable String type,
-			@RequestBody FaqMsgDto message) throws JsonProcessingException {
+	@PostMapping(value = "/messages/{type}/{classNo}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	public ResponseEntity<? extends MessageDto> insertMessage(@PathVariable Long classNo, @PathVariable String type,
+			@RequestPart("message") MessageDto message, @RequestPart(value = "selectedFile", required = false) MultipartFile upfile
+			) throws JsonProcessingException {
 		ObjectMapper mapper = new ObjectMapper();
 		String json = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(message);
 		System.out.println(json);
@@ -88,31 +90,48 @@ public class ChatController {
 		if (userNo == null) {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null); // 401
 		}
-		message.setUserNo(userNo);
+		if (!(upfile == null || upfile.isEmpty())) {
+			String webPath = "messages/" + userNo;
+			String changeName = utilService.getChangeName(upfile, webPath);
+			Map<String, Object> param = new HashMap<>();
+			String serverName = webPath + "/" + changeName;
+			param.put("serverName", serverName);
+			param.put("originName", upfile.getOriginalFilename());
+			int result = utilService.insertImage(param);
+			if (result > 0) {
+				message.setImageNo(utilService.getImageNo(param));
+				String imageUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
+		                .path("/images/")
+		                .path(serverName)
+		                .toUriString();
+				message.setContent(imageUrl);
+			} else {
+				return ResponseEntity.badRequest().build(); // 400
+			}
+		}
 		int result = 0;
+		message.setUserNo(userNo);
+		message.setRoomNo(classNo);
 		if (type.equals("cservice")) {
 			if (message.getUsername().equals("요픽")) {
 				message.setUsername("BOT");
 			} else {
 				message.setUsername("USER");
 			}
-			result = chatService.insertChatBot(message);
+			FaqMsgDto faqMessage = new FaqMsgDto();
+			faqMessage.setUserNo(message.getUserNo());
+			faqMessage.setUsername(message.getUsername());
+			faqMessage.setContent(message.getContent());
+			result = chatService.insertChatBot(faqMessage);
 		} else if (type.equals("admin")) {
-			Map<String, Object> param = new HashMap<>();
-			param.put("roomId", classNo);
-			param.put("msgType", "CSERVICE");
-			param.put("message", message);
-			result = chatService.insertCservice(param);
+			message.setMsgType("CSERVICE");
+			result = chatService.insertMessage(message);
 		} else {
-			Map<String, Object> param = new HashMap<>();
-			param.put("roomId", classNo);
-			param.put("msgType", "CCLASS");
-			param.put("message", message);
-			result = chatService.insertCclass(param);
+			message.setMsgType("CCLASS");
+			result = chatService.insertMessage(message);
 		}
 		if (result > 0) {
-			URI location = URI.create("");
-			return ResponseEntity.created(location).build(); // 201
+			return ResponseEntity.ok().body(message); // 201
 		} else {
 			return ResponseEntity.badRequest().build(); // 400
 		}

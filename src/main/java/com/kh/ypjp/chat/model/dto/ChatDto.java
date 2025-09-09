@@ -19,6 +19,8 @@ public class ChatDto {
         private Date createdAt;
         private Long roomNo;
         private String username;
+        private Long imageNo;
+        private String msgType;
         
         public MessageDto(Long userNo, String content, Date createdAt, Long roomNo, String username) {
         	this.userNo = userNo;
@@ -33,14 +35,8 @@ public class ChatDto {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class ChatMsgDto extends MessageDto {
-        private Long messageNo;
-        private String msgType;
         private Long refNo;
-        private Date createdAt;
         private String hidden;
-        private Long imageNo;
-        private Long userNo;
-        private String content;
     }
 
 
@@ -73,6 +69,7 @@ public class ChatDto {
         private String className;
         private String type;
         private List<? extends MessageDto> messages;
+        private String notification;
     }
 
 }

@@ -10,6 +10,7 @@ import com.kh.ypjp.security.model.dto.AuthDto.Authority;
 import com.kh.ypjp.security.model.dto.AuthDto.User;
 import com.kh.ypjp.security.model.dto.AuthDto.UserCredential;
 import com.kh.ypjp.security.model.dto.AuthDto.UserIdentities;
+import com.kh.ypjp.security.model.dto.UserNotiDto;
 
 import lombok.RequiredArgsConstructor;
 
@@ -18,6 +19,10 @@ import lombok.RequiredArgsConstructor;
 public class AuthDao {
 
 	private final SqlSessionTemplate session;
+	
+	public UserNotiDto getNotiByUserNo(String userNo) {
+		return session.selectOne("auth.getNotiByUserNo", userNo);
+	}
 
 	// Optional<User>를 반환하여 Service 계층에서 null 여부를 명시적으로 처리하도록 유도
 	public Optional<User> findUserByEmail(String email) {
