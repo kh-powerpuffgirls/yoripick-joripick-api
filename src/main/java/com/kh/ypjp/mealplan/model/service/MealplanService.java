@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import com.kh.ypjp.mealplan.model.dao.MealplanDao;
 import com.kh.ypjp.mealplan.model.vo.Food;
+import com.kh.ypjp.mealplan.model.vo.Food.FoodCode;
 
 import lombok.RequiredArgsConstructor;
 
@@ -18,6 +19,14 @@ public class MealplanService {
 
 	public List<Food> searchFoods(Map <String, Object> param) {
 		return mealplanDao.searchFood(param);
+	}
+
+	public List<FoodCode> searchFoodCodes() {
+		return mealplanDao.searchFoodCodes();
+	}
+
+	public int insertMeal(Map<String, Object> param) {
+		return mealplanDao.insertMeal(param);
 	}
 
 }

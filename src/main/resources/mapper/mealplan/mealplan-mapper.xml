@@ -2,32 +2,38 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
 <mapper namespace="mealplan">
 	<select id="searchFood" resultType="food">
-		SELECT 
-			food_no,
-			food_name,
-			rep_food_name,
-			food_code,
-			user_no,
-			food_code_name,
-			energy,
-			carb,
-			protein,
-			fat,
-			sodium
-		FROM FOOD
-		JOIN FOOD_CODE USING (food_code)
-		JOIN NUTRIENT USING (nutrient_no)
-		<where>
-			<trim prefixOverrides="OR">
-				<if test="query != null and query != ''">
-					food_name LIKE '%' || #{query} || '%'
-					OR
-					rep_food_name LIKE '%' || #{query} || '%'
-				</if>
-				<if test="foodCode != 0">
-					food_code = #{foodCode}
-				</if>
-			</trim>
-		</where>
+	    SELECT
+	        food_no,
+	        food_name,
+	        energy,
+	        carb,
+	        protein,
+	        fat,
+	        sodium
+	    FROM FOOD
+	    JOIN FOOD_CODE USING (food_code)
+	    JOIN NUTRIENT USING (nutrient_no)
+	    <where>
+	        <if test="query != null and query != ''">
+	            ( food_name LIKE '%' || #{query} || '%' OR rep_food_name LIKE '%' || #{query} || '%' )
+	        </if>
+	        <if test="foodCode != 0">
+	            <if test="query != null and query != ''">
+	                AND
+	            </if>
+	            food_code = #{foodCode}
+	        </if>
+	    </where>
+	    ORDER BY food_name
 	</select>
+	
+	<select id="searchFoodCodes" resultType="com.kh.ypjp.mealplan.model.vo.Food$FoodCode">
+		SELECT * FROM FOOD_CODE
+	</select>
+	
+	<insert id="insertMeal">
+		INSERT INTO MEAL_PLAN VALUES
+		(SEQ_MEAL_NO.NEXTVAL, #{userNo}, #{meal.mealDate}, #{meal.mealId}, 
+			#{meal.mealType}, #{meal.refNo}, #{meal.quantity})
+	</insert>
 </mapper>
