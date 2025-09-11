@@ -91,10 +91,8 @@ public class Food {
 		private Long rcpNo;
 		private String rcpName;
 		private int energy;
-//		private int carb;
-//		private int protein;
-//		private int fat;
-//		private int sodium;
-		private Long nutrientNo;
+
+		private String serverName;
+		private String imgUrl;
 	}
 }

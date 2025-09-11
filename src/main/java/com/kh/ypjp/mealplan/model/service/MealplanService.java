@@ -8,6 +8,7 @@ import java.util.Map;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.kh.ypjp.mealplan.model.dao.MealplanDao;
 import com.kh.ypjp.mealplan.model.vo.Food;
@@ -94,7 +95,15 @@ public class MealplanService {
 	}
 
 	public List<Recipe> getMyRecipes(Long userNo) {
-		return mealplanDao.getMyRecipes(userNo);
+		List<Recipe> rcpList = mealplanDao.getMyRecipes(userNo);
+		for (Recipe rcp : rcpList) {
+			String imageUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
+	                .path("/images/")
+	                .path(rcp.getServerName())
+	                .toUriString();
+			rcp.setImgUrl(imageUrl);
+		}
+		return rcpList;
 	}
 
 }

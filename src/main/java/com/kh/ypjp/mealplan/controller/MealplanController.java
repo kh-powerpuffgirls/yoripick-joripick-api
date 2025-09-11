@@ -89,7 +89,6 @@ public class MealplanController {
 	public void insertFood(@RequestBody NewFoodWrapper wrapper, @PathVariable Long userNo) {
 		if (userNo == null) return;
 		NewFood food = wrapper.getItem();
-		System.out.println(food.toString());
 		Map <String, Object> param = new HashMap<>();
 		param.put("wrapper", wrapper);
 		param.put("food", food);
@@ -99,6 +98,8 @@ public class MealplanController {
 	
 	@GetMapping("/recipes/{userNo}")
 	public List<Recipe> getMyRecipes(@PathVariable Long userNo) {
+		if (userNo == null) return null;
 	    return mealplanService.getMyRecipes(userNo);
 	}
+	
 }

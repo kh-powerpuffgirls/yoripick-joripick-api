@@ -38,40 +38,88 @@
 	</insert>
 	
 	<select id="getMealList" resultType="com.kh.ypjp.mealplan.model.vo.Food$FoodExt">
-		SELECT 
-			m.meal_no,
-			m.meal_id,
-			f.food_no,
-			f.food_name,
-			n.energy,
-			n.carb,
-			n.protein,
-			n.fat,
-			n.sodium,
-			m.quantity
-		FROM MEAL_PLAN m
-		JOIN FOOD f ON m.ref_no = f.food_no
-		JOIN NUTRIENT n ON f.nutrient_no = n.nutrient_no
-		WHERE m.user_no = #{userNo}
-			AND TRUNC(m.meal_date) = TO_DATE(#{date}, 'YYYY-MM-DD')
+	    SELECT * FROM (
+	        SELECT
+	            m.meal_no,
+	            m.meal_id,
+	            f.food_no,
+	            f.food_name,
+	            n.energy,
+	            n.carb,
+	            n.protein,
+	            n.fat,
+	            n.sodium,
+	            m.quantity
+	        FROM MEAL_PLAN m
+	        JOIN FOOD f ON m.ref_no = f.food_no
+	        JOIN NUTRIENT n ON f.nutrient_no = n.nutrient_no
+	        WHERE m.user_no = #{userNo}
+	            AND TRUNC(m.meal_date) = TO_DATE(#{date}, 'YYYY-MM-DD')
+	            AND m.meal_type = 'FOOD'
+	
+	        UNION ALL
+	
+	        SELECT
+	            m.meal_no,
+	            m.meal_id,
+	            r.rcp_no AS foodNo,
+	            r.rcp_name AS foodName,
+	            n.energy,
+	            n.carb,
+	            n.protein,
+	            n.fat,
+	            n.sodium,
+	            NULL AS quantity
+	        FROM MEAL_PLAN m
+	        JOIN RECIPE r ON m.ref_no = r.rcp_no
+	        JOIN NUTRIENT n ON r.nutrient_no = n.nutrient_no
+	        WHERE m.user_no = #{userNo}
+	            AND TRUNC(m.meal_date) = TO_DATE(#{date}, 'YYYY-MM-DD')
+	            AND m.meal_type = 'RCP'
+	    ) t
+	    ORDER BY meal_no
 	</select>
 	
 	<select id="getMealStats" resultType="map">
-		SELECT
-			TO_CHAR(m.meal_date, 'YYYY-MM-DD') AS mealDate,
-			SUM(n.energy * m.quantity / 100) AS energy,
-		    SUM(n.carb * m.quantity / 100) AS carbs,
-		    SUM(n.protein * m.quantity / 100) AS protein,
-		    SUM(n.fat * m.quantity / 100) AS fat,
-		    SUM(n.sodium * m.quantity / 100) AS sodium
-		FROM MEAL_PLAN m
-		JOIN FOOD f on m.ref_no = f.food_no
-		JOIN NUTRIENT n ON f.nutrient_no = n.nutrient_no	
-		WHERE m.user_no = #{userNo}
-			AND TRUNC(m.meal_date) BETWEEN TO_DATE(#{from}, 'YYYY-MM-DD')
-				AND TO_DATE(#{to}, 'YYYY-MM-DD')
-		GROUP BY TO_CHAR(m.meal_date, 'YYYY-MM-DD')
-		ORDER BY mealDate
+	    SELECT mealDate,
+	           SUM(energy) AS energy,
+	           SUM(carbs) AS carbs,
+	           SUM(protein) AS protein,
+	           SUM(fat) AS fat,
+	           SUM(sodium) AS sodium
+	    FROM (
+	        SELECT
+	            TO_CHAR(m.meal_date, 'YYYY-MM-DD') AS mealDate,
+	            n.energy * m.quantity / 100 AS energy,
+	            n.carb * m.quantity / 100 AS carbs,
+	            n.protein * m.quantity / 100 AS protein,
+	            n.fat * m.quantity / 100 AS fat,
+	            n.sodium * m.quantity / 100 AS sodium
+	        FROM MEAL_PLAN m
+	        JOIN FOOD f ON m.ref_no = f.food_no
+	        JOIN NUTRIENT n ON f.nutrient_no = n.nutrient_no
+	        WHERE m.user_no = #{userNo}
+	          AND TRUNC(m.meal_date) BETWEEN TO_DATE(#{from}, 'YYYY-MM-DD') AND TO_DATE(#{to}, 'YYYY-MM-DD')
+	          AND m.meal_type = 'FOOD'
+	
+	        UNION ALL
+	
+	        SELECT
+	            TO_CHAR(m.meal_date, 'YYYY-MM-DD') AS mealDate,
+	            n.energy AS energy,
+	            n.carb AS carbs,
+	            n.protein AS protein,
+	            n.fat AS fat,
+	            n.sodium AS sodium
+	        FROM MEAL_PLAN m
+	        JOIN RECIPE r ON m.ref_no = r.rcp_no
+	        JOIN NUTRIENT n ON r.nutrient_no = n.nutrient_no
+	        WHERE m.user_no = #{userNo}
+	          AND TRUNC(m.meal_date) BETWEEN TO_DATE(#{from}, 'YYYY-MM-DD') AND TO_DATE(#{to}, 'YYYY-MM-DD')
+	          AND m.meal_type = 'RCP'
+	    )
+	    GROUP BY mealDate
+	    ORDER BY mealDate
 	</select>
 	
 	<delete id="deleteMeals">
@@ -79,30 +127,34 @@
 	</delete>
 	
 	<select id="getRecents" resultType="com.kh.ypjp.mealplan.model.vo.Food$FoodExt">
-	    SELECT *
-		FROM (
-		    SELECT 
-		        m.meal_no,
-		        m.meal_id,
-		        m.meal_type,
-		        m.ref_no,
-		        f.food_no,
-		        f.food_name,
-		        n.energy,
-		        n.carb,
-		        n.protein,
-		        n.fat,
-		        n.sodium,
-		        m.quantity,
-		        ROW_NUMBER() OVER (PARTITION BY m.meal_type, m.ref_no ORDER BY m.meal_date DESC, m.meal_no DESC) AS rn
-		    FROM MEAL_PLAN m
-		    JOIN FOOD f ON m.ref_no = f.food_no
-		    JOIN NUTRIENT n ON f.nutrient_no = n.nutrient_no
-		    WHERE m.user_no = #{userNo}
-		    ORDER BY m.meal_date DESC, m.meal_no DESC
-		)
-		WHERE rn = 1
-			AND ROWNUM <![CDATA[<=]]> 10
+	    SELECT * FROM (
+	        SELECT
+	            m.meal_no,
+	            m.meal_id,
+	            m.meal_type,
+	            m.ref_no,
+	            CASE WHEN m.meal_type = 'FOOD' THEN f.food_no ELSE r.rcp_no END AS foodNo,
+	            CASE WHEN m.meal_type = 'FOOD' THEN f.food_name ELSE r.rcp_name END AS foodName,
+	            n.energy,
+	            n.carb,
+	            n.protein,
+	            n.fat,
+	            n.sodium,
+	            m.quantity,
+	            ROW_NUMBER() OVER (
+	                PARTITION BY m.meal_type, m.ref_no
+	                ORDER BY m.meal_date DESC, m.meal_no DESC
+	            ) AS rn
+	        FROM MEAL_PLAN m
+	        LEFT JOIN FOOD f ON m.meal_type = 'FOOD' AND m.ref_no = f.food_no
+	        LEFT JOIN RECIPE r  ON m.meal_type = 'RCP'  AND m.ref_no = r.rcp_no
+	        LEFT JOIN NUTRIENT n 
+	            ON ( (m.meal_type = 'FOOD' AND f.nutrient_no = n.nutrient_no)
+	              OR (m.meal_type = 'RCP'  AND r.nutrient_no = n.nutrient_no) )
+	        WHERE m.user_no = #{userNo}
+	    ) t
+	    WHERE t.rn = 1
+	      AND ROWNUM <![CDATA[<=]]> 10
 	</select>
 	
 	<insert id="insertNutrient">
@@ -126,10 +178,11 @@
 			r.rcp_no,
 			r.rcp_name,
 			n.energy,
-			r.nutrient_no
+			i.server_name
 		FROM BOOKMARK b
 		JOIN RECIPE r ON b.ref_no = r.rcp_no
 		JOIN NUTRIENT n ON r.nutrient_no = n.nutrient_no
+		JOIN IMAGE i ON r.image_no = i.image_no
 		WHERE b.user_no = #{userNo}
 			AND b.rcp_source = 'COMM'
 	</select>
