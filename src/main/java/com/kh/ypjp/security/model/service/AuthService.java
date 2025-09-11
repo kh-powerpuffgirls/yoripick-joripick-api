@@ -43,8 +43,8 @@ public class AuthService {
             throw new BadCredentialsException("비밀번호가 일치하지 않습니다.");
         }
         
-        String accessToken = jwt.createAccessToken(user.getUserNo(), 30);
-        String refreshToken = jwt.createRefreshToken(user.getUserNo(), 7);
+        String accessToken = jwt.createAccessToken(user.getUserNo(),user.getProvider(), 30);
+        String refreshToken = jwt.createRefreshToken(user.getUserNo(),user.getProvider(), 7);
         
 		User userNoPassword = User.builder()
 				.userNo(user.getUserNo())
@@ -74,7 +74,8 @@ public class AuthService {
         String encodedPassword = encoder.encode(password);
         User user = User.builder()
                         .email(email)
-                        .username(username)  
+                        .username(username)
+                        .provider("local")
                         .build();
         authDao.insertUser(user); 
 
@@ -91,8 +92,8 @@ public class AuthService {
         User savedUser = authDao.findUserByUserNo(user.getUserNo())
                                 .orElseThrow(() -> new IllegalStateException("회원가입 직후 사용자 조회 실패"));
 
-        String accessToken = jwt.createAccessToken(savedUser.getUserNo(), 30);
-        String refreshToken = jwt.createRefreshToken(savedUser.getUserNo(), 7);
+        String accessToken = jwt.createAccessToken(savedUser.getUserNo(),user.getProvider(), 30);
+        String refreshToken = jwt.createRefreshToken(savedUser.getUserNo(),user.getProvider(), 7);
 
         return AuthResult.builder()
                          .accessToken(accessToken)
@@ -112,7 +113,7 @@ public class AuthService {
         User user = authDao.findUserByUserNo(userNo)
                 .orElseThrow(() -> new BadCredentialsException("사용자 조회 실패"));
 
-        String newAccessToken = jwt.createAccessToken(user.getUserNo(), 30);
+        String newAccessToken = jwt.createAccessToken(user.getUserNo(),user.getProvider(), 30);
 
         return AuthResult.builder()
                 .accessToken(newAccessToken)
@@ -150,8 +151,8 @@ public class AuthService {
                 .build();
         authDao.insertUserRole(authority);
 
-        String newAccessToken = jwt.createAccessToken(user.getUserNo(), 30);
-        String refreshToken = jwt.createRefreshToken(user.getUserNo(), 7);
+        String newAccessToken = jwt.createAccessToken(user.getUserNo(),user.getProvider(), 30);
+        String refreshToken = jwt.createRefreshToken(user.getUserNo(),user.getProvider(), 7);
 
         return AuthResult.builder()
                 .accessToken(newAccessToken)
