@@ -36,4 +36,101 @@
 		(SEQ_MEAL_NO.NEXTVAL, #{userNo}, #{meal.mealDate}, #{meal.mealId}, 
 			#{meal.mealType}, #{meal.refNo}, #{meal.quantity})
 	</insert>
+	
+	<select id="getMealList" resultType="com.kh.ypjp.mealplan.model.vo.Food$FoodExt">
+		SELECT 
+			m.meal_no,
+			m.meal_id,
+			f.food_no,
+			f.food_name,
+			n.energy,
+			n.carb,
+			n.protein,
+			n.fat,
+			n.sodium,
+			m.quantity
+		FROM MEAL_PLAN m
+		JOIN FOOD f ON m.ref_no = f.food_no
+		JOIN NUTRIENT n ON f.nutrient_no = n.nutrient_no
+		WHERE m.user_no = #{userNo}
+			AND TRUNC(m.meal_date) = TO_DATE(#{date}, 'YYYY-MM-DD')
+	</select>
+	
+	<select id="getMealStats" resultType="map">
+		SELECT
+			TO_CHAR(m.meal_date, 'YYYY-MM-DD') AS mealDate,
+			SUM(n.energy * m.quantity / 100) AS energy,
+		    SUM(n.carb * m.quantity / 100) AS carbs,
+		    SUM(n.protein * m.quantity / 100) AS protein,
+		    SUM(n.fat * m.quantity / 100) AS fat,
+		    SUM(n.sodium * m.quantity / 100) AS sodium
+		FROM MEAL_PLAN m
+		JOIN FOOD f on m.ref_no = f.food_no
+		JOIN NUTRIENT n ON f.nutrient_no = n.nutrient_no	
+		WHERE m.user_no = #{userNo}
+			AND TRUNC(m.meal_date) BETWEEN TO_DATE(#{from}, 'YYYY-MM-DD')
+				AND TO_DATE(#{to}, 'YYYY-MM-DD')
+		GROUP BY TO_CHAR(m.meal_date, 'YYYY-MM-DD')
+		ORDER BY mealDate
+	</select>
+	
+	<delete id="deleteMeals">
+		DELETE FROM MEAL_PLAN WHERE meal_no = #{mealNo}
+	</delete>
+	
+	<select id="getRecents" resultType="com.kh.ypjp.mealplan.model.vo.Food$FoodExt">
+	    SELECT *
+		FROM (
+		    SELECT 
+		        m.meal_no,
+		        m.meal_id,
+		        m.meal_type,
+		        m.ref_no,
+		        f.food_no,
+		        f.food_name,
+		        n.energy,
+		        n.carb,
+		        n.protein,
+		        n.fat,
+		        n.sodium,
+		        m.quantity,
+		        ROW_NUMBER() OVER (PARTITION BY m.meal_type, m.ref_no ORDER BY m.meal_date DESC, m.meal_no DESC) AS rn
+		    FROM MEAL_PLAN m
+		    JOIN FOOD f ON m.ref_no = f.food_no
+		    JOIN NUTRIENT n ON f.nutrient_no = n.nutrient_no
+		    WHERE m.user_no = #{userNo}
+		    ORDER BY m.meal_date DESC, m.meal_no DESC
+		)
+		WHERE rn = 1
+			AND ROWNUM <![CDATA[<=]]> 10
+	</select>
+	
+	<insert id="insertNutrient">
+		<selectKey keyProperty="food.nutrientNo" resultType="long" order="BEFORE">
+			SELECT SEQ_NUTRIENT_NO.NEXTVAL FROM DUAL
+		</selectKey>
+		INSERT INTO NUTRIENT VALUES
+		(#{food.nutrientNo}, #{food.energy}, #{food.carb}, #{food.protein}, #{food.fat}, #{food.sodium})
+	</insert>
+	
+	<insert id="insertFood">
+		<selectKey keyProperty="food.foodNo" resultType="long" order="BEFORE">
+			SELECT SEQ_FOOD_NO.NEXTVAL FROM DUAL
+		</selectKey>
+		INSERT INTO FOOD (food_no, food_name, nutrient_no, user_no) VALUES
+		(#{food.foodNo}, #{food.foodName}, #{food.nutrientNo}, #{userNo})
+	</insert>
+	
+	<select id="getMyRecipes" resultType="com.kh.ypjp.mealplan.model.vo.Food$Recipe">
+		SELECT
+			r.rcp_no,
+			r.rcp_name,
+			n.energy,
+			r.nutrient_no
+		FROM BOOKMARK b
+		JOIN RECIPE r ON b.ref_no = r.rcp_no
+		JOIN NUTRIENT n ON r.nutrient_no = n.nutrient_no
+		WHERE b.user_no = #{userNo}
+			AND b.rcp_source = 'COMM'
+	</select>
 </mapper>
