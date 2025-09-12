@@ -4,7 +4,6 @@ import java.util.List;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -62,15 +61,12 @@ public class SecurityConfig {
             .sessionManagement(management -> management.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             // 요청별 권한 설정
             .authorizeHttpRequests(auth -> auth
-            	    .requestMatchers("/auth/**").permitAll()
-            	    .requestMatchers("/oauth2/**", "/login**", "/error").permitAll()
-            	    .requestMatchers(HttpMethod.GET, "/community/**").permitAll() // GET 요청만 허용
-            	    .requestMatchers(HttpMethod.POST, "/community/**").authenticated() // POST 요청은 인증 필요
-            	    .requestMatchers(HttpMethod.PUT, "/community/**").authenticated() // PUT 요청은 인증 필요
-            	    .requestMatchers(HttpMethod.DELETE, "/community/**").authenticated() // DELETE 요청은 인증 필요
-            	    .requestMatchers("/images/**").permitAll()
-            	    .anyRequest().authenticated()
-            	)
+                .requestMatchers("/auth/**").permitAll()
+                .requestMatchers("/oauth2/**", "/login**", "/error").permitAll()
+                .requestMatchers("/community/**").permitAll() 
+                .requestMatchers("/images/**").permitAll()
+                .anyRequest().authenticated()
+            )
             // OAuth2 로그인 핸들러
             .oauth2Login(oauth2 -> oauth2
                 .successHandler(OAuth2SuccessHandler)

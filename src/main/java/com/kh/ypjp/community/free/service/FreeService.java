@@ -29,7 +29,13 @@ public class FreeService {
     }
 
     public FreeDto selectBoardByNo(int boardNo) {
-        return freeDao.selectBoardByNo(boardNo);
+        FreeDto board = freeDao.selectBoardByNo(boardNo);
+        if (board != null) {
+            // 작성자의 sik_bti 가져오기
+            String sikBti = freeDao.selectSikBtiByUserNo(board.getUserNo());
+            board.setSik_bti(sikBti);
+        }
+        return board;
     }
     
     @Transactional
@@ -126,8 +132,13 @@ public class FreeService {
     }
 
     public List<ReplyDto> selectAllRepliesByBoardNo(int boardNo) {
-        return freeDao.selectAllRepliesByBoardNo(boardNo);
-    }
+        List<ReplyDto> replies = freeDao.selectAllRepliesByBoardNo(boardNo);
+        for (ReplyDto reply : replies) {
+            // 댓글 작성자의 sik_bti 가져오기
+            String sikBti = freeDao.selectSikBtiByUserNo(reply.getUserNo());
+            reply.setSik_bti(sikBti);
+        }
+        return replies;    }
 
     @Transactional
     public int insertReply(ReplyDto replyDto) {

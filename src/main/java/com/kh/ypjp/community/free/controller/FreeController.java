@@ -41,19 +41,18 @@ public class FreeController {
         this.freeService = freeService;
     }
     
-    // 유저 번호를 안전하게 가져오는 유틸리티 메서드
-    private int getUserNoFromAuth(Authentication auth) {
-        if (auth != null && auth.getPrincipal() instanceof UserDetails) {
-            UserDetails userDetails = (UserDetails) auth.getPrincipal();
-            try {
-                // UserDetails의 getUsername() 메서드가 userNo를 String으로 반환한다고 가정
-                return Integer.parseInt(userDetails.getUsername());
-            } catch (NumberFormatException e) {
-                return -1;
-            }
-        }
-        return -1;
-    }
+    // 이 유틸리티 메서드는 더 이상 사용하지 않습니다.
+    // private int getUserNoFromAuth(Authentication auth) {
+    //     if (auth != null && auth.getPrincipal() instanceof UserDetails) {
+    //         UserDetails userDetails = (UserDetails) auth.getPrincipal();
+    //         try {
+    //             return Integer.parseInt(userDetails.getUsername());
+    //         } catch (NumberFormatException e) {
+    //             return -1;
+    //         }
+    //     }
+    //     return -1;
+    // }
 
     @GetMapping
     public ResponseEntity<List<FreeDto>> selectAllBoards() {
@@ -69,7 +68,10 @@ public class FreeController {
             HttpServletRequest req,
             HttpServletResponse res) {
 
-        int userNo = getUserNoFromAuth(auth);
+        int userNo = -1; // 임시로 -1로 설정, 쿠키 처리를 위해 Authentication이 필요하다면 다른 방법을 사용해야 합니다.
+        if (auth != null && auth.getPrincipal() instanceof UserDetails) {
+            userNo = Integer.parseInt(((UserDetails) auth.getPrincipal()).getUsername());
+        }
         
         FreeDto board = freeService.selectBoardByNo(boardNo);
         if (board == null) {
@@ -118,13 +120,13 @@ public class FreeController {
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<String> insertBoard(
-            @RequestPart("title") String title,
-            @RequestPart("content") String content,
-            @RequestPart("subheading") String subheading,
-            @RequestPart(value = "file", required = false) MultipartFile file,
-            Authentication auth) {
-        int userNo = getUserNoFromAuth(auth);
-        if (userNo == -1) {
+    	    @RequestParam("title") String title,
+    	    @RequestParam("content") String content,
+    	    @RequestParam("userNo") int userNo,
+    	    @RequestParam(value = "subheading", required = false) String subheading,
+    	    @RequestPart(value = "file", required = false) MultipartFile file) {
+        
+        if (userNo == -1) { // -1은 로그인하지 않은 사용자로 간주
             return new ResponseEntity<>("로그인 후 이용해주세요.", HttpStatus.UNAUTHORIZED);
         }
         try {
@@ -132,7 +134,7 @@ public class FreeController {
             freeDto.setTitle(title);
             freeDto.setContent(content);
             freeDto.setUserNo(userNo);
-            freeDto.setSubheading(subheading);
+            freeDto.setSubheading(subheading != null ? subheading : ""); 
             freeService.insertBoard(freeDto, file);
             return new ResponseEntity<>("게시글이 성공적으로 등록되었습니다.", HttpStatus.CREATED);
         } catch (Exception e) {
@@ -143,13 +145,13 @@ public class FreeController {
 
     @PutMapping(value = "/{boardNo}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<String> updateBoard(
-            @PathVariable int boardNo,
-            @RequestPart("title") String title,
-            @RequestPart("content") String content,
-            @RequestPart(value = "subheading", required = false) String subheading,
-            @RequestPart(value = "file", required = false) MultipartFile file,
-            Authentication auth) {
-        int userNo = getUserNoFromAuth(auth);
+        @PathVariable int boardNo,
+        @RequestParam("title") String title,
+        @RequestParam("content") String content,
+        @RequestParam("userNo") int userNo,
+        @RequestParam(value = "subheading", required = false) String subheading,
+        @RequestPart(value = "file", required = false) MultipartFile file) {
+        
         if (userNo == -1) {
             return new ResponseEntity<>("로그인 후 이용해주세요.", HttpStatus.UNAUTHORIZED);
         }
@@ -158,7 +160,7 @@ public class FreeController {
             freeDto.setBoardNo(boardNo);
             freeDto.setTitle(title);
             freeDto.setContent(content);
-            freeDto.setSubheading(subheading);
+            freeDto.setSubheading(subheading != null ? subheading : "");
             freeDto.setUserNo(userNo);
             
             int result = freeService.updateBoard(freeDto, file);
@@ -176,9 +178,8 @@ public class FreeController {
     @DeleteMapping("/{boardNo}")
     public ResponseEntity<String> softDeleteBoard(
             @PathVariable int boardNo,
-            Authentication auth) {
+            @RequestParam("userNo") int userNo) { // <-- userNo를 직접 받습니다.
         
-        int userNo = getUserNoFromAuth(auth);
         if (userNo == -1) {
             return new ResponseEntity<>("로그인 후 이용해주세요.", HttpStatus.UNAUTHORIZED);
         }
@@ -195,8 +196,10 @@ public class FreeController {
     @PostMapping("/{boardNo}/likes")
     public ResponseEntity<String> toggleLike(
             @PathVariable int boardNo, 
-            Authentication auth) {
-        int userNo = getUserNoFromAuth(auth);
+            @RequestBody Map<String, Integer> payload) { // <-- userNo를 직접 받습니다.
+        
+        int userNo = payload.get("userNo");
+        
         if (userNo == -1) {
             return new ResponseEntity<>("로그인 후 이용해주세요.", HttpStatus.UNAUTHORIZED);
         }
@@ -211,8 +214,8 @@ public class FreeController {
     @GetMapping("/{boardNo}/likes/status")
     public ResponseEntity<Map<String, Boolean>> getLikeStatus(
             @PathVariable int boardNo, 
-            Authentication auth) {
-        int userNo = getUserNoFromAuth(auth);
+            @RequestParam("userNo") int userNo) { // <-- userNo를 직접 받습니다.
+        
         if (userNo == -1) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
@@ -241,15 +244,12 @@ public class FreeController {
 
     @PostMapping("/replies")
     public ResponseEntity<String> addReply(
-            @RequestBody ReplyDto replyDto,
-            Authentication auth) {
-        int userNo = getUserNoFromAuth(auth);
-        if (userNo == -1) {
+            @RequestBody ReplyDto replyDto) { // <-- replyDto에 userNo가 포함되어 있다고 가정합니다.
+        
+        if (replyDto.getUserNo() <= 0) {
             return new ResponseEntity<>("로그인 후 이용해주세요.", HttpStatus.UNAUTHORIZED);
         }
         try {
-            replyDto.setUserNo(userNo);
-            
             if (replyDto.getCategory() == null || replyDto.getCategory().isEmpty()) {
                 replyDto.setCategory("BOARD");
             }
@@ -264,8 +264,8 @@ public class FreeController {
     @DeleteMapping("/replies/{replyNo}")
     public ResponseEntity<String> deleteReply(
             @PathVariable Long replyNo,
-            Authentication auth) {
-        int userNo = getUserNoFromAuth(auth);
+            @RequestParam("userNo") int userNo) { // <-- userNo를 직접 받습니다.
+        
         if (userNo == -1) {
             return new ResponseEntity<>("로그인 후 이용해주세요.", HttpStatus.UNAUTHORIZED);
         }
@@ -286,15 +286,13 @@ public class FreeController {
     @PutMapping("/replies/{replyNo}")
     public ResponseEntity<String> updateReply(
             @PathVariable int replyNo, 
-            @RequestBody ReplyDto replyDto,
-            Authentication auth) {
-        int userNo = getUserNoFromAuth(auth);
-        if (userNo == -1) {
+            @RequestBody ReplyDto replyDto) { // <-- replyDto에 userNo가 포함되어 있다고 가정합니다.
+        
+        if (replyDto.getUserNo() <= 0) {
             return new ResponseEntity<>("로그인 후 이용해주세요.", HttpStatus.UNAUTHORIZED);
         }
         try {
             replyDto.setReplyNo(replyNo);
-            replyDto.setUserNo(userNo);
             
             int result = freeService.updateReply(replyDto);
             if (result > 0) {
