@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -21,6 +22,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.kh.ypjp.security.model.dto.AuthDto.AuthResult;
 import com.kh.ypjp.security.model.dto.AuthDto.LoginRequest;
 import com.kh.ypjp.security.model.dto.AuthDto.User;
+import com.kh.ypjp.security.model.dto.UserNotiDto;
+import com.kh.ypjp.security.model.dto.UserNotiDto;
 import com.kh.ypjp.security.model.provider.JWTProvider;
 import com.kh.ypjp.security.model.service.AuthService;
 import com.kh.ypjp.security.model.service.EmailService;
@@ -39,6 +42,19 @@ public class AuthController {
 	private final JWTProvider jwt;
 	private final EmailService emailService;
 	public static final String REFRESH_COOKIE = "REFRESH_TOKEN";
+
+	@GetMapping("/noti/{userNo}")
+	public ResponseEntity<UserNotiDto> getUserNotificationSettings(@PathVariable String userNo) {
+		if (userNo == null) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+		}
+		UserNotiDto settings = authService.getNotiByUserNo(userNo);
+		if (settings != null) {
+			return ResponseEntity.ok(settings);
+		} else {
+			return ResponseEntity.notFound().build();
+		}
+	}
 
 	@PostMapping("/login")
 	public ResponseEntity<AuthResult> login(@RequestBody LoginRequest req) {
@@ -78,14 +94,14 @@ public class AuthController {
 		return ResponseEntity.status(HttpStatus.CREATED).header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
 				.body(result);
 	}
-	
+
 	@GetMapping("/check-username")
 	public ResponseEntity<Map<String, Boolean>> checkUsername(@RequestParam String username) {
-	    Optional<User> userOpt = authService.findUserByUsername(username);
-	    boolean available = userOpt.isEmpty();
-	    Map<String, Boolean> response = new HashMap<>();
-	    response.put("available", available);
-	    return ResponseEntity.ok(response);
+		Optional<User> userOpt = authService.findUserByUsername(username);
+		boolean available = userOpt.isEmpty();
+		Map<String, Boolean> response = new HashMap<>();
+		response.put("available", available);
+		return ResponseEntity.ok(response);
 	}
 
 	@PostMapping("/refresh")
@@ -142,20 +158,20 @@ public class AuthController {
 
 	@PostMapping("/send-code")
 	public ResponseEntity<Map<String, Object>> sendEmailCode(@RequestBody Map<String, String> req) {
-	    String email = req.get("email");
-	    Map<String, Object> response = new HashMap<>();
-	    
-	    if (email == null || email.isEmpty()) {
-	        response.put("success", false);
-	        response.put("message", "이메일을 입력하세요.");
-	        return ResponseEntity.badRequest().body(response);
-	    }
-	    
-	    emailService.createAndSendCode(email);
-	    
-	    response.put("success", true);
-	    response.put("message", "인증번호 전송 완료");
-	    return ResponseEntity.ok(response);
+		String email = req.get("email");
+		Map<String, Object> response = new HashMap<>();
+
+		if (email == null || email.isEmpty()) {
+			response.put("success", false);
+			response.put("message", "이메일을 입력하세요.");
+			return ResponseEntity.badRequest().body(response);
+		}
+
+		emailService.createAndSendCode(email);
+
+		response.put("success", true);
+		response.put("message", "인증번호 전송 완료");
+		return ResponseEntity.ok(response);
 	}
 
 	@PostMapping("/verify-code")
@@ -167,21 +183,21 @@ public class AuthController {
 		res.put("verified", verified);
 		return ResponseEntity.ok(res);
 	}
-	
+
 	@PostMapping("/reset-password")
 	public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> req) {
-	    String email = req.get("email");
-	    String newPassword = req.get("password");
+		String email = req.get("email");
+		String newPassword = req.get("password");
 
-	    if (email == null || newPassword == null) {
-	        return ResponseEntity.badRequest().body("이메일 또는 비밀번호가 누락되었습니다.");
-	    }
+		if (email == null || newPassword == null) {
+			return ResponseEntity.badRequest().body("이메일 또는 비밀번호가 누락되었습니다.");
+		}
 
-	    boolean result = authService.resetPassword(email, newPassword);
-	    if (result) {
-	        return ResponseEntity.ok("비밀번호 변경 완료");
-	    } else {
-	        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("해당 이메일의 사용자를 찾을 수 없습니다.");
-	    }
+		boolean result = authService.resetPassword(email, newPassword);
+		if (result) {
+			return ResponseEntity.ok("비밀번호 변경 완료");
+		} else {
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("해당 이메일의 사용자를 찾을 수 없습니다.");
+		}
 	}
 }

@@ -65,11 +65,9 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/auth/**").permitAll()
                 .requestMatchers("/login/**", "/oauth2/**", "/error").permitAll()
-                .requestMatchers(HttpMethod.GET, 
-				        "/api/community/recipe/**", 
-				        "/api/options/**", 
-				        "/api/ingredients/search"
-				    ).permitAll()
+                .requestMatchers("/chat/**").permitAll()
+                .requestMatchers("/ws/**").permitAll()
+                .requestMatchers("/images/**").permitAll()
                 .anyRequest().authenticated()
             )
             // OAuth2 로그인 핸들러
