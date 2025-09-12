@@ -10,6 +10,7 @@ import com.kh.ypjp.security.model.dto.AuthDto.Authority;
 import com.kh.ypjp.security.model.dto.AuthDto.User;
 import com.kh.ypjp.security.model.dto.AuthDto.UserCredential;
 import com.kh.ypjp.security.model.dto.AuthDto.UserIdentities;
+import com.kh.ypjp.security.model.dto.UserNotiDto;
 
 import lombok.RequiredArgsConstructor;
 
@@ -18,6 +19,10 @@ import lombok.RequiredArgsConstructor;
 public class AuthDao {
 
 	private final SqlSessionTemplate session;
+	
+	public UserNotiDto getNotiByUserNo(String userNo) {
+		return session.selectOne("auth.getNotiByUserNo", userNo);
+	}
 
 	// Optional<User>를 반환하여 Service 계층에서 null 여부를 명시적으로 처리하도록 유도
 	public Optional<User> findUserByEmail(String email) {
@@ -31,35 +36,35 @@ public class AuthDao {
 		List<User> users = session.selectList("auth.findUserByUserNo", userNo);
 		return users.isEmpty() ? Optional.empty() : Optional.of(users.get(0));
 	}
-	
+
 	// 이하 코드는 기존과 동일하여 생략...
 	public void insertUserIdentities(UserIdentities userIdentities) {
 		session.insert("auth.insertUserIdentities", userIdentities);
 	}
-	
-    public void insertUser(User user) {
-        session.insert("auth.insertUser",user);
-    }
-    
-    public void insertCred(UserCredential cred) {
-        session.insert("auth.insertCred",cred);
-    }
-    
-    public void insertUserRole(Authority role) {
-        session.insert("auth.insertUserRole", role);
-    }
+
+	public void insertUser(User user) {
+		session.insert("auth.insertUser", user);
+	}
+
+	public void insertCred(UserCredential cred) {
+		session.insert("auth.insertCred", cred);
+	}
+
+	public void insertUserRole(Authority role) {
+		session.insert("auth.insertUserRole", role);
+	}
 
 	public void updatePassword(UserCredential credential) {
-	    session.update("auth.updatePassword", credential);
+		session.update("auth.updatePassword", credential);
 	}
 
 	public void updateUserIdentities(UserIdentities userIdentities) {
 		session.update("auth.updateUserIdentities", userIdentities);
 	}
-	
+
 	public Optional<User> findUserByUsername(String username) {
-	    List<User> users = session.selectList("auth.findUserByUsername", username);
-	    return users.isEmpty() ? Optional.empty() : Optional.of(users.get(0));
+		List<User> users = session.selectList("auth.findUserByUsername", username);
+		return users.isEmpty() ? Optional.empty() : Optional.of(users.get(0));
 	}
 
 	public String getKakaoAccessToken(Long userNo) {
