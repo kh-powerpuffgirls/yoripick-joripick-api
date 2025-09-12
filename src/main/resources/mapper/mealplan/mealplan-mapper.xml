@@ -127,34 +127,63 @@
 	</delete>
 	
 	<select id="getRecents" resultType="com.kh.ypjp.mealplan.model.vo.Food$FoodExt">
-	    SELECT * FROM (
-	        SELECT
-	            m.meal_no,
-	            m.meal_id,
-	            m.meal_type,
-	            m.ref_no,
-	            CASE WHEN m.meal_type = 'FOOD' THEN f.food_no ELSE r.rcp_no END AS foodNo,
-	            CASE WHEN m.meal_type = 'FOOD' THEN f.food_name ELSE r.rcp_name END AS foodName,
-	            n.energy,
-	            n.carb,
-	            n.protein,
-	            n.fat,
-	            n.sodium,
-	            m.quantity,
-	            ROW_NUMBER() OVER (
-	                PARTITION BY m.meal_type, m.ref_no
-	                ORDER BY m.meal_date DESC, m.meal_no DESC
-	            ) AS rn
-	        FROM MEAL_PLAN m
-	        LEFT JOIN FOOD f ON m.meal_type = 'FOOD' AND m.ref_no = f.food_no
-	        LEFT JOIN RECIPE r  ON m.meal_type = 'RCP'  AND m.ref_no = r.rcp_no
-	        LEFT JOIN NUTRIENT n 
-	            ON ( (m.meal_type = 'FOOD' AND f.nutrient_no = n.nutrient_no)
-	              OR (m.meal_type = 'RCP'  AND r.nutrient_no = n.nutrient_no) )
-	        WHERE m.user_no = #{userNo}
-	    ) t
-	    WHERE t.rn = 1
-	      AND ROWNUM <![CDATA[<=]]> 10
+	    SELECT * FROM (SELECT t.* FROM (SELECT * FROM (
+            SELECT
+                m.meal_no,
+                m.meal_id,
+                m.meal_type,
+                m.ref_no,
+                f.food_no AS foodNo,
+                f.food_name AS foodName,
+                n.energy,
+                n.carb,
+                n.protein,
+                n.fat,
+                n.sodium,
+                m.quantity,
+                m.meal_date,
+                ROW_NUMBER() OVER (
+                    PARTITION BY m.meal_type, m.ref_no
+                    ORDER BY m.meal_date DESC, m.meal_no DESC
+                ) AS rn
+            FROM MEAL_PLAN m
+            JOIN FOOD f ON m.ref_no = f.food_no
+            JOIN NUTRIENT n ON f.nutrient_no = n.nutrient_no
+            WHERE m.user_no = 4 AND m.meal_type = 'FOOD'
+	    )
+        WHERE rn = 1
+		
+        UNION ALL
+		
+        SELECT * FROM (
+            SELECT
+                m.meal_no,
+                m.meal_id,
+                m.meal_type,
+                m.ref_no,
+                r.rcp_no AS foodNo,
+                r.rcp_name AS foodName,
+                n.energy,
+                n.carb,
+                n.protein,
+                n.fat,
+                n.sodium,
+                m.quantity,
+                m.meal_date,
+                ROW_NUMBER() OVER (
+                    PARTITION BY m.meal_type, m.ref_no
+                    ORDER BY m.meal_date DESC, m.meal_no DESC
+                ) AS rn
+            FROM MEAL_PLAN m
+            JOIN RECIPE r ON m.ref_no = r.rcp_no
+            JOIN NUTRIENT n ON r.nutrient_no = n.nutrient_no
+            WHERE m.user_no = 4 AND m.meal_type = 'RCP'
+        )
+        WHERE rn = 1
+    	) t
+	    ORDER BY t.meal_date DESC
+		)
+		WHERE ROWNUM <![CDATA[<=]]> 10
 	</select>
 	
 	<insert id="insertNutrient">

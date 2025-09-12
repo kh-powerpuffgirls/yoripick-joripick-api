@@ -23,6 +23,7 @@ public class Food {
 	@AllArgsConstructor
 	public static class FoodExt extends Food {
 		private long mealNo;
+		private String mealType;
 		private String mealId;
 		private int quantity;
 	}
