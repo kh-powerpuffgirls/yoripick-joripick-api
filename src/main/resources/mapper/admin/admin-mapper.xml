@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="admin">
+	<select id="getAllChallenges" resultType="com.kh.ypjp.admin.model.dto.AdminDto$ChallengeForm">
+		SELECT
+			form_no,
+			user_no,
+			ch_title,
+			description,
+			reference,
+			resolved,
+			created_at
+	    FROM CHALLENGE_FORM
+	    WHERE resolved = 'N'
+	    ORDER BY form_no DESC
+	</select>
+	
+	<update id="resolveChallenge">
+		UPDATE CHALLENGE_FORM
+	    SET resolved = 'Y'
+	    WHERE form_no = #{formNo}
+	</update>
+	
+	<select id="getBestRecipes" resultType="com.kh.ypjp.admin.model.dto.AdminDto$Recipe">
+		SELECT
+			DISTINCT (r.rcp_no),
+			r.rcp_name,
+			r.user_no,
+			r.rcp_info
+		FROM RECIPE r
+		JOIN LIKES l ON r.rcp_no = l.ref_no
+		WHERE r.approval = 'N'
+			AND r.rcp_no IN (
+				SELECT ref_no FROM LIKES
+				WHERE ref_type = 'RECIPE'
+					AND (
+						SELECT count(*) FROM LIKES
+						HAVING (like_status = 'LIKE')
+						GROUP BY ref_type, ref_no, like_status
+					) > 5
+			)
+	</select>
+	
+	<select id="getAllReports" resultType="com.kh.ypjp.admin.model.dto.AdminDto$Report">
+		SELECT
+			report_no,
+			user_no,
+			category,
+			detail,
+			ref_no,
+			content,
+			reported_at
+		FROM REPORT
+		JOIN REPORT_TYPE USING (report_type)
+		WHERE resolved = 'N'
+		ORDER BY report_no
+	</select>
+</mapper>
