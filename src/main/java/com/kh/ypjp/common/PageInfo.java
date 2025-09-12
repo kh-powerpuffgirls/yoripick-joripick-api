@@ -6,7 +6,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Data
 public class PageInfo {
-	private int listCount;
+	private Long listCount;
 	private int currentPage;
 	private int pageLimit;
 	private int boardLimit;

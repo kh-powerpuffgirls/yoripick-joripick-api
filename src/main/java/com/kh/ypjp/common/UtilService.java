@@ -19,7 +19,7 @@ public class UtilService {
 	
     private final SqlSession session;
     
-    public PageInfo getPageInfo(int listCount, int currentPage, int pageLimit, int itemLimit) {
+    public PageInfo getPageInfo(Long listCount, int currentPage, int pageLimit, int itemLimit) {
     	PageInfo pi = new PageInfo();
 		pi.setListCount(listCount);
 		pi.setCurrentPage(currentPage);
