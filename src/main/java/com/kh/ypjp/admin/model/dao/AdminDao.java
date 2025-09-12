@@ -1,6 +1,7 @@
 package com.kh.ypjp.admin.model.dao;
 
 import java.util.List;
+import java.util.Map;
 
 import org.apache.ibatis.session.SqlSession;
 import org.springframework.stereotype.Repository;
@@ -25,8 +26,12 @@ public class AdminDao {
 		return session.update("admin.resolveChallenge", formNo);
 	}
 
-	public List<Recipe> getBestRecipes() {
-		return session.selectList("admin.getBestRecipes");
+	public Long countBestRecipes() {
+		return session.selectOne("admin.countBestRecipes");
+	}
+	
+	public List<Recipe> getBestRecipes(Map<String, Object> param) {
+		return session.selectList("admin.getBestRecipes", param);
 	}
 
 	public List<Report> getAllReports() {

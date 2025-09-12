@@ -21,24 +21,46 @@
 	    WHERE form_no = #{formNo}
 	</update>
 	
-	<select id="getBestRecipes" resultType="com.kh.ypjp.admin.model.dto.AdminDto$Recipe">
+	<select id="countBestRecipes" resultType="long">
 		SELECT
-			DISTINCT (r.rcp_no),
-			r.rcp_name,
-			r.user_no,
-			r.rcp_info
+		    COUNT(r.rcp_no)
 		FROM RECIPE r
-		JOIN LIKES l ON r.rcp_no = l.ref_no
-		WHERE r.approval = 'N'
-			AND r.rcp_no IN (
-				SELECT ref_no FROM LIKES
-				WHERE ref_type = 'RECIPE'
-					AND (
-						SELECT count(*) FROM LIKES
-						HAVING (like_status = 'LIKE')
-						GROUP BY ref_type, ref_no, like_status
-					) > 5
-			)
+		WHERE
+		    r.approval = 'N'
+		    AND r.rcp_no IN (
+		        SELECT ref_no
+		        FROM LIKES
+		        WHERE ref_type = 'RECIPE'
+		          AND like_status = 'LIKE'
+		        GROUP BY ref_no
+		        HAVING COUNT(*) > 5
+		    )
+	</select>
+	
+	<select id="getBestRecipes" resultType="com.kh.ypjp.admin.model.dto.AdminDto$Recipe">
+		SELECT * FROM (
+	        SELECT ROWNUM AS rnum, rcp.* FROM (
+	            SELECT
+					DISTINCT (r.rcp_no),
+					r.rcp_name,
+					r.user_no,
+					r.rcp_info
+				FROM RECIPE r
+				JOIN LIKES l ON r.rcp_no = l.ref_no
+				WHERE r.approval = 'N'
+					AND r.rcp_no IN (
+						SELECT ref_no FROM LIKES
+						WHERE ref_type = 'RECIPE'
+							AND (
+								SELECT count(*) FROM LIKES
+								HAVING (like_status = 'LIKE')
+								GROUP BY ref_type, ref_no, like_status
+							) > 5
+						)
+	        ) rcp
+	        WHERE ROWNUM <![CDATA[<=]]> #{offset} + #{limit}
+	    )
+	    WHERE rnum > #{offset}
 	</select>
 	
 	<select id="getAllReports" resultType="com.kh.ypjp.admin.model.dto.AdminDto$Report">

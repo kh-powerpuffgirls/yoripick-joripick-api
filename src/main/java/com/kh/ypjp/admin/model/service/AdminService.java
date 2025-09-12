@@ -1,6 +1,7 @@
 package com.kh.ypjp.admin.model.service;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.stereotype.Service;
 
@@ -25,8 +26,12 @@ public class AdminService {
 		return dao.resolveChallenge(formNo);
 	}
 
-	public List<Recipe> getBestRecipes() {
-		return dao.getBestRecipes();
+	public Long countBestRecipes() {
+		return dao.countBestRecipes();
+	}
+	
+	public List<Recipe> getBestRecipes(Map<String, Object> param) {
+		return dao.getBestRecipes(param);
 	}
 
 	public List<Report> getAllReports() {

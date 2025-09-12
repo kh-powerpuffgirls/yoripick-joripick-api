@@ -1,6 +1,8 @@
 package com.kh.ypjp.admin.controller;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -8,12 +10,15 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.kh.ypjp.admin.model.dto.AdminDto.ChallengeForm;
 import com.kh.ypjp.admin.model.dto.AdminDto.Recipe;
 import com.kh.ypjp.admin.model.dto.AdminDto.Report;
 import com.kh.ypjp.admin.model.service.AdminService;
+import com.kh.ypjp.common.PageInfo;
+import com.kh.ypjp.common.UtilService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -24,6 +29,7 @@ import lombok.RequiredArgsConstructor;
 public class AdminController {
 	
 	private final AdminService service;
+	private final UtilService utilService;
 	
 	@GetMapping("/challenges")
 	public ResponseEntity<List<ChallengeForm>> getAllChallenges() {
@@ -37,8 +43,25 @@ public class AdminController {
     }
 	
 	@GetMapping("/recipes")
-	public ResponseEntity<List<Recipe>> getBestRecipes() {
-        return ResponseEntity.ok(service.getBestRecipes());
+	public ResponseEntity<Map<String, Object>> getBestRecipes(
+			@RequestParam int page, @RequestParam int size) {
+		
+	    // 현재 페이지, 페이지 당 보여줄 리스트의 개수 기준으로 select
+	    Map<String, Object> param = new HashMap<>();
+	    param.put("offset", (page - 1) * size);
+	    param.put("limit", size);
+	    
+	    List<Recipe> list = service.getBestRecipes(param);
+	    
+	    // 프론트에서 페이징 바 만들기 위한 values 계산, 전달
+	    Long listCount = service.countBestRecipes();
+	    PageInfo pageInfo = utilService.getPageInfo(listCount, page, 10, size);
+	    
+	    Map<String, Object> response = new HashMap<>();
+	    response.put("list", list);
+	    response.put("pageInfo", pageInfo);
+	    
+        return ResponseEntity.ok(response);
     }
 	
 	@GetMapping("/reports")
