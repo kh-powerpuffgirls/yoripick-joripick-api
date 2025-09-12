@@ -68,6 +68,11 @@ public class SecurityConfig {
                 .requestMatchers("/chat/**").permitAll()
                 .requestMatchers("/ws/**").permitAll()
                 .requestMatchers("/images/**").permitAll()
+                .requestMatchers(HttpMethod.GET, 
+				        "/api/community/recipe/**", 
+				        "/api/options/**", 
+				        "/api/ingredients/search"
+				    ).permitAll()
                 .anyRequest().authenticated()
             )
             // OAuth2 로그인 핸들러
