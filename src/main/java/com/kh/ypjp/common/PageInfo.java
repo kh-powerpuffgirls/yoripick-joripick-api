@@ -9,7 +9,7 @@ public class PageInfo {
 	private Long listCount;
 	private int currentPage;
 	private int pageLimit;
-	private int boardLimit;
+	private int itemLimit;
 	private int maxPage;
 	private int startPage;
 	private int endPage;
