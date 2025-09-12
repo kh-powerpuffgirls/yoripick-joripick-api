@@ -43,7 +43,7 @@ public class AdminController {
     }
 	
 	@GetMapping("/recipes")
-	public ResponseEntity<Map<String, Object>> getBestRecipes(
+	public ResponseEntity<Map<String, Object>> getRecipes(
 			@RequestParam int page, @RequestParam int size) {
 		
 	    // 현재 페이지, 페이지 당 보여줄 리스트의 개수 기준으로 select
@@ -51,10 +51,10 @@ public class AdminController {
 	    param.put("offset", (page - 1) * size);
 	    param.put("limit", size);
 	    
-	    List<Recipe> list = service.getBestRecipes(param);
+	    List<Recipe> list = service.getRecipes(param);
 	    
 	    // 프론트에서 페이징 바 만들기 위한 values 계산, 전달
-	    Long listCount = service.countBestRecipes();
+	    Long listCount = service.countRecipes();
 	    PageInfo pageInfo = utilService.getPageInfo(listCount, page, 10, size);
 	    
 	    Map<String, Object> response = new HashMap<>();
@@ -65,8 +65,8 @@ public class AdminController {
     }
 	
 	@GetMapping("/reports")
-	public ResponseEntity<List<Report>> getAllReports() {
-        return ResponseEntity.ok(service.getAllReports());
+	public ResponseEntity<List<Report>> getReports() {
+        return ResponseEntity.ok(service.getReports());
     }
 	
 }

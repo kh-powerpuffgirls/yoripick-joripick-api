@@ -26,8 +26,13 @@ public class AdminDto {
 	public static class Recipe {
 		private Long rcpNo;
 		private Long userNo;
-		private String rcpName;
-		private String rcpInfo;
+		private String title;
+		private String info;
+		private String type;
+		private Long reportNo;
+		private String detail;
+		private String content;
+		private String reportedAt;
 	}
 	
 	@Data

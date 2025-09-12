@@ -21,49 +21,74 @@
 	    WHERE form_no = #{formNo}
 	</update>
 	
-	<select id="countBestRecipes" resultType="long">
-		SELECT
-		    COUNT(r.rcp_no)
-		FROM RECIPE r
-		WHERE
-		    r.approval = 'N'
-		    AND r.rcp_no IN (
-		        SELECT ref_no
-		        FROM LIKES
-		        WHERE ref_type = 'RECIPE'
-		          AND like_status = 'LIKE'
-		        GROUP BY ref_no
-		        HAVING COUNT(*) > 5
-		    )
+	<select id="countRecipes" resultType="long">
+		SELECT (
+		    SELECT COUNT(*) FROM RECIPE 
+		    WHERE approval = 'N'
+		        AND rcp_no IN (
+		            SELECT ref_no
+				        FROM LIKES
+				        WHERE ref_type = 'RECIPE'
+				        	AND like_status = 'LIKE'
+				        GROUP BY ref_no
+				        HAVING COUNT(*) > 5
+				    )
+		        )+(
+		    SELECT COUNT(*) FROM REPORT
+		    JOIN REPORT_TYPE USING (report_type)
+		    WHERE resolved = 'N'
+		        AND category = 'RECIPE'
+		    ) FROM DUAL
 	</select>
 	
-	<select id="getBestRecipes" resultType="com.kh.ypjp.admin.model.dto.AdminDto$Recipe">
+	<select id="getRecipes" resultType="com.kh.ypjp.admin.model.dto.AdminDto$Recipe">
 		SELECT * FROM (
-	        SELECT ROWNUM AS rnum, rcp.* FROM (
-	            SELECT
-					DISTINCT (r.rcp_no),
-					r.rcp_name,
-					r.user_no,
-					r.rcp_info
-				FROM RECIPE r
-				JOIN LIKES l ON r.rcp_no = l.ref_no
-				WHERE r.approval = 'N'
-					AND r.rcp_no IN (
-						SELECT ref_no FROM LIKES
-						WHERE ref_type = 'RECIPE'
-							AND (
-								SELECT count(*) FROM LIKES
-								HAVING (like_status = 'LIKE')
-								GROUP BY ref_type, ref_no, like_status
-							) > 5
-						)
-	        ) rcp
-	        WHERE ROWNUM <![CDATA[<=]]> #{offset} + #{limit}
-	    )
-	    WHERE rnum > #{offset}
+		    SELECT ROWNUM AS rnum, rcp.* FROM (
+		        SELECT
+		            r.rcp_no        AS rcpNo,
+		            r.user_no       AS userNo,
+		            r.rcp_name      AS title,
+		            r.rcp_info      AS info,
+		            NULL            AS reportNo,
+		            NULL            AS detail,
+		            NULL            AS content,
+		            NULL            AS reportedAt,
+		            'RECIPE'        AS type
+		        FROM RECIPE r
+		        JOIN (
+		            SELECT ref_no
+		            FROM LIKES
+		            WHERE ref_type = 'RECIPE' AND like_status = 'LIKE'
+		            GROUP BY ref_no
+		            HAVING COUNT(*) > 5
+		        ) l ON r.rcp_no = l.ref_no
+		        WHERE r.approval = 'N'
+		
+		        UNION ALL
+		
+		        SELECT
+		            rep.ref_no      AS rcpNo,
+		            rep.user_no     AS userNo,
+		            NULL            AS title,
+		            NULL            AS info,
+		            rep.report_no   AS reportNo,
+		            rt.detail      AS detail,
+		            rep.content     AS content,
+		            rep.reported_at AS reportedAt,
+		            'REPORT'        AS type
+		        FROM REPORT rep
+		        JOIN REPORT_TYPE rt USING (report_type)
+		        WHERE rep.resolved = 'N'
+		          AND rt.category = 'RECIPE'
+		    ) rcp
+		    ORDER BY 
+		        CASE WHEN type = 'RECIPE' THEN 1 ELSE 2 END,
+		        rcpNo DESC
+		) 
+		WHERE rnum BETWEEN #{offset} + 1 AND #{offset} + #{limit}
 	</select>
 	
-	<select id="getAllReports" resultType="com.kh.ypjp.admin.model.dto.AdminDto$Report">
+	<select id="getReports" resultType="com.kh.ypjp.admin.model.dto.AdminDto$Report">
 		SELECT
 			report_no,
 			user_no,
@@ -75,6 +100,7 @@
 		FROM REPORT
 		JOIN REPORT_TYPE USING (report_type)
 		WHERE resolved = 'N'
+			AND category NOT IN ('RECIPE')
 		ORDER BY report_no
 	</select>
 </mapper>

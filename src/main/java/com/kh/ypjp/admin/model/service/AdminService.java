@@ -26,16 +26,16 @@ public class AdminService {
 		return dao.resolveChallenge(formNo);
 	}
 
-	public Long countBestRecipes() {
-		return dao.countBestRecipes();
+	public Long countRecipes() {
+		return dao.countRecipes();
 	}
 	
-	public List<Recipe> getBestRecipes(Map<String, Object> param) {
-		return dao.getBestRecipes(param);
+	public List<Recipe> getRecipes(Map<String, Object> param) {
+		return dao.getRecipes(param);
 	}
 
-	public List<Report> getAllReports() {
-		return dao.getAllReports();
+	public List<Report> getReports() {
+		return dao.getReports();
 	}
 
 }

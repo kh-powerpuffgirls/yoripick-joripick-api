@@ -26,16 +26,16 @@ public class AdminDao {
 		return session.update("admin.resolveChallenge", formNo);
 	}
 
-	public Long countBestRecipes() {
-		return session.selectOne("admin.countBestRecipes");
+	public Long countRecipes() {
+		return session.selectOne("admin.countRecipes");
 	}
 	
-	public List<Recipe> getBestRecipes(Map<String, Object> param) {
-		return session.selectList("admin.getBestRecipes", param);
+	public List<Recipe> getRecipes(Map<String, Object> param) {
+		return session.selectList("admin.getRecipes", param);
 	}
 
-	public List<Report> getAllReports() {
-		return session.selectList("admin.getAllReports");
+	public List<Report> getReports() {
+		return session.selectList("admin.getReports");
 	}
 
 }
