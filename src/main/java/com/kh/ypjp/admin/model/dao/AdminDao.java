@@ -18,8 +18,8 @@ public class AdminDao {
 	
 	private final SqlSession session;
 
-	public List<ChallengeForm> getAllChallenges() {
-		return session.selectList("admin.getAllChallenges");
+	public List<ChallengeForm> getAllChallenges(Map<String, Object> param) {
+		return session.selectList("admin.getAllChallenges", param);
 	}
 
 	public int resolveChallenge(Long formNo) {

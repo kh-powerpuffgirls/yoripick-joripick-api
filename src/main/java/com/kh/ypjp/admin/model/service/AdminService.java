@@ -18,8 +18,8 @@ public class AdminService {
 
 	private final AdminDao dao;
 	
-	public List<ChallengeForm> getAllChallenges() {
-		return dao.getAllChallenges();
+	public List<ChallengeForm> getAllChallenges(Map<String, Object> param) {
+		return dao.getAllChallenges(param);
 	}
 
 	public int resolveChallenge(Long formNo) {

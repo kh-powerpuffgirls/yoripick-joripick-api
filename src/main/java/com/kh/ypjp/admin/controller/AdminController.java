@@ -32,8 +32,18 @@ public class AdminController {
 	private final UtilService utilService;
 	
 	@GetMapping("/challenges")
-	public ResponseEntity<List<ChallengeForm>> getAllChallenges() {
-        return ResponseEntity.ok(service.getAllChallenges());
+	public ResponseEntity<Map<String, Object>> getAllChallenges(
+			@RequestParam int page, @RequestParam int size) {
+		Map<String, Object> param = new HashMap<>();
+	    param.put("offset", (page - 1) * size);
+	    param.put("limit", size);
+		List<ChallengeForm> list = service.getAllChallenges(param);
+		Long listCount = service.countRecipes();
+	    PageInfo pageInfo = utilService.getPageInfo(listCount, page, 10, size);
+	    Map<String, Object> response = new HashMap<>();
+	    response.put("list", list);
+	    response.put("pageInfo", pageInfo);
+        return ResponseEntity.ok(response);
     }
 	
 	@PatchMapping("/resolve/{formNo}")
