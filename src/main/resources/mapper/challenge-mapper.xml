@@ -1,159 +1,212 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
 <mapper namespace="com.kh.ypjp.community.challenge.dao.ChallengeDao">
 
-    <select id="findAll" resultType="com.kh.ypjp.community.challenge.dto.ChallengeDto">
-	    SELECT
-	        C.challenge_no,
-	        C.user_no,
-	        U.username,
-	        CI.title,
-	        I.SERVER_NAME AS postImageUrl,
-	        CI.image_url AS imageUrl,
-	        C.video_url,
-	        C.views,
-	        (SELECT COUNT(*) FROM LIKES L WHERE L.ref_no = C.challenge_no AND L.ref_type = 'CHALLENGE') AS likes,
-	        C.created_at
-	    FROM CHALLENGE C
-	    JOIN CHALLENGE_INFO CI ON C.ch_info_no = CI.ch_info_no
-	    JOIN USERS U ON C.user_no = U.user_no
-	    LEFT JOIN IMAGE I ON C.image_no = I.image_no
-	    WHERE SYSDATE BETWEEN CI.START_DATE AND CI.END_DATE
-	    ORDER BY C.created_at DESC
-	</select>
-	    
-    <select id="findById" resultType="com.kh.ypjp.community.challenge.dto.ChallengeDto">
+    <resultMap id="ChallengeDtoResultMap" type="com.kh.ypjp.community.challenge.dto.ChallengeDto">
+        <id property="challengeNo" column="CHALLENGE_NO" />
+        <result property="userNo" column="USER_NO" />
+        <result property="chInfoNo" column="CH_INFO_NO" />
+        <result property="videoUrl" column="VIDEO_URL" />
+        <result property="views" column="VIEWS" />
+        <result property="createdAt" column="CREATED_AT" />
+        <result property="username" column="USERNAME" />
+        <result property="title" column="TITLE" />
+        <result property="startDate" column="START_DATE" />
+        <result property="endDate" column="END_DATE" />
+        <result property="likes" column="LIKES" />
+        <result property="postImageUrl" column="POST_IMAGE_URL" />
+        <result property="imageNo" column="IMAGE_NO" jdbcType="INTEGER" />
+    </resultMap>
+
+    <resultMap id="ChallengeInfoDtoResultMap" type="com.kh.ypjp.community.challenge.dto.ChallengeInfoDto">
+        <id property="chInfoNo" column="CH_INFO_NO" />
+        <result property="title" column="TITLE" />
+        <result property="startDate" column="START_DATE" />
+        <result property="endDate" column="END_DATE" />
+        <result property="imageNo" column="IMAGE_NO" jdbcType="INTEGER" />
+    </resultMap>
+
+    <resultMap id="ChallengeSuggestionDtoResultMap" type="com.kh.ypjp.community.challenge.dto.ChallengeSuggestionDto">
+        <id property="formNo" column="FORM_NO" />
+        <result property="userNo" column="USER_NO" />
+        <result property="chTitle" column="CH_TITLE" />
+        <result property="description" column="DESCRIPTION" />
+        <result property="reference" column="REFERENCE" />
+    </resultMap>
+
+    <resultMap id="ChallengeReplyResultMap" type="com.kh.ypjp.community.challenge.dto.ChallengeReplyDto">
+        <result property="replyNo" column="REPLY_NO"/>
+        <result property="refNo" column="REF_NO"/>
+        <result property="userNo" column="USER_NO"/>
+        <result property="content" column="CONTENT"/>
+        <result property="createdAt" column="CREATED_AT"/>
+        <result property="username" column="USERNAME"/>
+        <result property="profileImageServerName" column="PROFILE_IMAGE_SERVER_NAME"/>
+        <result property="category" column="CATEGORY"/>
+    </resultMap>
+
+    <select id="findAll" resultMap="ChallengeDtoResultMap">
         SELECT
-            C.challenge_no,
-            C.user_no,
-            U.username,
-            CI.title,
-            I.SERVER_NAME AS postImageUrl,
-            CI.image_url AS imageUrl,
-            C.video_url,
-            C.views,
-            CI.likes,
-            C.created_at
-        FROM CHALLENGE C
-        JOIN CHALLENGE_INFO CI ON C.ch_info_no = CI.ch_info_no
-        JOIN USERS U ON C.user_no = U.user_no
-        LEFT JOIN IMAGE I ON C.image_no = I.image_no
-        WHERE C.challenge_no = #{id}
+            c.CHALLENGE_NO, c.USER_NO, c.CH_INFO_NO, c.VIDEO_URL, c.VIEWS, c.CREATED_AT,
+            u.USERNAME,
+            ci.TITLE, ci.START_DATE, ci.END_DATE,
+            i.SERVER_NAME AS POST_IMAGE_URL,
+            (SELECT COUNT(*) FROM LIKES l WHERE l.REF_TYPE = 'CHALLENGE' AND l.REF_NO = c.CHALLENGE_NO) AS LIKES
+        FROM CHALLENGE c
+        JOIN USERS u ON c.USER_NO = u.USER_NO
+        JOIN CHALLENGE_INFO ci ON c.CH_INFO_NO = ci.CH_INFO_NO
+        LEFT JOIN IMAGE i ON c.IMAGE_NO = i.IMAGE_NO
+        WHERE c.DELETE_STATUS = 'N'
+        ORDER BY c.CREATED_AT DESC
     </select>
 
-    <insert id="saveChallenge" parameterType="com.kh.ypjp.community.challenge.dto.ChallengeDto">
-        <selectKey keyProperty="challengeNo" resultType="Long" order="BEFORE">
-            SELECT CHALLENGE_SEQ.NEXTVAL FROM DUAL
+    <select id="findActiveChallengeInfo" resultMap="ChallengeInfoDtoResultMap">
+        SELECT CH_INFO_NO, TITLE, START_DATE, END_DATE
+        FROM CHALLENGE_INFO
+        WHERE TRUNC(SYSDATE) BETWEEN START_DATE AND END_DATE
+    </select>
+
+    <select id="findActiveChallenges" resultMap="ChallengeDtoResultMap">
+        SELECT
+            c.CHALLENGE_NO, c.USER_NO, c.CH_INFO_NO, c.VIDEO_URL, c.VIEWS, c.CREATED_AT,
+            u.USERNAME,
+            ci.TITLE, ci.START_DATE, ci.END_DATE,
+            i.SERVER_NAME AS POST_IMAGE_URL,
+            (SELECT COUNT(*) FROM LIKES l WHERE l.REF_TYPE = 'CHALLENGE' AND l.REF_NO = c.CHALLENGE_NO) AS LIKES
+        FROM CHALLENGE c
+        JOIN USERS u ON c.USER_NO = u.USER_NO
+        JOIN CHALLENGE_INFO ci ON c.CH_INFO_NO = ci.CH_INFO_NO
+        LEFT JOIN IMAGE i ON c.IMAGE_NO = i.IMAGE_NO
+        WHERE c.DELETE_STATUS = 'N' AND TRUNC(SYSDATE) BETWEEN ci.START_DATE AND ci.END_DATE
+        ORDER BY c.CREATED_AT DESC
+    </select>
+
+    <select id="findById" resultMap="ChallengeDtoResultMap">
+        SELECT
+            c.CHALLENGE_NO, c.USER_NO, c.CH_INFO_NO, c.VIDEO_URL, c.VIEWS, c.CREATED_AT, c.IMAGE_NO,
+            u.USERNAME,
+            ci.TITLE, ci.START_DATE, ci.END_DATE,
+            i.SERVER_NAME AS POST_IMAGE_URL,
+            (SELECT COUNT(*) FROM LIKES l WHERE l.REF_TYPE = 'CHALLENGE' AND l.REF_NO = c.CHALLENGE_NO) AS LIKES
+        FROM CHALLENGE c
+        JOIN USERS u ON c.USER_NO = u.USER_NO
+        JOIN CHALLENGE_INFO ci ON c.CH_INFO_NO = ci.CH_INFO_NO
+        LEFT JOIN IMAGE i ON c.IMAGE_NO = i.IMAGE_NO
+        WHERE c.CHALLENGE_NO = #{id} AND c.DELETE_STATUS = 'N'
+    </select>
+
+    <insert id="insertImage" parameterType="map">
+        <selectKey keyProperty="imageNo" resultType="int" order="BEFORE">
+            SELECT SEQ_IMAGE_NO.NEXTVAL FROM DUAL
         </selectKey>
-        INSERT INTO CHALLENGE (challenge_no, user_no, ch_info_no, video_url, created_at, image_no)
-        VALUES (#{challengeNo}, #{userNo}, #{chInfoNo}, #{videoUrl}, SYSDATE, #{imageNo})
+        INSERT INTO IMAGE (IMAGE_NO, ORIGIN_NAME, SERVER_NAME)
+        VALUES (#{imageNo}, #{originName}, #{serverName})
+    </insert>
+
+    <update id="updateImage" parameterType="map">
+        UPDATE IMAGE
+        SET ORIGIN_NAME = #{originName}, SERVER_NAME = #{serverName}
+        WHERE IMAGE_NO = #{imageNo}
+    </update>
+
+    <delete id="deleteImageByImageNo" parameterType="int">
+        DELETE FROM IMAGE WHERE IMAGE_NO = #{imageNo}
+    </delete>
+
+    <update id="updateChallengeImageNo">
+        UPDATE CHALLENGE SET IMAGE_NO = #{imageNo} WHERE CHALLENGE_NO = #{challengeNo}
+    </update>
+
+    <select id="selectImageNoByChallengeNo" resultType="int">
+        SELECT IMAGE_NO FROM CHALLENGE WHERE CHALLENGE_NO = #{challengeNo}
+    </select>
+
+    <insert id="saveChallenge">
+        <selectKey keyProperty="challengeNo" resultType="long" order="BEFORE">
+            SELECT SEQ_CHALLENGE_NO.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO CHALLENGE (CHALLENGE_NO, USER_NO, CH_INFO_NO, VIDEO_URL, IMAGE_NO)
+        VALUES (#{challengeNo}, #{userNo}, #{chInfoNo}, #{videoUrl}, #{imageNo})
     </insert>
 
     <update id="update" parameterType="com.kh.ypjp.community.challenge.dto.ChallengeDto">
         UPDATE CHALLENGE
-        SET video_url = #{videoUrl}, image_no = #{imageNo}
-        WHERE challenge_no = #{challengeNo}
-    </update>
-    
-    <update id="updateImageNo" parameterType="map">
-        UPDATE CHALLENGE
-        SET image_no = #{imageNo}
-        WHERE challenge_no = #{challengeNo}
+        SET VIDEO_URL = #{videoUrl}
+        <if test="imageNo != null">, IMAGE_NO = #{imageNo}</if>
+        WHERE CHALLENGE_NO = #{challengeNo}
     </update>
 
-    <delete id="delete">
-        DELETE FROM CHALLENGE WHERE challenge_no = #{id}
-    </delete>
+    <update id="updateDeleteStatus">
+        UPDATE CHALLENGE SET DELETE_STATUS = #{deleteStatus} WHERE CHALLENGE_NO = #{challengeNo}
+    </update>
 
     <update id="incrementViews">
-        UPDATE CHALLENGE SET views = views + 1 WHERE challenge_no = #{id}
+        UPDATE CHALLENGE SET VIEWS = VIEWS + 1 WHERE CHALLENGE_NO = #{id}
     </update>
 
-    <select id="checkIfLiked" resultType="int">
-        SELECT COUNT(*)
-        FROM LIKES
-        WHERE user_no = #{userId} AND ref_type = 'CHALLENGE' AND ref_no = #{challengeId}
+    <select id="checkIfLiked" parameterType="com.kh.ypjp.community.challenge.dto.ChallengeLikesDto" resultType="int">
+        SELECT COUNT(*) FROM LIKES
+        WHERE USER_NO = #{userNo} AND REF_TYPE = 'CHALLENGE' AND l.REF_NO = #{challengeNo}
     </select>
 
-	<insert id="insertLike">
-	    INSERT INTO LIKES (user_no, ref_type, ref_no)
-	    VALUES (#{userId}, 'CHALLENGE', #{challengeId})
-	</insert>
-	
-	<delete id="deleteLike">
-	    DELETE FROM LIKES
-	    WHERE user_no = #{userId} AND ref_type = 'CHALLENGE' AND ref_no = #{challengeId}
-	</delete>
+    <insert id="insertLike" parameterType="com.kh.ypjp.community.challenge.dto.ChallengeLikesDto">
+        INSERT INTO LIKES (USER_NO, REF_TYPE, REF_NO)
+        VALUES (#{userNo}, 'CHALLENGE', #{challengeNo})
+    </insert>
 
-    <update id="incrementLikes">
-        UPDATE CHALLENGE_INFO
-        SET likes = likes + 1
-        WHERE ch_info_no = (SELECT ch_info_no FROM CHALLENGE WHERE challenge_no = #{challengeId})
-    </update>
-
-    <update id="decrementLikes">
-        UPDATE CHALLENGE_INFO
-        SET likes = likes - 1
-        WHERE ch_info_no = (SELECT ch_info_no FROM CHALLENGE WHERE challenge_no = #{challengeId})
-    </update>
-
-	<select id="getLikesCount" resultType="int">
-	    SELECT COUNT(*) FROM LIKES
-	    WHERE ref_no = #{challengeId} AND ref_type = 'CHALLENGE'
-	</select>
-
-    <select id="findActiveChallengeInfo" resultType="com.kh.ypjp.community.challenge.dto.ChallengeDto">
-        SELECT
-            CH_INFO_NO,
-            TITLE
-        FROM CHALLENGE_INFO
-        WHERE SYSDATE BETWEEN START_DATE AND END_DATE
-        AND ROWNUM = 1
-    </select>
-    
-    <delete id="deleteExpiredChallenges">
-        DELETE FROM CHALLENGE_INFO
-        WHERE END_DATE + 7 <![CDATA[ < ]]> SYSDATE
+    <delete id="deleteLike" parameterType="com.kh.ypjp.community.challenge.dto.ChallengeLikesDto">
+        DELETE FROM LIKES
+        WHERE USER_NO = #{userNo} AND REF_TYPE = 'CHALLENGE' AND REF_NO = #{challengeNo}
     </delete>
 
-    <select id="selectRepliesByRefNo" resultType="com.kh.ypjp.community.challenge.dto.ChallengeReplyDto">
-        SELECT 
-            R.REPLY_NO,
-            R.PARENT_REPLY_NO,
-            R.REF_NO,
-            R.USER_NO,
-            U.USERNAME,
-            U.SIK_BTI,
-            R.CONTENT,
-            R.CREATED_AT,
-            I.SERVER_NAME AS profileImageServerName
+    <select id="selectAllRepliesByChallengeId" parameterType="long" resultMap="ChallengeReplyResultMap">
+        SELECT R.REPLY_NO, R.REF_NO, R.USER_NO, R.CONTENT, R.CREATED_AT, R.CATEGORY,
+               U.USERNAME, I.SERVER_NAME AS PROFILE_IMAGE_SERVER_NAME
         FROM REPLY R
         JOIN USERS U ON R.USER_NO = U.USER_NO
         LEFT JOIN IMAGE I ON U.IMAGE_NO = I.IMAGE_NO
-        WHERE R.REF_TYPE = 'CHALLENGE' AND R.REF_NO = #{refNo}
-        ORDER BY R.CREATED_AT ASC
+        START WITH R.REF_NO = #{challengeId}
+        CONNECT BY PRIOR R.REPLY_NO = R.REF_NO
+        ORDER SIBLINGS BY R.CREATED_AT ASC
     </select>
 
     <insert id="insertReply" parameterType="com.kh.ypjp.community.challenge.dto.ChallengeReplyDto">
-        <selectKey keyProperty="replyNo" resultType="int" order="BEFORE">
-            SELECT REPLY_SEQ.NEXTVAL FROM DUAL
+        <selectKey keyProperty="replyNo" resultType="Long" order="BEFORE">
+            SELECT SEQ_REPLY_NO.NEXTVAL FROM DUAL
         </selectKey>
-        INSERT INTO REPLY (
-            REPLY_NO,
-            PARENT_REPLY_NO,
-            REF_NO,
-            REF_TYPE,
-            USER_NO,
-            CONTENT,
-            CREATED_AT
-        ) VALUES (
-            #{replyNo},
-            #{parentReplyNo},
-            #{refNo},
-            'CHALLENGE',
-            #{userNo},
-            #{content},
-            SYSDATE
-        )
+        INSERT INTO REPLY (REPLY_NO, REF_NO, USER_NO, CONTENT, CATEGORY, CREATED_AT)
+        VALUES (#{replyNo}, #{refNo}, #{userNo}, #{content}, #{category}, SYSDATE)
     </insert>
-</mapper>
+
+    <update id="updateReply" parameterType="com.kh.ypjp.community.challenge.dto.ChallengeReplyDto">
+        UPDATE REPLY SET CONTENT = #{content} WHERE REPLY_NO = #{replyNo}
+    </update>
+    
+    <select id="selectReplyById" resultType="com.kh.ypjp.community.challenge.dto.ChallengeReplyDto">
+   	 	SELECT * FROM REPLY WHERE REPLY_NO = #{replyNo}
+	</select>
+
+	<delete id="deleteReply" parameterType="java.lang.Long">
+	    DELETE FROM REPLY WHERE REPLY_NO = #{replyNo}
+	</delete>
+	
+    <select id="checkCircularReference" resultType="int">
+        SELECT COUNT(*)
+        FROM REPLY
+        START WITH REPLY_NO = #{newRefNo}
+        CONNECT BY NOCYCLE PRIOR REF_NO = REPLY_NO
+        WHERE REPLY_NO = #{replyNo}
+    </select>
+
+    <insert id="insertSuggestion" parameterType="com.kh.ypjp.community.challenge.dto.ChallengeSuggestionDto">
+        <selectKey keyProperty="formNo" resultType="int" order="BEFORE">
+            SELECT SEQ_CH_FORM_NO.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO CHALLENGE_FORM (FORM_NO, USER_NO, CH_TITLE, DESCRIPTION, REFERENCE)
+        VALUES (#{formNo}, #{userNo}, #{chTitle}, #{description}, #{reference})
+    </insert>
+
+    </mapper>

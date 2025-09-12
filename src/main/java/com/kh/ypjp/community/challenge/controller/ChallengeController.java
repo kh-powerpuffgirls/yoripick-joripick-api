@@ -1,146 +1,226 @@
 package com.kh.ypjp.community.challenge.controller;
 
-import com.kh.ypjp.community.challenge.dto.ChallengeDto;
-import com.kh.ypjp.community.challenge.dto.ChallengeReplyDto;
+import com.kh.ypjp.community.challenge.dto.*;
 import com.kh.ypjp.community.challenge.service.ChallengeService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import java.io.File;
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID; // 랜덤하고 고유한 문자열 생성해줌. 필요없음 빼기
-import java.util.HashMap;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
+import java.util.*;
 
 @RestController
 @RequestMapping("/community/challenge")
 @CrossOrigin(origins = "http://localhost:5173")
+@RequiredArgsConstructor
 public class ChallengeController {
 
     private final ChallengeService challengeService;
-    private final Long USER_NO = 2L; // Temporary fixed user ID
 
-    @Autowired
-    public ChallengeController(ChallengeService challengeService) {
-        this.challengeService = challengeService;
+    /**
+     * userDetails 객체에서 userNo를 안전하게 추출하는 유틸리티 메서드
+     *
+     * @param userDetails Spring Security의 UserDetails 객체
+     * @return 유효한 userNo
+     * @throws IllegalArgumentException userDetails가 null일 경우 발생
+     */
+    private Long getUserNoFromUserDetails(UserDetails userDetails) {
+        if (userDetails == null) {
+            throw new IllegalArgumentException("로그인 후 이용할 수 있습니다.");
+        }
+        return Long.valueOf(userDetails.getUsername());
     }
 
     @GetMapping
     public ResponseEntity<List<ChallengeDto>> getAllPosts() {
-        List<ChallengeDto> posts = challengeService.getAllPosts();
-        return ResponseEntity.ok(posts);
+        return ResponseEntity.ok(challengeService.getAllPosts());
     }
 
-    // Retrieves a specific user challenge post
     @GetMapping("/{id}")
-    public ResponseEntity<ChallengeDto> getPost(@PathVariable Long id) {
-        challengeService.incrementViews(id);
-        return challengeService.getPost(id)
+    public ResponseEntity<ChallengeDto> getPost(
+            @PathVariable Long id,
+            @AuthenticationPrincipal(expression = "isAuthenticated() ? userDetails : null") UserDetails userDetails,
+            HttpServletRequest req,
+            HttpServletResponse res) {
+        
+        Long userNo = (userDetails != null) ? Long.valueOf(userDetails.getUsername()) : null;
+
+        return challengeService.getPostAndIncrementViews(id, userNo, req, res)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
-    public ResponseEntity<ChallengeDto> createPost(@RequestBody ChallengeDto challengeDto) {
-        challengeDto.setUserNo(USER_NO);
-        ChallengeDto createdPost = challengeService.createPost(challengeDto);
-        return new ResponseEntity<>(createdPost, HttpStatus.CREATED);
+    public ResponseEntity<Map<String, Object>> createPost(
+            @RequestPart("challengeDto") ChallengeDto challengeDto,
+            @RequestPart(value = "file", required = false) MultipartFile file,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        try {
+            Long userNo = Long.valueOf(userDetails.getUsername());
+            challengeDto.setUserNo(userNo);
+            Long newChallengeNo = challengeService.createPostAndReturnNo(challengeDto, file);
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "게시글이 성공적으로 등록되었습니다.");
+            response.put("challengeNo", newChallengeNo);
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        } catch (RuntimeException e) { // RuntimeException으로 통합
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "게시글 등록 중 오류가 발생했습니다."));
+        }
     }
-    
-    // Updates a user challenge post
+
     @PutMapping("/{id}")
-    public ResponseEntity<ChallengeDto> updatePost(@PathVariable Long id, @RequestBody ChallengeDto challengeDto) {
-        Optional<ChallengeDto> updatedPost = challengeService.updatePost(id, challengeDto, USER_NO);
-        return updatedPost
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.status(HttpStatus.FORBIDDEN).build());
+    public ResponseEntity<ChallengeDto> updatePost(
+            @PathVariable Long id,
+            @RequestPart("challengeDto") ChallengeDto challengeDto,
+            @RequestPart(value = "file", required = false) MultipartFile file,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        try {
+            Long userNo = getUserNoFromUserDetails(userDetails);
+            Optional<ChallengeDto> updatedPost = challengeService.updatePost(id, challengeDto, file, userNo);
+            return updatedPost
+                    .map(ResponseEntity::ok)
+                    .orElse(ResponseEntity.status(HttpStatus.FORBIDDEN).build());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletePost(@PathVariable Long id) {
-        if (challengeService.deletePost(id, USER_NO)) {
-            return ResponseEntity.noContent().build();
+    public ResponseEntity<Void> deletePost(@PathVariable Long id, @AuthenticationPrincipal UserDetails userDetails) {
+        try {
+            Long userNo = getUserNoFromUserDetails(userDetails);
+            if (challengeService.deletePost(id, userNo)) {
+                return ResponseEntity.noContent().build();
+            }
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
     }
-    
+
     @PostMapping("/like/{challengeId}")
-    public ResponseEntity<Void> toggleLike(@PathVariable Long challengeId) {
-        challengeService.toggleLike(USER_NO, challengeId);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<Void> toggleLike(@PathVariable Long challengeId, @AuthenticationPrincipal UserDetails userDetails) {
+        try {
+            Long userNo = getUserNoFromUserDetails(userDetails);
+            challengeService.toggleLike(userNo, challengeId);
+            return ResponseEntity.ok().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
     }
-    
+
     @GetMapping("/like/status/{challengeId}")
-    public ResponseEntity<Boolean> getLikeStatus(@PathVariable Long challengeId, @RequestParam Long userId) {
-        return ResponseEntity.ok(challengeService.checkIfLiked(userId, challengeId));
+    public ResponseEntity<Boolean> getLikeStatus(@PathVariable Long challengeId, @AuthenticationPrincipal UserDetails userDetails) {
+        try {
+            Long userNo = getUserNoFromUserDetails(userDetails);
+            return ResponseEntity.ok(challengeService.checkIfLiked(userNo, challengeId));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
     }
-    
+
     @GetMapping("/replies/{challengeId}")
     public ResponseEntity<List<ChallengeReplyDto>> getReplies(@PathVariable Long challengeId) {
-        List<ChallengeReplyDto> replies = challengeService.getReplies(challengeId);
-        return ResponseEntity.ok(replies);
-    }
-    
-    @PostMapping("/replies/{challengeId}")
-    public ResponseEntity<ChallengeReplyDto> createReply(@PathVariable Long challengeId, @RequestBody ChallengeReplyDto replyDto) {
-        replyDto.setRefNo(challengeId.intValue());
-        replyDto.setUserNo(USER_NO.intValue());
-        
-        int result = challengeService.createReply(replyDto);
-        if (result > 0) {
-            return new ResponseEntity<>(replyDto, HttpStatus.CREATED);
-        } else {
+        try {
+            List<ChallengeReplyDto> replies = challengeService.selectAllRepliesByChallengeId(challengeId);
+            return ResponseEntity.ok(replies);
+        } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
+    @PostMapping("/replies")
+    public ResponseEntity<String> addReply(@RequestBody ChallengeReplyDto replyDto, @AuthenticationPrincipal UserDetails userDetails) {
+        try {
+            Long userNo = getUserNoFromUserDetails(userDetails);
+            if (replyDto.getCategory() == null || replyDto.getCategory().isEmpty()) {
+                replyDto.setCategory("CHALLENGE");
+            }
+            replyDto.setUserNo(userNo);
+            challengeService.insertReply(replyDto);
+            return new ResponseEntity<>("댓글이 성공적으로 등록되었습니다.", HttpStatus.CREATED);
+        } catch (IllegalArgumentException e) {
+            return new ResponseEntity<>("로그인 후 이용할 수 있습니다.", HttpStatus.UNAUTHORIZED);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>("댓글 등록에 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @PutMapping("/replies/{replyNo}")
+    public ResponseEntity<String> updateReply(@PathVariable Long replyNo, @RequestBody ChallengeReplyDto replyDto, @AuthenticationPrincipal UserDetails userDetails) {
+        try {
+            Long userNo = getUserNoFromUserDetails(userDetails);
+            replyDto.setReplyNo(replyNo);
+            int result = challengeService.updateReply(replyDto, userNo);
+            if (result > 0) {
+                return new ResponseEntity<>("댓글이 성공적으로 수정되었습니다.", HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>("댓글 수정에 실패했습니다.", HttpStatus.FORBIDDEN);
+            }
+        } catch (IllegalArgumentException e) {
+            return new ResponseEntity<>("로그인 후 이용할 수 있습니다.", HttpStatus.UNAUTHORIZED);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>("댓글 수정에 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @DeleteMapping("/replies/{replyNo}")
+    public ResponseEntity<String> deleteReply(@PathVariable Long replyNo, @AuthenticationPrincipal UserDetails userDetails) {
+        try {
+            Long userNo = getUserNoFromUserDetails(userDetails);
+            int result = challengeService.deleteReply(replyNo, userNo);
+            if (result > 0) {
+                return new ResponseEntity<>("댓글이 성공적으로 삭제되었습니다.", HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>("댓글 삭제에 실패했습니다. 권한을 확인해주세요.", HttpStatus.FORBIDDEN);
+            }
+        } catch (IllegalArgumentException e) {
+            return new ResponseEntity<>("로그인 후 이용할 수 있습니다.", HttpStatus.UNAUTHORIZED);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>("댓글 삭제 중 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     @GetMapping("/active")
-    public ResponseEntity<ChallengeDto> getActiveChallengeInfo() {
+    public ResponseEntity<List<ChallengeInfoDto>> getActiveChallengeInfo() {
         return challengeService.getActiveChallengeInfo()
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
-    
-    // Handles image uploads
-    @PostMapping("/images/upload")
-    public ResponseEntity<Map<String, String>> uploadImage(@RequestParam("file") MultipartFile file) {
-        Map<String, String> response = new HashMap<>();
-        
-        if (file.isEmpty()) {
-            response.put("error", "파일이 비어있습니다.");
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-        }
 
+    @PostMapping("/suggestion")
+    public ResponseEntity<String> createSuggestion(@RequestBody ChallengeSuggestionDto suggestionDto, @AuthenticationPrincipal UserDetails userDetails) {
         try {
-            // 이미지 저장 경로 (프로젝트 내부에 'upload' 디렉토리 생성 필요)
-            String uploadDir = System.getProperty("user.dir") + "/src/main/resources/static/images/upload/";
-            File dir = new File(uploadDir);
-            if (!dir.exists()) {
-                dir.mkdirs();
+            Long userNo = getUserNoFromUserDetails(userDetails);
+            suggestionDto.setUserNo(userNo);
+            int result = challengeService.createSuggestion(suggestionDto);
+            if (result > 0) {
+                return ResponseEntity.status(HttpStatus.CREATED)
+                        .body("챌린지 신청서가 성공적으로 등록되었습니다.");
+            } else {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body("챌린지 신청서 등록에 실패했습니다.");
             }
-
-            // 파일명 생성 (UUID를 사용하여 고유한 파일명 보장)
-            String originalFilename = file.getOriginalFilename();
-            String fileExtension = originalFilename.substring(originalFilename.lastIndexOf("."));
-            String uniqueFilename = UUID.randomUUID().toString() + fileExtension;
-            
-            // 파일 저장
-            File dest = new File(uploadDir + uniqueFilename);
-            file.transferTo(dest);
-
-            // 클라이언트에 반환할 정보
-            response.put("fileName", uniqueFilename);
-            response.put("filePath", "/images/upload/" + uniqueFilename);
-
-            return ResponseEntity.ok(response);
-        } catch (IOException e) {
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                                 .body(e.getMessage());
+        } catch (Exception e) {
             e.printStackTrace();
-            response.put("error", "파일 업로드 중 오류가 발생했습니다.");
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("챌린지 신청서 등록 중 오류가 발생했습니다.");
         }
     }
 }

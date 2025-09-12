@@ -1,56 +1,38 @@
 package com.kh.ypjp.community.challenge.dao;
 
-import com.kh.ypjp.community.challenge.dto.ChallengeDto;
-import com.kh.ypjp.community.challenge.dto.ChallengeReplyDto;
+import com.kh.ypjp.community.challenge.dto.*;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+
 import java.util.List;
+import java.util.Map;
 
 @Mapper
 public interface ChallengeDao {
 
-    // Retrieves all active user challenge posts (filtered by date)
     List<ChallengeDto> findAll();
-
-    // Retrieves a specific user challenge post
     ChallengeDto findById(Long id);
+    int update(ChallengeDto challengeDto);
+    int updateDeleteStatus(@Param("challengeNo") Long challengeNo, @Param("deleteStatus") String deleteStatus);
+    int incrementViews(Long id);
+    int saveChallenge(ChallengeDto challengeDto);
 
-    // Updates a user challenge post
-    int update(ChallengeDto dto);
+    List<ChallengeInfoDto> findActiveChallengeInfo();
+    int checkIfLiked(ChallengeLikesDto likesDto);
+    int insertLike(ChallengeLikesDto likesDto);
+    int deleteLike(ChallengeLikesDto likesDto);
+    int insertImage(Map<String, Object> imageInfo);
+    int updateImage(Map<String, Object> imageInfo);
+    int updateChallengeImageNo(@Param("challengeNo") Long challengeNo, @Param("imageNo") int imageNo);
+    int selectImageNoByChallengeNo(Long challengeNo);
+    int insertSuggestion(ChallengeSuggestionDto suggestionDto);
 
-    // Deletes a user challenge post
-    int delete(Long id);
-
-    // Increments view count
-    void incrementViews(Long id);
-
-    // Checks if a user has liked a post
-    int checkIfLiked(@Param("userId") Long userId, @Param("challengeId") Long challengeId);
-
-    // Inserts a like record
-    int insertLike(@Param("userId") Long userId, @Param("challengeId") Long challengeId);
-
-    // Deletes a like record
-    int deleteLike(@Param("userId") Long userId, @Param("challengeId") Long challengeId);
-
-    // Retrieves the single currently active challenge (based on date)
-    ChallengeDto findActiveChallengeInfo();
-
-    // Saves a new challenge info record (for admins)
-    int saveChallengeInfo(ChallengeDto dto);
-
-    // Saves a new user challenge post
-    int saveChallenge(@Param("dto") ChallengeDto dto);
-
-    // Deletes expired challenge info and user posts
-    int deleteExpiredChallenges();
-
-    // Retrieves all replies for a challenge post
-    List<ChallengeReplyDto> selectRepliesByRefNo(Long refNo);
-
-    // Inserts a new reply
+    List<ChallengeReplyDto> selectAllRepliesByChallengeId(@Param("challengeId") Long challengeId);
     int insertReply(ChallengeReplyDto replyDto);
-    
-    // Deletes an image record
-    int deleteImage(@Param("imageNo") Integer imageNo);
+    int updateReply(ChallengeReplyDto replyDto);
+    int checkCircularReference(@Param("replyNo") Long replyNo, @Param("newRefNo") Long newRefNo);
+
+    ChallengeReplyDto selectReplyById(@Param("replyNo") Long replyNo);
+    // userNo를 매개변수에 추가했습니다.
+    int deleteReply(@Param("replyNo") Long replyNo, @Param("userNo") Long userNo);
 }

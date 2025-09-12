@@ -30,75 +30,75 @@
         <result property="profileImageServerName" column="profileImageServerName" />
         <result property="category" column="category" />
     </resultMap>
-    
-	<select id="selectAllBoards" resultMap="freeResultMap">
-	    SELECT 
-	        b.board_no AS boardNo,
-	        b.user_no AS userNo,
-	        b.title,
-	        b.created_at AS createdDate,
-	        b.views,
-	        b.subheading,
-	        U.username,
-	        U.sik_bti,
-	        (SELECT COUNT(*) FROM LIKES l WHERE l.ref_no = b.board_no AND l.ref_type = 'BOARD') AS likes,
-			(
-			    SELECT
-			        COUNT(*)
-			    FROM
-			        REPLY
-			    START WITH
-			        ref_no = b.board_no AND category = 'BOARD'
-			    CONNECT BY
-			        PRIOR reply_no = ref_no
-			) AS replyCount,
-	        i.server_name AS serverName
-	    FROM 
-	        BOARD b
-	    JOIN USERS U ON b.user_no = U.user_no
-	    LEFT JOIN IMAGE i ON b.image_no = i.image_no
-	    ORDER BY b.board_no DESC
-	</select>
-	
-	<select id="selectBoardByNo" resultMap="freeResultMap">
-	    SELECT 
-	        b.board_no AS boardNo,
-	        b.user_no AS userNo,
-	        b.subheading,
-	        b.title,
-	        b.content,
-	        b.created_at AS createdDate,
-	        b.views,
-	        U.username,
-	        U.sik_bti,
-	        (SELECT COUNT(*) FROM LIKES l WHERE l.ref_no = b.board_no AND l.ref_type = 'BOARD') AS likes,
-	        (
-	            SELECT
-	                COUNT(*)
-	            FROM
-	                REPLY
-	            START WITH
-	                ref_no = b.board_no AND category = 'BOARD'
-	            CONNECT BY
-	                PRIOR reply_no = ref_no
-	        ) AS replyCount, i.origin_name AS originName,
-	        i.server_name AS serverName
-	    FROM 
-	        BOARD b
-	    JOIN USERS U ON b.user_no = U.user_no
-	    LEFT JOIN IMAGE i ON b.image_no = i.image_no
-	    WHERE b.board_no = #{boardNo}
-	</select>
-    
-      <!-- 댓글 수정 시 순환 참조 방지 쿼리 -->
-		<select id="checkCircularReference" resultType="int">
-		    SELECT COUNT(*)
-		    FROM REPLY
-		    START WITH reply_no = #{newRefNo}
-		    CONNECT BY NOCYCLE PRIOR ref_no = reply_no
-		    WHERE reply_no = #{replyNo}
-		</select>	
-    
+
+    <select id="selectAllBoards" resultMap="freeResultMap">
+        SELECT
+            b.board_no AS boardNo,
+            b.user_no AS userNo,
+            b.title,
+            b.created_at AS createdDate,
+            b.views,
+            b.subheading,
+            U.username,
+            U.sik_bti,
+            (SELECT COUNT(*) FROM LIKES l WHERE l.ref_no = b.board_no AND l.ref_type = 'BOARD') AS likes,
+            (
+                SELECT
+                    COUNT(*)
+                FROM
+                    REPLY
+                START WITH
+                    ref_no = b.board_no AND category = 'BOARD'
+                CONNECT BY
+                    PRIOR reply_no = ref_no
+            ) AS replyCount,
+            i.server_name AS serverName
+        FROM
+            BOARD b
+        JOIN USERS U ON b.user_no = U.user_no
+        LEFT JOIN IMAGE i ON b.image_no = i.image_no
+        WHERE b.delete_status = 'N'
+        ORDER BY b.board_no DESC
+    </select>
+
+    <select id="selectBoardByNo" resultMap="freeResultMap">
+        SELECT
+            b.board_no AS boardNo,
+            b.user_no AS userNo,
+            b.subheading,
+            b.title,
+            b.content,
+            b.created_at AS createdDate,
+            b.views,
+            U.username,
+            U.sik_bti,
+            (SELECT COUNT(*) FROM LIKES l WHERE l.ref_no = b.board_no AND l.ref_type = 'BOARD') AS likes,
+            (
+                SELECT
+                    COUNT(*)
+                FROM
+                    REPLY
+                START WITH
+                    ref_no = b.board_no AND category = 'BOARD'
+                CONNECT BY
+                    PRIOR reply_no = ref_no
+            ) AS replyCount, i.origin_name AS originName,
+            i.server_name AS serverName
+        FROM
+            BOARD b
+        JOIN USERS U ON b.user_no = U.user_no
+        LEFT JOIN IMAGE i ON b.image_no = i.image_no
+        WHERE b.board_no = #{boardNo}
+    </select>
+
+    <select id="checkCircularReference" resultType="int">
+        SELECT COUNT(*)
+        FROM REPLY
+        START WITH reply_no = #{newRefNo}
+        CONNECT BY NOCYCLE PRIOR ref_no = reply_no
+        WHERE reply_no = #{replyNo}
+    </select>
+
     <insert id="insertBoard" keyProperty="boardNo">
         <selectKey keyProperty="boardNo" resultType="int" order="BEFORE">
             SELECT SEQ_BOARD_NO.NEXTVAL FROM DUAL
@@ -114,11 +114,11 @@
         INSERT INTO IMAGE (image_no, origin_name, server_name)
         VALUES (#{imageNo}, #{originName}, #{serverName})
     </insert>
-    
+
     <update id="updateBoardImageNo">
-      UPDATE BOARD
-      SET image_no = #{imageNo}
-      WHERE board_no = #{boardNo}
+        UPDATE BOARD
+        SET image_no = #{imageNo}
+        WHERE board_no = #{boardNo}
     </update>
 
     <update id="updateBoard">
@@ -127,14 +127,15 @@
         WHERE board_no = #{boardNo}
     </update>
 
-    <delete id="deleteBoard">
-        DELETE FROM BOARD
+    <update id="updateBoardDeleteStatus">
+        UPDATE BOARD
+        SET delete_status = #{deleteStatus}
         WHERE board_no = #{boardNo}
+    </update>
+
+    <delete id="deleteImageByImageNo" parameterType="int">
+        DELETE FROM IMAGE WHERE image_no = #{imageNo}
     </delete>
-    
-	<delete id="deleteImageByImageNo" parameterType="int">
-	    DELETE FROM IMAGE WHERE image_no = #{imageNo}
-	</delete>
 
     <update id="incrementViews">
         UPDATE BOARD
@@ -155,17 +156,29 @@
     <select id="countLikesByBoardNo" resultType="int">
         SELECT COUNT(*) FROM LIKES WHERE ref_no = #{boardNo} AND ref_type = 'BOARD'
     </select>
-    
+
     <select id="checkUserLiked" resultType="int">
         SELECT COUNT(*) FROM LIKES WHERE ref_no = #{boardNo} AND ref_type = 'BOARD' AND user_no = #{userNo}
     </select>
-    
+
+    <select id="selectReplyById" resultType="com.kh.ypjp.community.free.dto.ReplyDto">
+        SELECT
+            REPLY_NO,
+            REF_NO,
+            USER_NO,
+            CONTENT,
+            CREATED_AT,
+            CATEGORY
+        FROM REPLY
+        WHERE REPLY_NO = #{replyNo}
+    </select>
+
     <select id="selectAllRepliesByBoardNo" resultMap="replyResultMap">
-        SELECT 
-            R.reply_no AS replyNo, 
-            R.ref_no AS refNo, 
-            R.user_no AS userNo, 
-            R.content, 
+        SELECT
+            R.reply_no AS replyNo,
+            R.ref_no AS refNo,
+            R.user_no AS userNo,
+            R.content,
             R.created_at AS createdAt,
             R.category AS category,
             U.username,
@@ -174,31 +187,27 @@
         FROM REPLY R
         JOIN USERS U ON R.user_no = U.user_no
         LEFT JOIN IMAGE I ON U.image_no = I.image_no
-        WHERE
-            R.category = 'BOARD' AND R.ref_no = #{boardNo}
-            OR R.category = 'REPLY' AND R.ref_no IN (
-                SELECT reply_no FROM REPLY WHERE category = 'BOARD' AND ref_no = #{boardNo}
-            )
-        ORDER BY
-            R.created_at ASC
+        START WITH R.category = 'BOARD' AND R.ref_no = #{boardNo}
+        CONNECT BY PRIOR R.reply_no = R.ref_no
+        ORDER SIBLINGS BY R.created_at ASC
     </select>
 
     <select id="selectImageNoByBoardNo" parameterType="int" resultType="int">
         SELECT image_no FROM BOARD WHERE board_no = #{boardNo}
     </select>
 
-	<insert id="insertReply" parameterType="com.kh.ypjp.community.free.dto.ReplyDto">
-	    INSERT INTO REPLY (REPLY_NO, CATEGORY, REF_NO, USER_NO, CONTENT, CREATED_AT)
-	    VALUES (
-	        SEQ_REPLY_NO.NEXTVAL,
-	        #{category},
-	        #{refNo},
-	        #{userNo},
-	        #{content},
-	        SYSDATE
-	    )
-	</insert>
-    
+    <insert id="insertReply" parameterType="com.kh.ypjp.community.free.dto.ReplyDto">
+        INSERT INTO REPLY (REPLY_NO, CATEGORY, REF_NO, USER_NO, CONTENT, CREATED_AT)
+        VALUES (
+            SEQ_REPLY_NO.NEXTVAL,
+            #{category},
+            #{refNo},
+            #{userNo},
+            #{content},
+            SYSDATE
+        )
+    </insert>
+
     <update id="updateReply">
         UPDATE REPLY
         SET content = #{content}
@@ -210,14 +219,12 @@
         WHERE reply_no = #{replyNo}
     </delete>
 
-    <!-- 사용자별 조회수 기록 확인 및 추가 쿼리 -->
     <select id="checkUserViewed" resultType="int">
         SELECT COUNT(*) FROM VIEWS_LOG WHERE board_no = #{boardNo} AND user_no = #{userNo}
     </select>
-    
+
     <insert id="insertViewLog">
         INSERT INTO VIEWS_LOG (view_no, board_no, user_no, created_at)
         VALUES (SEQ_VIEW_NO.NEXTVAL, #{boardNo}, #{userNo}, SYSDATE)
     </insert>
-
 </mapper>

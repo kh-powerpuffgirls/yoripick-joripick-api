@@ -6,7 +6,8 @@ import java.util.Date;
 @Data
 public class ChallengeLikesDto{
     private int likeNo;
-    private int challengeNo;
-    private int userNo;
+    private Long challengeNo;
     private Date likedAt;
+    private Long refNo;
+    private Long userNo;
 }

@@ -18,26 +18,15 @@ public class MyPostService {
         this.myPostDao = myPostDao;
     }
 
-    public List<MyPostDto> findAllPosts() {
-        return myPostDao.findAll();
+    // 내 게시물 조회
+    public List<MyPostDto> findPostsByUser(Integer userId) {
+        return myPostDao.findPostsByUser(userId);
     }
 
-    public Optional<MyPostDto> findPostById(Integer id) {
-        Optional<MyPostDto> post = myPostDao.findById(id);
-        post.ifPresent(p -> p.setViews(p.getViews() + 1));
-        return post;
-    }
-
-    public MyPostDto createPost(MyPostDto newPost) {
-        return myPostDao.save(newPost);
-    }
-
-    public Optional<MyPostDto> updatePost(Integer id, MyPostDto updatedPost) {
-        updatedPost.setId(id);
-        return myPostDao.update(updatedPost);
-    }
-
-    public void deletePost(Integer id) {
-        myPostDao.delete(id);
+    // 게시글 상세 조회
+    public Optional<MyPostDto> findPostDetail(String category, Integer id) {
+        // 조회수 증가
+        myPostDao.incrementViews(id, category);
+        return myPostDao.findPostDetail(id, category);
     }
 }
