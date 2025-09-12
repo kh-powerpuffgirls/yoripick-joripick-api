@@ -2,18 +2,20 @@ package com.kh.ypjp.community.recipe.service;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
-import org.apache.tomcat.util.http.fileupload.FileUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.kh.ypjp.common.UtilService;
 import com.kh.ypjp.common.model.vo.Image;
 import com.kh.ypjp.common.model.vo.Nutrient;
 import com.kh.ypjp.community.recipe.dao.UserRecipeDao;
@@ -27,10 +29,8 @@ import com.kh.ypjp.community.recipe.model.vo.RcpIngredient;
 import com.kh.ypjp.community.recipe.model.vo.RcpMethod;
 import com.kh.ypjp.community.recipe.model.vo.RcpSituation;
 import com.kh.ypjp.community.recipe.model.vo.Recipe;
-import com.kh.ypjp.community.recipe.model.vo.RecipeStep;
 
 import jakarta.servlet.ServletContext;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -42,12 +42,21 @@ public class UserRecipeServiceImpl implements UserRecipeService {
 	private final UserRecipeDao dao;
     private final ServletContext servletContext;
     private final ObjectMapper objectMapper;
+    private final UtilService utilService;
 
     @Override
     public RecipePage selectRecipePage(HashMap<String, Object> params) {
         // 1. 페이지당 보여줄 게시글 수 설정 (예: 8개)
         int pageSize = 12;
         params.put("pageSize", pageSize);
+        
+        String ingredientsParam = (String) params.get("ingredients");
+        if (ingredientsParam != null && !ingredientsParam.isEmpty()) {
+            // 쉼표(,)를 기준으로 문자열을 잘라 List로 만듭니다.
+            List<String> ingredientList = Arrays.asList(ingredientsParam.split(","));
+            // Mapper에서 사용할 수 있도록 "ingredientList"라는 새로운 키로 Map에 추가합니다.
+            params.put("ingredientList", ingredientList);
+        }
         
         // 2. 전체 게시글 수 조회 (필터링 조건 포함)
         long totalElements = dao.selectRecipeCount(params);
@@ -57,6 +66,18 @@ public class UserRecipeServiceImpl implements UserRecipeService {
         
         // 4. 현재 페이지의 게시글 목록 조회
         List<UserRecipeResponse> recipes = dao.selectRecipeList(params);
+        for (UserRecipeResponse recipe : recipes) {
+        	String imageUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
+	                .path("/images/")
+	                .path(recipe.getServerName())
+	                .toUriString();
+        	recipe.setServerName(imageUrl);
+        	String profileImageUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
+	                .path("/images/")
+	                .path(recipe.getUserProfileImage())
+	                .toUriString();
+        	recipe.setUserProfileImage(profileImageUrl);
+        }
         
         // 5. RecipePage 객체로 포장하여 반환
         return new RecipePage(recipes, totalPages, totalElements);
@@ -85,58 +106,85 @@ public class UserRecipeServiceImpl implements UserRecipeService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void createRecipe(RecipeWriteRequest request, long userNo) throws Exception {
-        // 1. 대표 이미지 저장
-        Image mainImage = saveImage(request.getMainImage());
-        dao.insertImage(mainImage);
         
-        //영양성분 저장
+    	 // 1. DB에서 다음에 사용할 rcpNo를 미리 가져옵니다.
+        long rcpNo = dao.getNextRcpNo();
+        
+        long mainImageNo = 0;
+        
+        String projectRoot = System.getProperty("user.dir");
+
+        // 2. 대표 이미지 저장
+        MultipartFile mainImageFile = request.getMainImage();
+        if (mainImageFile != null && !mainImageFile.isEmpty()) {
+        	String webPath = "community/recipe/" + rcpNo;
+            String changeName = utilService.getChangeName(mainImageFile, webPath);
+            
+            String serverNameForDb = webPath + "/" + changeName;
+            
+            Map<String, Object> imageParam = new HashMap<>();
+            imageParam.put("originName", mainImageFile.getOriginalFilename());
+            imageParam.put("serverName", serverNameForDb);
+            
+            utilService.insertImage(imageParam);
+            mainImageNo = utilService.getImageNo(imageParam);
+        }
+        
+        
+        // 3. 영양 정보 및 레시피 정보 저장
         Nutrient totalNutrient = calculateTotalNutrients(request.getIngredients());
         dao.insertNutrient(totalNutrient);
 
-        // 2. RECIPE 테이블 저장
         Recipe recipe = new Recipe();
-        recipe.setUserNo(userNo); // long 타입 userNo 저장
+        recipe.setRcpNo((int)rcpNo); // 미리 받아온 rcpNo 사용
+        recipe.setUserNo(userNo);
         recipe.setRcpName(request.getRcpName());
         recipe.setRcpInfo(request.getRcpInfo());
         recipe.setTag(request.getTag());
         recipe.setRcpMthNo(request.getRcpMthNo());
         recipe.setRcpStaNo(request.getRcpStaNo());
-        recipe.setImageNo(mainImage.getImageNo());
-        
+        recipe.setImageNo((int)mainImageNo);
         recipe.setNutrientNo(totalNutrient.getNutrientNo()); 
         
         dao.insertRecipe(recipe);
-        int rcpNo = recipe.getRcpNo();
 
-        // 3. 재료 정보 저장 (rcp_ingredient)
+        // 4. 재료 정보 저장
         List<IngredientJsonDto> ingredients = objectMapper.readValue(request.getIngredients(), new TypeReference<>() {});
         for (IngredientJsonDto dto : ingredients) {
             RcpIngredient ing = new RcpIngredient();
-            ing.setRcpNo(rcpNo);
+            ing.setRcpNo((int)rcpNo);
             ing.setIngNo(dto.getIngNo());
             ing.setQuantity(dto.getQuantity());
             ing.setWeight(dto.getWeight());
             dao.insertRcpIngredient(ing);
         }
 
-        // 4. 요리 순서 저장 (rcp_detail)
+        // 5. 요리 순서 저장
         List<String> descriptions = request.getStepDescriptions();
         List<MultipartFile> images = request.getStepImages();
         for (int i = 0; i < descriptions.size(); i++) {
             RcpDetail detail = new RcpDetail();
-            detail.setRcpNo(rcpNo);
+            detail.setRcpNo((int)rcpNo);
             detail.setRcpOrder(i + 1);
             detail.setDescription(descriptions.get(i));
-
+            
             MultipartFile stepImgFile = images.get(i);
             if (stepImgFile != null && !stepImgFile.isEmpty()) {
-                Image stepImage = saveImage(stepImgFile);
-                dao.insertImage(stepImage);
-                detail.setImageNo(stepImage.getImageNo());
+            	String webPath = "community/recipe/" + rcpNo;
+                String changeName = utilService.getChangeName(stepImgFile, webPath);
+                String serverNameForDb = webPath + "/" + changeName;
+                
+                Map<String, Object> imageParam = new HashMap<>();
+                imageParam.put("originName", stepImgFile.getOriginalFilename());
+                imageParam.put("serverName", serverNameForDb);
+                
+                // ✨ 동일한 로직으로 순서 이미지도 처리합니다.
+                utilService.insertImage(imageParam);
+                long stepImageNo = utilService.getImageNo(imageParam);
+                detail.setImageNo((int)stepImageNo);
             }
             dao.insertRcpDetail(detail);
         }
-        
     }
     
     private Nutrient calculateTotalNutrients(String ingredientsJson) throws IOException {

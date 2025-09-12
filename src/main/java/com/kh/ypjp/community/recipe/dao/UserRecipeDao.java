@@ -34,6 +34,8 @@ public interface UserRecipeDao {
 
     int insertImage(Image image);
 
+    long getNextRcpNo(); 
+    
     int insertRecipe(Recipe recipe);
     
     int insertRcpIngredient(RcpIngredient ingredient);

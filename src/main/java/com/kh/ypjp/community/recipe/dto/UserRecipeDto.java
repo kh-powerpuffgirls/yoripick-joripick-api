@@ -21,7 +21,7 @@ public class UserRecipeDto {
 		private String username;
 		private String rcpName;	//레시피명
 		private int categoryNo;	//카테고리 번호
-		private int imageNo;		//이미지 번호
+		private String serverName;		//이미지 번호
 		private int views;			//조회수
 		private Date createdAt;	//작성일자
 		private String userProfileImage;	// 작성자 프로필 이미지

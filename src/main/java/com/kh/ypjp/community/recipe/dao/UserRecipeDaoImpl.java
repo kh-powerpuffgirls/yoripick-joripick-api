@@ -65,8 +65,13 @@ public class UserRecipeDaoImpl implements UserRecipeDao{
     }
 
     @Override
-    public int insertNutrient(Nutrient nutrient) { // ✨ 메소드 구현 추가
+    public int insertNutrient(Nutrient nutrient) { 
         return session.insert("userRecipeMapper.insertNutrient", nutrient);
+    }
+    
+    @Override
+    public long getNextRcpNo() { 
+        return session.selectOne("userRecipeMapper.getNextRcpNo");
     }
     
     @Override

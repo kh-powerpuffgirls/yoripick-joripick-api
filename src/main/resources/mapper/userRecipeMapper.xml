@@ -11,8 +11,15 @@
             <if test="rcpStaNo != null and rcpStaNo != ''">
                 AND R.RCP_STA_NO = #{rcpStaNo}
             </if>
-            <if test="ingredients != null and ingredients != ''">
-                AND REGEXP_LIKE(R.INGREDIENT, #{ingredients.replace(',', '|')})
+            <if test="ingredientList != null and !ingredientList.isEmpty()">
+                <foreach item="ingredientName" collection="ingredientList">
+                    AND EXISTS (
+                        SELECT 1 
+                        FROM RCP_INGREDIENT RI
+                        JOIN INGREDIENT I ON RI.ING_NO = I.ING_NO
+                        WHERE RI.RCP_NO = R.RCP_NO AND I.ING_NAME LIKE '%' || #{ingredientName} || '%'
+                    )
+                </foreach>
             </if>
         </where>
     </sql>
@@ -72,8 +79,8 @@
             L.LIKE_COUNT 
         FROM RECIPE R
         JOIN USERS U ON (R.USER_NO = U.USER_NO)
-        LEFT JOIN IMG RI ON (R.IMAGE_NO = RI.IMAGE_NO)
-        LEFT JOIN IMG UI ON (U.IMAGE_NO = UI.IMAGE_NO)
+        LEFT JOIN IMAGE  RI ON (R.IMAGE_NO = RI.IMAGE_NO)
+        LEFT JOIN IMAGE  UI ON (U.IMAGE_NO = UI.IMAGE_NO)
         LEFT JOIN (
             SELECT REF_NO, AVG(STARS) AS AVG_STARS, COUNT(*) AS REVIEW_COUNT
             FROM REVIEWS WHERE RCP_SOURCE = 'RCP' GROUP BY REF_NO
@@ -88,7 +95,6 @@
             GROUP BY RCP_NO
         ) L ON R.RCP_NO = L.RCP_NO
         WHERE R.DELETE_STATUS = 'N'
-        -- ✨ 수정: 좋아요가 많은 순서로 정렬
         ORDER BY NVL(L.LIKE_COUNT, 0) DESC, R.CREATED_AT DESC
     )
     FETCH FIRST 4 ROWS ONLY
@@ -113,12 +119,12 @@
 
 
 
-    <insert id="insertImage" parameterType="com.kh.ypjp.common.model.vo.Image">
-	    <selectKey keyProperty="imageNo" resultType="_int" order="BEFORE">
-	        SELECT SEQ_IMAGE_NO.NEXTVAL FROM DUAL
-	    </selectKey>
-	    INSERT INTO IMAGE (IMAGE_NO, ORIGIN_NAME, SERVER_NAME)
-	    VALUES (#{imageNo}, #{originName}, #{serverName})
+    <insert id="insertImage" parameterType="map">
+		<selectKey keyProperty="imageNo" resultType="_int" order="BEFORE">
+			SELECT SEQ_IMAGE_NO.NEXTVAL FROM DUAL
+		</selectKey>
+		INSERT INTO IMG (IMAGE_NO, ORIGIN_NAME, SERVER_NAME)
+		VALUES (#{imageNo}, #{originName}, #{serverName})
 	</insert>
 
     <insert id="insertNutrient" parameterType="Nutrient">
@@ -128,11 +134,12 @@
         INSERT INTO NUTRIENT (NUTRIENT_NO, ENERGY, CARB, PROTEIN, FAT, SODIUM)
         VALUES (#{nutrientNo}, #{energy}, #{carb}, #{protein}, #{fat}, #{sodium})
     </insert>
-
+	
+    <select id="getNextRcpNo" resultType="_long">
+        SELECT SEQ_RECIPE_NO.NEXTVAL FROM DUAL
+    </select>
+    
     <insert id="insertRecipe" parameterType="Recipe">
-        <selectKey keyProperty="rcpNo" resultType="_int" order="BEFORE">
-            SELECT SEQ_RECIPE_NO.NEXTVAL FROM DUAL
-        </selectKey>
         INSERT INTO RECIPE (
             RCP_NO, USER_NO, RCP_NAME, RCP_INFO, RCP_MTH_NO,
             RCP_STA_NO, TAG, IMAGE_NO, NUTRIENT_NO
