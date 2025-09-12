@@ -9,8 +9,11 @@ import org.springframework.stereotype.Repository;
 
 import com.kh.ypjp.common.model.vo.Image;
 import com.kh.ypjp.common.model.vo.Nutrient;
+import com.kh.ypjp.community.recipe.dto.UserRecipeDto;
 import com.kh.ypjp.community.recipe.dto.UserRecipeDto.IngredientInfo;
 import com.kh.ypjp.community.recipe.dto.UserRecipeDto.UserRecipeResponse;
+import com.kh.ypjp.community.recipe.model.vo.RcpDetail;
+import com.kh.ypjp.community.recipe.model.vo.RcpIngredient;
 import com.kh.ypjp.community.recipe.model.vo.RcpMethod;
 import com.kh.ypjp.community.recipe.model.vo.RcpSituation;
 import com.kh.ypjp.community.recipe.model.vo.Recipe;
@@ -25,49 +28,65 @@ import lombok.extern.slf4j.Slf4j;
 public class UserRecipeDaoImpl implements UserRecipeDao{
 
 	private final SqlSessionTemplate session;
+    private static final String NAMESPACE = "userRecipeMapper.";
 
-    private static final String NAMESPACE = "menumapper.";
+    public List<UserRecipeResponse> selectRecipeList(HashMap<String, Object> params) {
+        return session.selectList("userRecipeMapper.selectRecipeList", params);
+    }
     
-	@Override
-	public List<UserRecipeResponse> selectRecipe(HashMap<String, Object> param) {
-		return session.selectList("recipemapper.selectRecipe",param);
-	}
+    // ✨ 추가: 전체 게시글 수 조회
+    public long selectRecipeCount(HashMap<String, Object> params) {
+        return session.selectOne("userRecipeMapper.selectRecipeCount", params);
+    }
+    
+    // ✨ 추가: 랭킹 목록 조회
+    public List<UserRecipeResponse> selectRankingRecipes() {
+        return session.selectList("userRecipeMapper.selectRankingRecipes");
+    }
 
-	@Override
-	public List<RcpMethod> selectRcpMethods() {
+    @Override
+    public List<RcpMethod> selectRcpMethods() {
         return session.selectList(NAMESPACE + "selectRcpMethods");
-	}
+    }
 
-	@Override
-	public void insertImage(Image mainImageVo) {
-        session.insert(NAMESPACE + "insertImage", mainImageVo);
-		
-	}
+    @Override
+    public List<RcpSituation> selectRcpSituations() {
+        return session.selectList(NAMESPACE + "selectRcpSituations");
+    }
 
-	@Override
-	public void insertNutrient(Nutrient totalNutrient) {
-        session.insert(NAMESPACE + "insertNutrient", totalNutrient);
-	}
+    @Override
+    public List<UserRecipeDto.IngredientInfo> searchIngredients(String keyword) {
+        return session.selectList(NAMESPACE + "searchIngredients", keyword);
+    }
 
-	@Override
-	public void insertRecipeStep(RecipeStep recipe) {
-        session.insert(NAMESPACE + "insertRecipe", recipe);	
-	}
+    @Override
+    public int insertImage(Image image) {
+        return session.insert(NAMESPACE + "insertImage", image);
+    }
 
-	@Override
-	public void insertRecipe(Recipe step) {
-        session.insert(NAMESPACE + "insertRecipeStep", step);
-	}
+    @Override
+    public int insertNutrient(Nutrient nutrient) { // ✨ 메소드 구현 추가
+        return session.insert("userRecipeMapper.insertNutrient", nutrient);
+    }
+    
+    @Override
+    public int insertRecipe(Recipe recipe) {
+        return session.insert(NAMESPACE + "insertRecipe", recipe);
+    }
 
-	@Override
-	public List<RcpSituation> selectRcpSituations() {
-		return session.selectList(NAMESPACE+"selectRcpSituations");
-	}
+    @Override
+    public int insertRcpIngredient(RcpIngredient ingredient) {
+        return session.insert(NAMESPACE + "insertRcpIngredient", ingredient);
+    }
 
-	@Override
-	public List<IngredientInfo> searchIngredients(String keyword) {
-		return session.selectList(NAMESPACE + "searchIngredients", keyword);
-	}
+    @Override
+    public int insertRcpDetail(RcpDetail detail) {
+        return session.insert(NAMESPACE + "insertRcpDetail", detail);
+    }
 	
+    @Override
+    public Nutrient findNutrientsByIngNo(int ingNo) { 
+        return session.selectOne("userRecipeMapper.findNutrientsByIngNo", ingNo);
+    }
 
 }

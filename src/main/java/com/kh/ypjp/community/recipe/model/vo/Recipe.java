@@ -14,11 +14,12 @@ public class Recipe {
     private int rcpMthNo;
     private int rcpStaNo;
     private String tag;
+    private int imageNo;
     private int categoryNo;
     private int nutrientNo;
     private String ingredient;
     private String approval;
-    private int imageNo;
     private int views;
     private Date createdAt;
+    private char deleteStaus;
 }
