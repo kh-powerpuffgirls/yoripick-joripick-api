@@ -24,7 +24,7 @@ public class UtilService {
 		pi.setListCount(listCount);
 		pi.setCurrentPage(currentPage);
 		pi.setPageLimit(pageLimit);
-		pi.setBoardLimit(itemLimit);
+		pi.setItemLimit(itemLimit);
 		int maxPage = (int)Math.ceil((double)listCount / (double)itemLimit);
 		int startPage = (currentPage - 1) / pageLimit * pageLimit + 1;
 		int endPage = startPage + pageLimit - 1;
