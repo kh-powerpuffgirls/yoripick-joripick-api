@@ -1,18 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
 <mapper namespace="admin">
-	<select id="getAllChallenges" resultType="com.kh.ypjp.admin.model.dto.AdminDto$ChallengeForm">
-		SELECT
-			form_no,
-			user_no,
-			ch_title,
-			description,
-			reference,
-			resolved,
-			created_at
-	    FROM CHALLENGE_FORM
+	<select id="countAllChallenges" resultType="long">
+		SELECT COUNT(*)
+		FROM CHALLENGE_FORM
 	    WHERE resolved = 'N'
-	    ORDER BY form_no DESC
+	</select>
+
+	<select id="getAllChallenges" resultType="com.kh.ypjp.admin.model.dto.AdminDto$ChallengeForm">
+		SELECT * FROM (
+		    SELECT ROWNUM AS rnum, ch.* FROM (
+		        SELECT
+		            form_no,
+		            user_no,
+		            ch_title,
+		            description,
+		            reference,
+		            resolved,
+		            created_at
+		        FROM CHALLENGE_FORM
+		        WHERE resolved = 'N'
+		    	)ch
+		    ORDER BY form_no DESC
+		) WHERE rnum BETWEEN #{offset} + 1 AND #{offset} + #{limit}
 	</select>
 	
 	<update id="resolveChallenge">
@@ -88,19 +98,59 @@
 		WHERE rnum BETWEEN #{offset} + 1 AND #{offset} + #{limit}
 	</select>
 	
-	<select id="getReports" resultType="com.kh.ypjp.admin.model.dto.AdminDto$Report">
-		SELECT
-			report_no,
-			user_no,
-			category,
-			detail,
-			ref_no,
-			content,
-			reported_at
+	<select id="countUserReports" resultType="long">
+		SELECT COUNT(*)
 		FROM REPORT
 		JOIN REPORT_TYPE USING (report_type)
-		WHERE resolved = 'N'
-			AND category NOT IN ('RECIPE')
-		ORDER BY report_no
+	    WHERE resolved = 'N'
+	    	AND category = 'USERS'
+	</select>
+	
+	<select id="getUserReports" resultType="com.kh.ypjp.admin.model.dto.AdminDto$Report">
+		SELECT * FROM (
+		    SELECT ROWNUM AS rnum, u.* FROM (
+		        SELECT
+					report_no,
+					user_no,
+					category,
+					detail,
+					ref_no,
+					content,
+					reported_at
+				FROM REPORT
+				JOIN REPORT_TYPE USING (report_type)
+				WHERE resolved = 'N'
+					AND category = 'USERS'
+		    	) u 
+		    ORDER BY report_no
+		) WHERE rnum BETWEEN #{offset} + 1 AND #{offset} + #{limit}
+	</select>
+	
+	<select id="countCommReports" resultType="long">
+		SELECT COUNT(*)
+		FROM REPORT
+		JOIN REPORT_TYPE USING (report_type)
+	    WHERE resolved = 'N'
+	    	AND category NOT IN ('RECIPE', 'USERS')
+	</select>
+	
+	<select id="getCommReports" resultType="com.kh.ypjp.admin.model.dto.AdminDto$Report">
+		SELECT * FROM (
+		    SELECT ROWNUM AS rnum, c.* FROM (
+		        SELECT
+					report_no,
+					user_no,
+					category,
+					detail,
+					ref_no,
+					content,
+					reported_at
+				FROM REPORT
+				JOIN REPORT_TYPE USING (report_type)
+				WHERE resolved = 'N'
+					AND category NOT IN ('RECIPE', 'USERS')
+		    	)c
+		    ORDER BY report_no
+	    ) WHERE rnum BETWEEN #{offset} + 1 AND #{offset} + #{limit}
 	</select>
 </mapper>

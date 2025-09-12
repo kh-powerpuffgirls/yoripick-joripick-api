@@ -18,6 +18,10 @@ public class AdminDao {
 	
 	private final SqlSession session;
 
+	public Long countAllChallenges() {
+		return session.selectOne("admin.countAllChallenges");
+	}
+	
 	public List<ChallengeForm> getAllChallenges(Map<String, Object> param) {
 		return session.selectList("admin.getAllChallenges", param);
 	}
@@ -34,8 +38,20 @@ public class AdminDao {
 		return session.selectList("admin.getRecipes", param);
 	}
 
-	public List<Report> getReports() {
-		return session.selectList("admin.getReports");
+	public List<Report> getUserReports(Map<String, Object> param) {
+		return session.selectList("admin.getUserReports", param);
+	}
+
+	public Long countUserReports() {
+		return session.selectOne("admin.countUserReports");
+	}
+
+	public Long countCommReports() {
+		return session.selectOne("admin.countCommReports");
+	}
+
+	public List<Report> getCommReports(Map<String, Object> param) {
+		return session.selectList("admin.getCommReports", param);
 	}
 
 }

@@ -18,6 +18,10 @@ public class AdminService {
 
 	private final AdminDao dao;
 	
+	public Long countAllChallenges() {
+		return dao.countAllChallenges();
+	}
+	
 	public List<ChallengeForm> getAllChallenges(Map<String, Object> param) {
 		return dao.getAllChallenges(param);
 	}
@@ -34,8 +38,20 @@ public class AdminService {
 		return dao.getRecipes(param);
 	}
 
-	public List<Report> getReports() {
-		return dao.getReports();
+	public List<Report> getUserReports(Map<String, Object> param) {
+		return dao.getUserReports(param);
+	}
+
+	public Long countUserReports() {
+		return dao.countUserReports();
+	}
+
+	public Long countCommReports() {
+		return dao.countCommReports();
+	}
+
+	public List<Report> getCommReports(Map<String, Object> param) {
+		return dao.getCommReports(param);
 	}
 
 }
