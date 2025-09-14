@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.ibatis.session.SqlSession;
@@ -36,6 +35,7 @@ public class UtilService {
 		pi.setMaxPage(maxPage);
 		return pi;
     }
+
 	
 	public String getChangeName(MultipartFile upfile, String webPath) {
 		// webPath 예시: ".../{userNo}"
@@ -66,5 +66,5 @@ public class UtilService {
 	public Long getImageNo(Map<String, Object> param) {
 		return session.selectOne("util.getImageNo", param);
 	}
-
 }
+
