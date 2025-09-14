@@ -1,11 +1,9 @@
 package com.kh.ypjp.community.challenge.dto;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 import java.time.LocalDate;
 
-@Getter
-@Setter
+@Data
 public class ChallengeInfoDto {
     private Long chInfoNo;
     private String title;

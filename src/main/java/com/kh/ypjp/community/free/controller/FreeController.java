@@ -29,19 +29,23 @@ public class FreeController {
         this.freeService = freeService;
     }
 
+    // 로그인 여부 확인
     private boolean isLoggedIn(int userNo) {
         return userNo > 0;
     }
 
+    // 로그인 필요 응답
     private ResponseEntity<String> unauthorizedResponse() {
         return new ResponseEntity<>("로그인 후 이용해주세요.", HttpStatus.UNAUTHORIZED);
     }
 
+    // 전체 게시글 조회
     @GetMapping
     public ResponseEntity<List<FreeDto>> selectAllBoards() {
         return new ResponseEntity<>(freeService.selectAllBoards(), HttpStatus.OK);
     }
 
+    // 특정 게시글 조회 및 조회수 증가 (은비 코드)
     @GetMapping("/{boardNo}")
     public ResponseEntity<FreeDto> selectBoardByNo(@PathVariable int boardNo,
                                                    HttpServletRequest req,
@@ -84,6 +88,7 @@ public class FreeController {
         return new ResponseEntity<>(board, HttpStatus.OK);
     }
 
+    // 게시글 등록
     @PostMapping
     public ResponseEntity<String> insertBoard(
             @RequestParam("title") String title,
@@ -104,6 +109,7 @@ public class FreeController {
         return new ResponseEntity<>("게시글이 성공적으로 등록되었습니다.", HttpStatus.CREATED);
     }
 
+    // 게시글 수정
     @PutMapping("/{boardNo}")
     public ResponseEntity<String> updateBoard(
             @PathVariable int boardNo,
@@ -129,6 +135,7 @@ public class FreeController {
             return new ResponseEntity<>("게시글 수정에 실패했습니다. 작성자만 수정할 수 있습니다.", HttpStatus.FORBIDDEN);
     }
 
+    // 게시글 삭제
     @DeleteMapping("/{boardNo}")
     public ResponseEntity<String> softDeleteBoard(@PathVariable int boardNo, @RequestParam("userNo") int userNo) {
         if (!isLoggedIn(userNo)) return unauthorizedResponse();
@@ -138,7 +145,7 @@ public class FreeController {
         else return new ResponseEntity<>("게시글 삭제에 실패했거나 권한이 없습니다.", HttpStatus.FORBIDDEN);
     }
 
-    // ====== 좋아요 ======
+    // 좋아요 토글
     @PostMapping("/{boardNo}/likes")
     public ResponseEntity<String> toggleLike(@PathVariable int boardNo, @RequestBody Map<String, Integer> payload) {
         int userNo = payload.get("userNo");
@@ -148,6 +155,7 @@ public class FreeController {
         return new ResponseEntity<>(liked ? "좋아요가 추가되었습니다." : "좋아요가 취소되었습니다.", HttpStatus.OK);
     }
 
+    // 좋아요 상태 조회
     @GetMapping("/{boardNo}/likes/status")
     public ResponseEntity<Map<String, Boolean>> getLikeStatus(@PathVariable int boardNo, @RequestParam("userNo") int userNo) {
         if (!isLoggedIn(userNo)) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
@@ -157,17 +165,19 @@ public class FreeController {
         return ResponseEntity.ok(response);
     }
 
+    // 좋아요 개수 조회
     @GetMapping("/{boardNo}/likes/count")
     public ResponseEntity<Integer> getLikesCount(@PathVariable int boardNo) {
         return new ResponseEntity<>(freeService.getLikesCount(boardNo), HttpStatus.OK);
     }
 
-    // ====== 댓글 ======
+    // 댓글 조회
     @GetMapping("/{boardNo}/replies")
     public ResponseEntity<List<ReplyDto>> getRepliesByBoardNo(@PathVariable int boardNo) {
         return ResponseEntity.ok(freeService.selectAllRepliesByBoardNo(boardNo));
     }
 
+    // 댓글 등록
     @PostMapping("/replies")
     public ResponseEntity<String> addReply(@RequestBody ReplyDto replyDto) {
         if (!isLoggedIn(replyDto.getUserNo())) return unauthorizedResponse();
@@ -179,6 +189,7 @@ public class FreeController {
         return new ResponseEntity<>("댓글이 성공적으로 등록되었습니다.", HttpStatus.CREATED);
     }
 
+    // 댓글 수정
     @PutMapping("/replies/{replyNo}")
     public ResponseEntity<String> updateReply(@PathVariable int replyNo, @RequestBody ReplyDto replyDto) {
         if (!isLoggedIn(replyDto.getUserNo())) return unauthorizedResponse();
@@ -189,6 +200,7 @@ public class FreeController {
         else return new ResponseEntity<>("댓글 수정에 실패했습니다. 작성자만 수정할 수 있습니다.", HttpStatus.NOT_FOUND);
     }
 
+    // 댓글 삭제
     @DeleteMapping("/replies/{replyNo}")
     public ResponseEntity<String> deleteReply(@PathVariable Long replyNo, @RequestParam("userNo") int userNo) {
         if (!isLoggedIn(userNo)) return unauthorizedResponse();

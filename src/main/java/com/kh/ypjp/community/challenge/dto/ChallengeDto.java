@@ -1,11 +1,9 @@
 package com.kh.ypjp.community.challenge.dto;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 import java.time.LocalDateTime;
 
-@Getter
-@Setter
+@Data
 public class ChallengeDto {
     private Long challengeNo;
     private Long userNo;
@@ -18,6 +16,13 @@ public class ChallengeDto {
     private LocalDateTime startDate;
     private LocalDateTime endDate;
     private int likes;
-    private String postImageUrl;
+
+    private String originName;
+    private String serverName; 
+
+    private String sik_bti;
     private Integer imageNo;
+    
+    private String postImageUrl;
+
 }
