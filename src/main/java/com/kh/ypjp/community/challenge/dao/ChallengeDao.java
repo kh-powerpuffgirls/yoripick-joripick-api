@@ -9,7 +9,11 @@ import java.util.List;
 public interface ChallengeDao {
 
     List<ChallengeDto> findAll();
-    ChallengeDto findById(@Param("challengeNo") Long challengeNo);
+    
+    ChallengeDto findByIdWithImage(@Param("challengeNo") Long challengeNo);
+    
+    public Long findUserNoById(@Param("challengeNo") Long challengeNo);
+
     int saveChallenge(ChallengeDto challengeDto);
     int update(ChallengeDto challengeDto);
     int updateDeleteStatus(@Param("challengeNo") Long challengeNo,

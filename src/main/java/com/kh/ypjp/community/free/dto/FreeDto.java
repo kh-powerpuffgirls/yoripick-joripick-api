@@ -18,6 +18,7 @@ public class FreeDto {
     
     private String originName; 
     private String serverName;
+    private String imageUrl;
 
     private String sik_bti;
 }

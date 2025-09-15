@@ -3,6 +3,9 @@
 
 <mapper namespace="com.kh.ypjp.community.free.dao.FreeDao">
 
+    <!-- ===================== DTO 매핑 ===================== -->
+
+    <!-- FreeDto 매핑 -->
     <resultMap id="freeResultMap" type="FreeDto">
         <result property="boardNo" column="boardNo" />
         <result property="userNo" column="userNo" />
@@ -19,6 +22,7 @@
         <result property="sik_bti" column="sik_bti" />
     </resultMap>
 
+    <!-- ReplyDto 매핑 -->
     <resultMap id="replyResultMap" type="ReplyDto">
         <result property="replyNo" column="replyNo" />
         <result property="refNo" column="refNo" />
@@ -31,6 +35,10 @@
         <result property="category" column="category" />
     </resultMap>
 
+
+    <!-- ===================== 게시글 조회 ===================== -->
+
+    <!-- 전체 게시글 조회 -->
     <select id="selectAllBoards" resultMap="freeResultMap">
         SELECT
             b.board_no AS boardNo,
@@ -50,13 +58,15 @@
         WHERE b.delete_status = 'N'
         ORDER BY b.board_no DESC
     </select>
-    
-    <select id="selectSikBtiByUserNo" parameterType="int" resultType="String">
-	    SELECT sik_bti
-	    FROM USERS
-	    WHERE user_no = #{userNo}
-	</select>
 
+    <!-- 특정 사용자의 sik_bti 조회 -->
+    <select id="selectSikBtiByUserNo" parameterType="int" resultType="String">
+        SELECT sik_bti
+        FROM USERS
+        WHERE user_no = #{userNo}
+    </select>
+
+    <!-- 특정 게시글 조회 -->
     <select id="selectBoardByNo" resultMap="freeResultMap">
         SELECT
             b.board_no AS boardNo,
@@ -78,13 +88,10 @@
         WHERE b.board_no = #{boardNo}
     </select>
 
-    <select id="checkCircularReference" resultType="int">
-        SELECT COUNT(*)
-        FROM REPLY
-        START WITH reply_no = #{replyNo}
-        CONNECT BY NOCYCLE PRIOR ref_no = reply_no
-    </select>
 
+    <!-- ===================== 게시글 등록/수정 ===================== -->
+
+    <!-- 게시글 등록 -->
     <insert id="insertBoard" keyProperty="boardNo">
         <selectKey keyProperty="boardNo" resultType="int" order="BEFORE">
             SELECT SEQ_BOARD_NO.NEXTVAL FROM DUAL
@@ -93,6 +100,7 @@
         VALUES (#{boardNo}, #{userNo}, #{title}, #{subheading}, #{content})
     </insert>
 
+    <!-- 이미지 등록 -->
     <insert id="insertImage" parameterType="map">
         <selectKey keyProperty="imageNo" resultType="int" order="BEFORE">
             SELECT SEQ_IMAGE_NO.NEXTVAL FROM DUAL
@@ -101,58 +109,75 @@
         VALUES (#{imageNo}, #{originName}, #{serverName})
     </insert>
 
+    <!-- 게시글 이미지 업데이트 -->
     <update id="updateBoardImageNo">
         UPDATE BOARD
         SET image_no = #{imageNo}
         WHERE board_no = #{boardNo}
     </update>
 
+    <!-- 게시글 내용 수정 -->
     <update id="updateBoard">
         UPDATE BOARD
         SET title = #{title}, content = #{content}, subheading = #{subheading}
         WHERE board_no = #{boardNo}
     </update>
 
+    <!-- 게시글 삭제(상태 변경) -->
     <update id="updateBoardDeleteStatus">
         UPDATE BOARD
         SET delete_status = #{deleteStatus}
         WHERE board_no = #{boardNo}
     </update>
 
+
+    <!-- ===================== 조회수/좋아요 ===================== -->
+
+    <!-- 이미지 삭제 -->
     <delete id="deleteImageByImageNo" parameterType="int">
         DELETE FROM IMAGE WHERE image_no = #{imageNo}
     </delete>
 
+    <!-- 조회수 증가 -->
     <update id="incrementViews">
         UPDATE BOARD
         SET views = views + 1
         WHERE board_no = #{boardNo}
     </update>
 
+    <!-- 좋아요 추가 -->
     <insert id="insertLike">
         INSERT INTO LIKES (user_no, ref_type, ref_no)
         VALUES (#{userNo}, 'BOARD', #{boardNo})
     </insert>
 
+    <!-- 좋아요 삭제 -->
     <delete id="deleteLike">
         DELETE FROM LIKES
         WHERE ref_type = 'BOARD' AND ref_no = #{boardNo} AND user_no = #{userNo}
     </delete>
 
+    <!-- 게시글 좋아요 수 조회 -->
     <select id="countLikesByBoardNo" resultType="int">
         SELECT COUNT(*) FROM LIKES WHERE ref_no = #{boardNo} AND ref_type = 'BOARD'
     </select>
 
+    <!-- 사용자가 좋아요 눌렀는지 확인 -->
     <select id="checkUserLiked" resultType="int">
         SELECT COUNT(*) FROM LIKES WHERE ref_no = #{boardNo} AND ref_type = 'BOARD' AND user_no = #{userNo}
     </select>
 
+
+    <!-- ===================== 댓글(Reply) 관련 ===================== -->
+
+    <!-- 특정 댓글 조회 -->
     <select id="selectReplyById" resultType="com.kh.ypjp.community.free.dto.ReplyDto">
         SELECT reply_no, ref_no, user_no, content, created_at, category
         FROM REPLY
         WHERE reply_no = #{replyNo}
     </select>
 
+    <!-- 게시글 댓글 전체 조회 -->
     <select id="selectAllRepliesByBoardNo" resultMap="replyResultMap">
         SELECT
             R.reply_no AS replyNo,
@@ -172,10 +197,12 @@
         ORDER SIBLINGS BY R.created_at ASC
     </select>
 
+    <!-- 게시글 이미지 번호 조회 -->
     <select id="selectImageNoByBoardNo" parameterType="int" resultType="int">
         SELECT image_no FROM BOARD WHERE board_no = #{boardNo}
     </select>
 
+    <!-- 댓글 등록 -->
     <insert id="insertReply" parameterType="com.kh.ypjp.community.free.dto.ReplyDto">
         INSERT INTO REPLY (REPLY_NO, CATEGORY, REF_NO, USER_NO, CONTENT, CREATED_AT)
         VALUES (
@@ -188,21 +215,36 @@
         )
     </insert>
 
+    <!-- 댓글 수정 -->
     <update id="updateReply">
         UPDATE REPLY
         SET content = #{content}
         WHERE reply_no = #{replyNo}
     </update>
 
-	<delete id="deleteReply" parameterType="long">
-	    DELETE FROM REPLY
-	    WHERE reply_no = #{replyNo} OR ref_no = #{replyNo}
-	</delete>
+    <!-- 댓글 삭제 -->
+    <delete id="deleteReply" parameterType="long">
+        DELETE FROM REPLY
+        WHERE reply_no = #{replyNo} OR ref_no = #{replyNo}
+    </delete>
 
+    <!-- 순환 참조 체크 -->
+    <select id="checkCircularReference" resultType="int">
+        SELECT COUNT(*)
+        FROM REPLY
+        START WITH reply_no = #{replyNo}
+        CONNECT BY NOCYCLE PRIOR ref_no = reply_no
+    </select>
+
+
+    <!-- ===================== 조회 기록 ===================== -->
+
+    <!-- 사용자가 게시글 조회했는지 체크 -->
     <select id="checkUserViewed" resultType="int">
         SELECT COUNT(*) FROM VIEWS_LOG WHERE board_no = #{boardNo} AND user_no = #{userNo}
     </select>
 
+    <!-- 조회 기록 추가 -->
     <insert id="insertViewLog">
         INSERT INTO VIEWS_LOG (view_no, board_no, user_no, created_at)
         VALUES (SEQ_VIEW_NO.NEXTVAL, #{boardNo}, #{userNo}, SYSDATE)

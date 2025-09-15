@@ -2,7 +2,6 @@ package com.kh.ypjp.community.mypost.service;
 
 import com.kh.ypjp.community.mypost.dao.MyPostDao;
 import com.kh.ypjp.community.mypost.dto.MyPostDto;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -13,7 +12,6 @@ public class MyPostService {
 
     private final MyPostDao myPostDao;
 
-    @Autowired
     public MyPostService(MyPostDao myPostDao) {
         this.myPostDao = myPostDao;
     }
@@ -25,7 +23,7 @@ public class MyPostService {
 
     // 게시글 상세 조회
     public Optional<MyPostDto> findPostDetail(String category, Integer id) {
-        // 조회수 증가
+        // 조회수 증가 (일단 상세조회니까 본인 글도 조회 증가 되어야함...)
         myPostDao.incrementViews(id, category);
         return myPostDao.findPostDetail(id, category);
     }

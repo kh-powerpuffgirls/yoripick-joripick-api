@@ -26,7 +26,7 @@ public class FreeService {
         return freeDao.selectAllBoards();
     }
 
-    // 게시글 조회+식bti
+    // 게시글 조회 + 식bti
     public FreeDto selectBoardByNo(int boardNo) {
         FreeDto board = freeDao.selectBoardByNo(boardNo);
         if (board != null) {
@@ -92,7 +92,7 @@ public class FreeService {
         return result;
     }
 
-    // 삭제 상태로 변경
+    // 삭제 안하고 걍 Y로 바꾸기
     @Transactional
     public boolean softDeleteBoard(int boardNo, int userNo) {
         FreeDto existingPost = freeDao.selectBoardByNo(boardNo);
@@ -109,14 +109,14 @@ public class FreeService {
         return freeDao.incrementViews(boardNo);
     }
 
-    // 좋아요를 추가하거나 취소
+    // 좋아요 추가 또는 취소
     @Transactional
     public boolean toggleLike(int boardNo, int userNo) {
         LikesDto likesDto = new LikesDto();
         likesDto.setBoardNo(boardNo);
         likesDto.setUserNo(userNo);
 
-        // 좋아요 기록이 있는지 확인 후 토글
+        // 좋아요 기록이 있는지 확인 후 ㄱㄱ
         if (freeDao.checkUserLiked(likesDto) > 0) {
             freeDao.deleteLike(likesDto);
             return false;
@@ -126,12 +126,12 @@ public class FreeService {
         }
     }
 
-    //  좋아요 개수
+    // 좋아요 개수
     public int getLikesCount(int boardNo) {
         return freeDao.countLikesByBoardNo(boardNo);
     }
 
-    // 댓글 조회+식bti
+    // 댓글 조회 + 식bti
     public List<ReplyDto> selectAllRepliesByBoardNo(int boardNo) {
         List<ReplyDto> replies = freeDao.selectAllRepliesByBoardNo(boardNo);
         for (ReplyDto reply : replies) {
@@ -149,7 +149,7 @@ public class FreeService {
     // 댓글 수정
     @Transactional
     public int updateReply(ReplyDto replyDto) {
-        // 대댓글인 경우 순환 참조를 방지
+        // 대댓글인 경우 순환 참조를 방지 (근데 필요할까?)
         if ("REPLY".equals(replyDto.getCategory())) {
             int newRefNo = replyDto.getRefNo();
             int replyNo = replyDto.getReplyNo();
@@ -172,7 +172,7 @@ public class FreeService {
     @Transactional
     public boolean deleteReply(Long replyNo, int userNo) {
         ReplyDto reply = freeDao.selectReplyById(replyNo);
-        // 작성자 본인인지 확인 후 삭제
+        // 작성자 확인 후 삭제
         if (reply == null || reply.getUserNo() != userNo) return false;
         return freeDao.deleteReply(replyNo) > 0;
     }
