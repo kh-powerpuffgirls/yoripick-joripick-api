@@ -39,14 +39,14 @@ public class AuthService {
 
     public AuthResult login(String email, String password) {
         User user = authDao.findUserByEmail(email)
-                .orElseThrow(() -> new RuntimeException("이메일이 잘못되었습니다. 다시 확인해주세요."));
+                .orElseThrow(() -> new RuntimeException("존재하지 않는 이메일입니다. 다시 확인해주세요."));
 
         if (!encoder.matches(password, user.getPassword())) {
             throw new RuntimeException("비밀번호가 잘못되었습니다. 다시 입력해주세요.");
         }
 
         if ("LOCKED".equalsIgnoreCase(user.getStatus())) {
-            throw new RuntimeException("계정이 잠겼습니다. 문의해주세요.");
+            throw new RuntimeException("계정이 잠겼습니다. 관리자에게 문의해주세요.");
         }
 
         return issueTokens(user);
