@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ing">
+
+	<resultMap id="IngResult"
+		type="com.kh.ypjp.ing.model.dto.IngDto$IngResponse" autoMapping="true">
+		<id property="ingNo" column="ING_NO" />
+		<result property="userNo" column="USER_NO" />
+		<result property="ingName" column="ING_NAME" />
+		<result property="ingCode" column="ING_CODE" />
+		<result property="ingCodeName" column="ING_CODE_NAME" />
+	</resultMap>
+		
+	<select id="selectIngs" resultMap="IngResult">
+		SELECT
+		    I.USER_NO, I.ING_NO,
+		    I.ING_NAME, I.ING_CODE,
+		    C.ING_CODE_NAME
+		FROM INGREDIENT I
+		JOIN ING_CODE C ON I.ING_CODE = C.ING_CODE
+		WHERE 1 = 1
+		<if test="ingCode != 0 and ingCode != null">
+			and I.ING_CODE LIKE '%' || #{ingCode} || '%'
+		</if>
+		<if test="keyword != '' and keyword != null">
+			and I.ING_NAME LIKE '%' || #{keyword} || '%'
+		</if>
+		ORDER BY I.ING_CODE, I.ING_NAME
+	</select>
+
+
+	
+</mapper>
