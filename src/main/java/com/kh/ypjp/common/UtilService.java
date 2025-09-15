@@ -18,6 +18,24 @@ import lombok.RequiredArgsConstructor;
 public class UtilService {
 	
     private final SqlSession session;
+    
+    public PageInfo getPageInfo(Long listCount, int currentPage, int pageLimit, int itemLimit) {
+    	PageInfo pi = new PageInfo();
+		pi.setListCount(listCount);
+		pi.setCurrentPage(currentPage);
+		pi.setPageLimit(pageLimit);
+		pi.setItemLimit(itemLimit);
+		int maxPage = (int)Math.ceil((double)listCount / (double)itemLimit);
+		int startPage = (currentPage - 1) / pageLimit * pageLimit + 1;
+		int endPage = startPage + pageLimit - 1;
+		if (endPage > maxPage) {
+			endPage = maxPage;
+		}
+		pi.setStartPage(startPage);
+		pi.setEndPage(endPage);
+		pi.setMaxPage(maxPage);
+		return pi;
+    }
 	
 	public String getChangeName(MultipartFile upfile, String webPath) {
 		// webPath 예시: ".../{userNo}"
