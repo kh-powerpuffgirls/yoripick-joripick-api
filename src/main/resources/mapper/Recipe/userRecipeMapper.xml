@@ -1,0 +1,299 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="userRecipeMapper">
+    
+    <sql id="recipeSearchCondition">
+        <where>
+            R.DELETE_STATUS = 'N'
+            <if test="rcpMthNo != null and rcpMthNo != ''">
+                AND R.RCP_MTH_NO = #{rcpMthNo}
+            </if>
+            <if test="rcpStaNo != null and rcpStaNo != ''">
+                AND R.RCP_STA_NO = #{rcpStaNo}
+            </if>
+            <if test="ingredientList != null and !ingredientList.isEmpty()">
+                <foreach item="ingredientName" collection="ingredientList">
+                    AND EXISTS (
+                        SELECT 1 
+                        FROM RCP_INGREDIENT RI
+                        JOIN INGREDIENT I ON RI.ING_NO = I.ING_NO
+                        WHERE RI.RCP_NO = R.RCP_NO AND I.ING_NAME LIKE '%' || #{ingredientName} || '%'
+                    )
+                </foreach>
+            </if>
+        </where>
+    </sql>
+
+    <select id="selectRecipeList" parameterType="map" resultType="com.kh.ypjp.community.recipe.dto.UserRecipeDto$UserRecipeResponse">
+        SELECT * FROM (
+            SELECT
+                R.RCP_NO        AS rcpNo,
+                R.RCP_NAME      AS rcpName,
+                R.CREATED_AT    AS createdAt,
+                U.USERNAME,
+                U.SIK_BTI       AS sikBti,
+                RI.SERVER_NAME   AS serverName,
+                UI.SERVER_NAME   AS userProfileImage,
+                NVL(V.AVG_STARS, 0) AS avgStars,
+                NVL(V.REVIEW_COUNT, 0) AS reviewCount
+            FROM RECIPE R
+            JOIN USERS U ON (R.USER_NO = U.USER_NO)
+            LEFT JOIN IMAGE RI ON (R.IMAGE_NO = RI.IMAGE_NO)
+            LEFT JOIN IMAGE UI ON (U.IMAGE_NO = UI.IMAGE_NO)
+            LEFT JOIN (
+                SELECT REF_NO, AVG(STARS) AS AVG_STARS, COUNT(*) AS REVIEW_COUNT
+                FROM REVIEW WHERE RCP_SOURCE = 'RCP' GROUP BY REF_NO
+            ) V ON R.RCP_NO = V.REF_NO
+            <include refid="recipeSearchCondition"/>
+            <choose>
+                <when test="sort == 'stars'">
+                    ORDER BY avgStars DESC, R.CREATED_AT DESC
+                </when>
+                <otherwise>
+                    ORDER BY R.CREATED_AT DESC
+                </otherwise>
+            </choose>
+        )
+        OFFSET (#{page} * #{pageSize}) ROWS
+        FETCH NEXT #{pageSize} ROWS ONLY
+    </select>
+
+    <select id="selectRecipeCount" parameterType="map" resultType="_long">
+        SELECT COUNT(*)
+        FROM RECIPE R
+        <include refid="recipeSearchCondition"/>
+    </select>
+
+    <select id="selectRankingRecipes" resultType="com.kh.ypjp.community.recipe.dto.UserRecipeDto$UserRecipeResponse">
+         SELECT * FROM (
+            SELECT
+                R.RCP_NO        AS rcpNo,
+                R.RCP_NAME      AS rcpName,
+                R.CREATED_AT    AS createdAt,
+                U.USERNAME,
+                U.SIK_BTI       AS sikBti,
+                RI.SERVER_NAME   AS serverName,
+                UI.SERVER_NAME   AS userProfileImage,
+                NVL(V.AVG_STARS, 0) AS avgStars,
+                NVL(V.REVIEW_COUNT, 0) AS reviewCount
+            FROM RECIPE R
+            JOIN USERS U ON (R.USER_NO = U.USER_NO)
+            LEFT JOIN IMAGE  RI ON (R.IMAGE_NO = RI.IMAGE_NO)
+            LEFT JOIN IMAGE  UI ON (U.IMAGE_NO = UI.IMAGE_NO)
+            LEFT JOIN (
+                SELECT REF_NO, AVG(STARS) AS AVG_STARS, COUNT(*) AS REVIEW_COUNT
+                FROM REVIEW WHERE RCP_SOURCE = 'RCP' GROUP BY REF_NO
+            ) V ON R.RCP_NO = V.REF_NO
+            JOIN (
+                SELECT REF_NO, COUNT(*) AS LIKE_COUNT
+                FROM LIKES
+                WHERE REF_TYPE = 'RCP'
+                  AND LIKE_STATUS = 'LIKE' -- '좋아요' 상태만 카운트
+                  AND LIKED_AT >= TRUNC(SYSDATE, 'MM') -- 이번 달 1일 00시부터
+                  AND LIKED_AT &lt; ADD_MONTHS(TRUNC(SYSDATE, 'MM'), 1) -- 다음 달 1일 00시 전까지
+                GROUP BY REF_NO
+            ) L ON R.RCP_NO = L.REF_NO
+            WHERE R.DELETE_STATUS = 'N'
+            ORDER BY L.LIKE_COUNT DESC, R.CREATED_AT DESC
+        )
+        FETCH FIRST 4 ROWS ONLY
+</select>
+
+    <select id="selectRcpMethods" resultType="com.kh.ypjp.community.recipe.model.vo.RcpMethod">
+        SELECT RCP_MTH_NO, RCP_METHOD 
+        FROM RCP_METHOD
+    </select>
+
+    <select id="selectRcpSituations" resultType="com.kh.ypjp.community.recipe.model.vo.RcpSituation">
+        SELECT RCP_STA_NO, RCP_SITUATION 
+        FROM RCP_SITUATION
+    </select>
+
+    <select id="searchIngredients" parameterType="string" resultType="com.kh.ypjp.community.recipe.dto.UserRecipeDto$IngredientInfo">
+        SELECT I.ING_NO AS ingNo, I.ING_NAME AS ingName, N.ENERGY, N.CARB, N.PROTEIN, N.FAT, N.SODIUM
+        FROM INGREDIENT I
+        JOIN NUTRIENT N ON I.NUTRIENT_NO = N.NUTRIENT_NO
+        WHERE I.ING_NAME LIKE '%' || #{keyword} || '%'
+    </select>
+
+
+
+    <insert id="insertImage" parameterType="map">
+		<selectKey keyProperty="imageNo" resultType="_int" order="BEFORE">
+			SELECT SEQ_IMAGE_NO.NEXTVAL FROM DUAL
+		</selectKey>
+		INSERT INTO IMG (IMAGE_NO, ORIGIN_NAME, SERVER_NAME)
+		VALUES (#{imageNo}, #{originName}, #{serverName})
+	</insert>
+
+    <insert id="insertNutrient" parameterType="Nutrient">
+        <selectKey keyProperty="nutrientNo" resultType="_int" order="BEFORE">
+            SELECT SEQ_NUTRIENT_NO.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO NUTRIENT (NUTRIENT_NO, ENERGY, CARB, PROTEIN, FAT, SODIUM)
+        VALUES (#{nutrientNo}, #{energy}, #{carb}, #{protein}, #{fat}, #{sodium})
+    </insert>
+	
+    <select id="getNextRcpNo" resultType="_long">
+        SELECT SEQ_RECIPE_NO.NEXTVAL FROM DUAL
+    </select>
+    
+    <insert id="insertRecipe" parameterType="Recipe">
+        INSERT INTO RECIPE (
+            RCP_NO, USER_NO, RCP_NAME, RCP_INFO, RCP_MTH_NO,
+            RCP_STA_NO, TAG, IMAGE_NO, NUTRIENT_NO
+        ) VALUES (
+            #{rcpNo}, #{userNo}, #{rcpName}, #{rcpInfo}, #{rcpMthNo},
+            #{rcpStaNo}, #{tag}, #{imageNo}, #{nutrientNo}
+        )
+    </insert>
+
+    <insert id="insertRcpIngredient" parameterType="com.kh.ypjp.community.recipe.model.vo.RcpIngredient">
+	    INSERT INTO RCP_INGREDIENT (RCP_NO, ING_NO, QUANTITY, WEIGHT)
+	    VALUES (#{rcpNo}, #{ingNo}, #{quantity}, #{weight})
+	</insert>
+
+    <insert id="insertRcpDetail" parameterType="com.kh.ypjp.community.recipe.model.vo.RcpDetail">
+	    INSERT INTO RCP_DETAIL (RCP_NO, RCP_ORDER, DESCRIPTION, IMAGE_NO)
+	    VALUES (#{rcpNo}, #{rcpOrder}, #{description}, #{imageNo})
+	</insert>
+	
+	<select id="findNutrientsByIngNo" parameterType="_int" resultType="Nutrient">
+	    SELECT
+	        N.NUTRIENT_NO AS nutrientNo,
+	        N.ENERGY,
+	        N.CARB,
+	        N.PROTEIN,
+	        N.FAT,
+	        N.SODIUM
+	    FROM INGREDIENT I
+	    JOIN NUTRIENT N ON I.NUTRIENT_NO = N.NUTRIENT_NO
+	    WHERE I.ING_NO = #{ingNo}
+	</select>
+	<update id="increaseViewCount" parameterType="_int">
+        UPDATE RECIPE
+        SET VIEWS = VIEWS + 1
+        WHERE RCP_NO = #{rcpNo}
+    </update>
+
+    <resultMap id="recipeDetailResultMap" type="com.kh.ypjp.community.recipe.dto.UserRecipeDto$RecipeDetailResponse">
+        <id property="rcpNo" column="RCP_NO"/>
+        <result property="rcpName" column="RCP_NAME"/>
+        <result property="rcpInfo" column="RCP_INFO"/>
+        <result property="createdAt" column="CREATED_AT"/>
+        <result property="views" column="VIEWS"/>
+        <result property="tag" column="TAG"/>
+        <result property="rcpMethod" column="RCP_METHOD"/>
+        <result property="rcpSituation" column="RCP_SITUATION"/>
+        <result property="mainImage" column="MAIN_IMAGE_SERVER_NAME"/>
+        <result property="avgStars" column="AVG_STARS"/>
+        <result property="reviewCount" column="REVIEW_COUNT"/>
+        
+        <association property="writer" javaType="com.kh.ypjp.community.recipe.dto.UserRecipeDto$RecipeDetailResponse$WriterInfo">
+            <result property="userNo" column="USER_NO"/>
+            <result property="username" column="USERNAME"/>
+            <result property="sik_bti" column="SIK_BTI"/>
+            <result property="serverName" column="WRITER_IMAGE_SERVER_NAME"/>
+        </association>
+
+        <association property="totalNutrient" javaType="com.kh.ypjp.common.model.vo.Nutrient">
+            <result property="energy" column="TOTAL_ENERGY"/>
+            <result property="carb" column="TOTAL_CARB"/>
+            <result property="protein" column="TOTAL_PROTEIN"/>
+            <result property="fat" column="TOTAL_FAT"/>
+            <result property="sodium" column="TOTAL_SODIUM"/>
+        </association>
+
+        <collection property="ingredients" ofType="com.kh.ypjp.community.recipe.dto.UserRecipeDto$RecipeDetailResponse$Ingredient">
+            <result property="ingName" column="ING_NAME"/>
+            <result property="quantity" column="QUANTITY"/>
+            <result property="weight" column="WEIGHT"/>
+        </collection>
+
+        <collection property="steps" ofType="com.kh.ypjp.community.recipe.dto.UserRecipeDto$RecipeDetailResponse$Step">
+            <result property="rcpOrder" column="RCP_ORDER"/>
+            <result property="description" column="DESCRIPTION"/>
+            <result property="serverName" column="STEP_IMAGE_SERVER_NAME"/>
+        </collection>
+    </resultMap>
+
+    
+    <select id="findLike" parameterType="map" resultType="_int">
+        SELECT COUNT(*)
+        FROM LIKES
+        WHERE USER_NO = #{userNo}
+          AND REF_TYPE = 'RCP'
+          AND REF_NO = #{rcpNo}
+    </select>
+
+    <insert id="insertLike" parameterType="map">
+        INSERT INTO LIKES (USER_NO, REF_TYPE, REF_NO, LIKE_STATUS)
+        VALUES (#{userNo}, 'RCP', #{rcpNo}, 'LIKE')
+    </insert>
+    
+    <delete id="deleteLike" parameterType="map">
+        DELETE FROM LIKES
+        WHERE USER_NO = #{userNo}
+          AND REF_TYPE = 'RCP'
+          AND REF_NO = #{rcpNo}
+    </delete>
+
+    <select id="countLikes" parameterType="_int" resultType="_int">
+        SELECT COUNT(*)
+        FROM LIKES
+        WHERE REF_TYPE = 'RCP'
+          AND REF_NO = #{rcpNo}
+    </select>
+	
+	 <resultMap id="recipeDetailResultMap" type="com.kh.ypjp.community.recipe.dto.UserRecipeDto$RecipeDetailResponse">
+        <result property="likeCount" column="LIKE_COUNT"/>
+        <result property="dislikeCount" column="DISLIKE_COUNT"/>
+        <result property="likeStatus" column="LIKE_STATUS"/>
+    </resultMap>
+    
+    <select id="selectRecipeDetail" parameterType="map" resultMap="recipeDetailResultMap">
+        SELECT
+            R.RCP_NO, R.RCP_NAME, R.RCP_INFO, R.CREATED_AT, R.VIEWS, R.TAG,
+            RM.RCP_METHOD, RS.RCP_SITUATION,
+            U.USER_NO, U.USERNAME, U.SIK_BTI,
+            MAIN_IMG.SERVER_NAME AS MAIN_IMAGE_SERVER_NAME,
+            WRITER_IMG.SERVER_NAME AS WRITER_IMAGE_SERVER_NAME,
+            N.ENERGY AS TOTAL_ENERGY, N.CARB AS TOTAL_CARB, N.PROTEIN AS TOTAL_PROTEIN, N.FAT AS TOTAL_FAT, N.SODIUM AS TOTAL_SODIUM,
+            I.ING_NAME, RI.QUANTITY, RI.WEIGHT,
+            RD.RCP_ORDER, RD.DESCRIPTION,
+            STEP_IMG.SERVER_NAME AS STEP_IMAGE_SERVER_NAME,
+            NVL(REV.AVG_STARS, 0) AS AVG_STARS,
+            NVL(REV.REVIEW_COUNT, 0) AS REVIEW_COUNT,
+            NVL(LC.LIKE_COUNT, 0) AS LIKE_COUNT,
+            NVL(LC.DISLIKE_COUNT, 0) AS DISLIKE_COUNT,
+            NVL(UL.LIKE_STATUS, 'COMMON') AS LIKE_STATUS
+        FROM RECIPE R
+        JOIN USERS U ON R.USER_NO = U.USER_NO
+        JOIN RCP_METHOD RM ON R.RCP_MTH_NO = RM.RCP_MTH_NO
+        JOIN RCP_SITUATION RS ON R.RCP_STA_NO = RS.RCP_STA_NO
+        LEFT JOIN IMAGE MAIN_IMG ON R.IMAGE_NO = MAIN_IMG.IMAGE_NO
+        LEFT JOIN IMAGE WRITER_IMG ON U.IMAGE_NO = WRITER_IMG.IMAGE_NO
+        LEFT JOIN NUTRIENT N ON R.NUTRIENT_NO = N.NUTRIENT_NO
+        LEFT JOIN RCP_INGREDIENT RI ON R.RCP_NO = RI.RCP_NO
+        LEFT JOIN INGREDIENT I ON RI.ING_NO = I.ING_NO
+        LEFT JOIN RCP_DETAIL RD ON R.RCP_NO = RD.RCP_NO
+        LEFT JOIN IMAGE STEP_IMG ON RD.IMAGE_NO = STEP_IMG.IMAGE_NO
+        LEFT JOIN (
+            SELECT REF_NO, AVG(STARS) AS AVG_STARS, COUNT(*) AS REVIEW_COUNT
+            FROM REVIEW WHERE RCP_SOURCE = 'RCP' AND REF_NO = #{rcpNo}
+            GROUP BY REF_NO
+        ) REV ON R.RCP_NO = REV.REF_NO
+        LEFT JOIN (
+            SELECT
+                REF_NO,
+                COUNT(CASE WHEN LIKE_STATUS = 'LIKE' THEN 1 END) AS LIKE_COUNT,
+                COUNT(CASE WHEN LIKE_STATUS = 'DISLIKE' THEN 1 END) AS DISLIKE_COUNT
+            FROM LIKES WHERE REF_TYPE='RCP' AND REF_NO = #{rcpNo} GROUP BY REF_NO
+        ) LC ON R.RCP_NO = LC.REF_NO
+        LEFT JOIN LIKES UL ON R.RCP_NO = UL.REF_NO AND UL.REF_TYPE = 'RCP' AND UL.USER_NO = #{userNo}
+        WHERE R.RCP_NO = #{rcpNo} AND R.DELETE_STATUS = 'N'
+        ORDER BY RD.RCP_ORDER ASC
+    </select>
+    
+
+</mapper>

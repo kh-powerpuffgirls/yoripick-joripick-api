@@ -2,18 +2,17 @@ package com.kh.ypjp.community.recipe.dao;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.kh.ypjp.common.model.vo.Image;
 import com.kh.ypjp.common.model.vo.Nutrient;
 import com.kh.ypjp.community.recipe.dto.UserRecipeDto;
-import com.kh.ypjp.community.recipe.dto.UserRecipeDto.IngredientInfo;
-import com.kh.ypjp.community.recipe.dto.UserRecipeDto.UserRecipeResponse;
+import com.kh.ypjp.community.recipe.dto.UserRecipeDto.RecipeDetailResponse;
 import com.kh.ypjp.community.recipe.model.vo.RcpDetail;
 import com.kh.ypjp.community.recipe.model.vo.RcpIngredient;
 import com.kh.ypjp.community.recipe.model.vo.RcpMethod;
 import com.kh.ypjp.community.recipe.model.vo.RcpSituation;
 import com.kh.ypjp.community.recipe.model.vo.Recipe;
-import com.kh.ypjp.community.recipe.model.vo.RecipeStep;
 
 
 public interface UserRecipeDao {
@@ -43,5 +42,16 @@ public interface UserRecipeDao {
     int insertRcpDetail(RcpDetail detail);
     
     int insertNutrient(Nutrient nutrient);
+    
+    RecipeDetailResponse selectRecipeDetail(int rcpNo);
+    
+    int increaseViewCount(int rcpNo);
+    
+    
+    //좋아요
+    int findLike(Map<String, Object> params);
+    void insertLike(Map<String, Object> params);
+    void deleteLike(Map<String, Object> params);
+    int countLikes(int rcpNo);
 
 }

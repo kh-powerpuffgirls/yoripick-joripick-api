@@ -5,6 +5,8 @@ import java.util.List;
 
 import org.springframework.web.multipart.MultipartFile;
 
+import com.kh.ypjp.common.model.vo.Nutrient;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -72,5 +74,68 @@ public class UserRecipeDto {
         private long totalElements;               // 전체 게시글 수
     }
     
+    @Data
+	@NoArgsConstructor
+	public static class RecipeDetailResponse {
+		private int rcpNo;
+		private String rcpName;
+		private String rcpInfo;
+		private String createdAt;
+		private int views;
+		private String tag;
 
+		// JOIN된 정보들
+		private boolean isOfficial = false; // 식구 레시피는 항상 false
+		private String rcpMethod;
+		private String rcpSituation;
+		
+		private String mainImage; // 대표 이미지 경로
+		private WriterInfo writer; // 작성자 정보
+		
+		private Nutrient totalNutrient; // 전체 영양 정보
+		private List<Ingredient> ingredients; // 재료 목록
+		private List<Step> steps; // 요리 순서 목록
+
+		// 집계 정보 (리뷰 기능 구현 후 추가)
+		private int likeCount;
+		private int dislikeCount;
+        private String likeStatus;
+        private double avgStars;
+        private int reviewCount;
+        private boolean isLiked; 
+        
+		@Data
+		@NoArgsConstructor
+		public static class WriterInfo {
+			private long userNo;
+			private String username;
+			private String sik_bti;
+			private String serverName; // 프로필 이미지
+		}
+
+		@Data
+		@NoArgsConstructor
+		public static class Ingredient {
+			private String ingName;
+			private String quantity;
+			private int weight;
+		}
+
+		@Data
+		@NoArgsConstructor
+		public static class Step {
+			private int rcpOrder;
+			private String description;
+			private String serverName; // 순서 이미지
+		}
+		
+    }
+    
+    @Data
+    @AllArgsConstructor
+    public static class LikeResponse {
+        private int likeCount;
+        private int dislikeCount;
+        private boolean isLiked;	//좋아요 상태
+    }
 }

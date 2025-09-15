@@ -5,7 +5,6 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -16,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.kh.ypjp.community.recipe.dto.UserRecipeDto;
+import com.kh.ypjp.community.recipe.dto.UserRecipeDto.RecipeDetailResponse;
 import com.kh.ypjp.community.recipe.dto.UserRecipeDto.RecipePage;
 import com.kh.ypjp.community.recipe.model.vo.RcpMethod;
 import com.kh.ypjp.community.recipe.model.vo.RcpSituation;
@@ -76,7 +76,6 @@ public class UserRecipeController {
     @PostMapping(value = "/community/recipe/{userNo}", consumes = "multipart/form-data")
     public ResponseEntity<Void> createRecipe(
             @ModelAttribute UserRecipeDto.RecipeWriteRequest request,
-            // ✨ 바로 이 부분입니다! @AuthenticationPrincipal로 CustomOAuth2User 객체를 직접 받습니다.
             @PathVariable Long userNo 
     ) {
     	System.out.println(userNo);
@@ -100,5 +99,28 @@ public class UserRecipeController {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
+    }
+    
+    // 레시피 상세
+    @GetMapping("/community/recipe/{rcpNo}")
+    public ResponseEntity<RecipeDetailResponse> selectRecipeDetail(@PathVariable int rcpNo) {
+        RecipeDetailResponse recipeDetail = recipeService.selectRecipeDetail(rcpNo);
+        
+        if (recipeDetail == null) {
+            // 조회 결과가 없으면 404 Not Found 응답
+            return ResponseEntity.notFound().build();
+        }
+        
+        return ResponseEntity.ok(recipeDetail);
+    }
+    @PostMapping("/community/recipe/{rcpNo}/like")
+    public ResponseEntity<UserRecipeDto.LikeResponse> toggleLike(
+            @PathVariable int rcpNo,
+            @PathVariable Long userNo ) { // 실제 사용하는 유저 객체로 변경 필요
+        
+        //  서비스 호출
+        UserRecipeDto.LikeResponse response = recipeService.toggleLike(rcpNo, userNo);
+        
+        return ResponseEntity.ok(response);
     }
 }

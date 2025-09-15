@@ -19,8 +19,10 @@ import com.kh.ypjp.common.UtilService;
 import com.kh.ypjp.common.model.vo.Image;
 import com.kh.ypjp.common.model.vo.Nutrient;
 import com.kh.ypjp.community.recipe.dao.UserRecipeDao;
+import com.kh.ypjp.community.recipe.dto.UserRecipeDto;
 import com.kh.ypjp.community.recipe.dto.UserRecipeDto.IngredientInfo;
 import com.kh.ypjp.community.recipe.dto.UserRecipeDto.IngredientJsonDto;
+import com.kh.ypjp.community.recipe.dto.UserRecipeDto.RecipeDetailResponse;
 import com.kh.ypjp.community.recipe.dto.UserRecipeDto.RecipePage;
 import com.kh.ypjp.community.recipe.dto.UserRecipeDto.RecipeWriteRequest;
 import com.kh.ypjp.community.recipe.dto.UserRecipeDto.UserRecipeResponse;
@@ -240,7 +242,77 @@ public class UserRecipeServiceImpl implements UserRecipeService {
         image.setServerName(serverName);
         return image;
     }
+    
+    
+    @Override
+    @Transactional
+    public RecipeDetailResponse selectRecipeDetail(int rcpNo) {
+        
+        // 1. 먼저 조회수를 1 증가시킵니다.
+        dao.increaseViewCount(rcpNo);
 
-   
+        // 2. 레시피 상세 정보를 조회합니다.
+        RecipeDetailResponse detail = dao.selectRecipeDetail(rcpNo);
+        
+        // 3. 각 이미지 경로를 전체 URL로 변환합니다.
+        if (detail != null) {
+            // 메인 이미지
+            if (detail.getMainImage() != null && !detail.getMainImage().isEmpty()) {
+                detail.setMainImage(createFullUrl(detail.getMainImage()));
+            }
+            // 작성자 프로필 이미지
+            if (detail.getWriter() != null && detail.getWriter().getServerName() != null && !detail.getWriter().getServerName().isEmpty()) {
+                detail.getWriter().setServerName(createFullUrl(detail.getWriter().getServerName()));
+            }
+            // 요리 순서 이미지
+            for (RecipeDetailResponse.Step step : detail.getSteps()) {
+                if (step.getServerName() != null && !step.getServerName().isEmpty()) {
+                    step.setServerName(createFullUrl(step.getServerName()));
+                }
+            }
+        }
+        
+        return detail;
+    }
+    
+    
+    // 이미지 경로를 완성된 URL로 만들어주는 private 헬퍼 메소드
+    private String createFullUrl(String serverName) {
+        return ServletUriComponentsBuilder.fromCurrentContextPath()
+                .path("/images/")
+                .path(serverName)
+                .toUriString();
+    }
+    
+    //좋아요 기능
+    @Override
+    @Transactional
+    public UserRecipeDto.LikeResponse toggleLike(int rcpNo, long userNo) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("rcpNo", rcpNo);
+        params.put("userNo", userNo);
+
+        boolean isLiked;
+        
+        // 1. 이미 좋아요를 눌렀는지 확인
+        int likeCount = dao.findLike(params);
+        
+        if (likeCount > 0) {
+            // 2. 이미 눌렀다면 좋아요 삭제
+            dao.deleteLike(params);
+            isLiked = false;
+        } else {
+            // 3. 누르지 않았다면 좋아요 추가
+            dao.insertLike(params);
+            isLiked = true;
+        }
+        
+        // 4. 최신 좋아요 총 개수 조회
+        int totalLikes = dao.countLikes(rcpNo);
+        
+        // 5. 결과를 DTO에 담아 반환
+//        return new UserRecipeDto.LikeResponse(totalLikes, isLiked);
+        return null;
+    }
 
 }

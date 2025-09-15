@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="reviewMapper">
+
+    <resultMap id="reviewResultMap" type="com.kh.ypjp.community.review.dto.ReviewDto$ReviewResponse">
+        <id property="reviewNo" column="REVIEW_NO"/>
+        <result property="stars" column="STARS"/>
+        <result property="content" column="CONTENT"/>
+        <result property="reviewDate" column="REVIEW_DATE"/>
+        <result property="serverName" column="SERVER_NAME"/>
+        <association property="userInfo" javaType="com.kh.ypjp.community.review.dto.ReviewDto$UserInfo">
+            <id property="userNo" column="USER_NO"/>
+            <result property="username" column="USERNAME"/>
+            <result property="sikBti" column="SIK_BTI"/>
+            <result property="profileImage" column="PROFILE_IMAGE"/>
+        </association>
+    </resultMap>
+
+    <sql id="reviewColumns">
+        R.REVIEW_NO, R.STARS, R.CONTENT, R.REVIEW_DATE,
+        I.SERVER_NAME,
+        U.USER_NO, U.USERNAME, U.SIK_BTI,
+        UI.SERVER_NAME AS PROFILE_IMAGE
+    </sql>
+
+    <select id="selectReviewList" parameterType="map" resultMap="reviewResultMap">
+        SELECT <include refid="reviewColumns"/>
+        FROM REVIEWS R
+        JOIN USERS U ON (R.USER_NO = U.USER_NO)
+        LEFT JOIN IMAGE I ON (R.IMAGE_NO = I.IMAGE_NO)
+        LEFT JOIN IMAGE UI ON (U.IMAGE_NO = UI.IMAGE_NO)
+        WHERE R.REF_NO = #{rcpNo} AND R.RCP_SOURCE = 'RCP'
+        <choose>
+            <when test="sort == 'stars'">
+                ORDER BY R.STARS DESC, R.REVIEW_DATE DESC
+            </when>
+            <otherwise>
+                ORDER BY R.REVIEW_DATE DESC
+            </otherwise>
+        </choose>
+        OFFSET (#{page} * #{pageSize}) ROWS
+        FETCH NEXT #{pageSize} ROWS ONLY
+    </select>
+    
+    <select id="selectReviewCount" parameterType="int" resultType="_long">
+        SELECT COUNT(*) FROM REVIEWS
+        WHERE REF_NO = #{rcpNo} AND RCP_SOURCE = 'RCP'
+    </select>
+    
+    <select id="selectPhotoReviews" parameterType="int" resultMap="reviewResultMap">
+        SELECT <include refid="reviewColumns"/>
+        FROM REVIEWS R
+        JOIN USERS U ON (R.USER_NO = U.USER_NO)
+        LEFT JOIN IMAGE I ON (R.IMAGE_NO = I.IMAGE_NO)
+        LEFT JOIN IMAGE UI ON (U.IMAGE_NO = UI.IMAGE_NO)
+        WHERE R.REF_NO = #{rcpNo} AND R.RCP_SOURCE = 'RCP'
+          AND R.IMAGE_NO IS NOT NULL
+        ORDER BY R.REVIEW_DATE DESC
+    </select>
+    
+    <insert id="insertReview" parameterType="Review">
+        INSERT INTO REVIEWS (
+            REVIEW_NO, USER_NO, REF_NO, RCP_SOURCE,
+            STARS, CONTENT, IMAGE_NO
+        ) VALUES (
+            SEQ_REVIEW_NO.NEXTVAL, #{userNo}, #{refNo}, 'RCP',
+            #{stars}, #{content}, #{imageNo, jdbcType=INTEGER}
+        )
+    </insert>
+</mapper>
