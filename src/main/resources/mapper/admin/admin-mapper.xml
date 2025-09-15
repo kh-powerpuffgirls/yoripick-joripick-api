@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="admin">
+	<select id="countAllChallenges" resultType="long">
+		SELECT COUNT(*)
+		FROM CHALLENGE_FORM
+	    WHERE resolved = 'N'
+	</select>
+
+	<select id="getAllChallenges" resultType="com.kh.ypjp.admin.model.dto.AdminDto$ChallengeForm">
+		SELECT * FROM (
+		    SELECT ROWNUM AS rnum, ch.* FROM (
+		        SELECT
+		            form_no,
+		            user_no,
+		            ch_title,
+		            description,
+		            reference,
+		            resolved,
+		            created_at
+		        FROM CHALLENGE_FORM
+		        WHERE resolved = 'N'
+		    	)ch
+		    ORDER BY form_no DESC
+		) WHERE rnum BETWEEN #{offset} + 1 AND #{offset} + #{limit}
+	</select>
+	
+	<update id="resolveChallenge">
+		UPDATE CHALLENGE_FORM
+	    SET resolved = 'Y'
+	    WHERE form_no = #{formNo}
+	</update>
+	
+	<select id="countRecipes" resultType="long">
+		SELECT (
+		    SELECT COUNT(*) FROM RECIPE 
+		    WHERE approval = 'N'
+		        AND rcp_no IN (
+		            SELECT ref_no
+				        FROM LIKES
+				        WHERE ref_type = 'RECIPE'
+				        	AND like_status = 'LIKE'
+				        GROUP BY ref_no
+				        HAVING COUNT(*) > 5
+				    )
+		        )+(
+		    SELECT COUNT(*) FROM REPORT
+		    JOIN REPORT_TYPE USING (report_type)
+		    WHERE resolved = 'N'
+		        AND category = 'RECIPE'
+		    ) FROM DUAL
+	</select>
+	
+	<select id="getRecipes" resultType="com.kh.ypjp.admin.model.dto.AdminDto$Recipe">
+		SELECT * FROM (
+		    SELECT ROWNUM AS rnum, rcp.* FROM (
+		        SELECT
+		            r.rcp_no        AS rcpNo,
+		            r.user_no       AS userNo,
+		            r.rcp_name      AS title,
+		            r.rcp_info      AS info,
+		            NULL            AS reportNo,
+		            NULL            AS detail,
+		            NULL            AS content,
+		            NULL            AS reportedAt,
+		            'RECIPE'        AS type
+		        FROM RECIPE r
+		        JOIN (
+		            SELECT ref_no
+		            FROM LIKES
+		            WHERE ref_type = 'RECIPE' AND like_status = 'LIKE'
+		            GROUP BY ref_no
+		            HAVING COUNT(*) > 5
+		        ) l ON r.rcp_no = l.ref_no
+		        WHERE r.approval = 'N'
+		
+		        UNION ALL
+		
+		        SELECT
+		            rep.ref_no      AS rcpNo,
+		            rep.user_no     AS userNo,
+		            NULL            AS title,
+		            NULL            AS info,
+		            rep.report_no   AS reportNo,
+		            rt.detail      AS detail,
+		            rep.content     AS content,
+		            rep.reported_at AS reportedAt,
+		            'REPORT'        AS type
+		        FROM REPORT rep
+		        JOIN REPORT_TYPE rt USING (report_type)
+		        WHERE rep.resolved = 'N'
+		          AND rt.category = 'RECIPE'
+		    ) rcp
+		    ORDER BY 
+		        CASE WHEN type = 'RECIPE' THEN 1 ELSE 2 END,
+		        rcpNo DESC
+		) 
+		WHERE rnum BETWEEN #{offset} + 1 AND #{offset} + #{limit}
+	</select>
+	
+	<select id="countUserReports" resultType="long">
+		SELECT COUNT(*)
+		FROM REPORT
+		JOIN REPORT_TYPE USING (report_type)
+	    WHERE resolved = 'N'
+	    	AND category = 'USERS'
+	</select>
+	
+	<select id="getUserReports" resultType="com.kh.ypjp.admin.model.dto.AdminDto$Report">
+		SELECT * FROM (
+		    SELECT ROWNUM AS rnum, u.* FROM (
+		        SELECT
+					report_no,
+					user_no,
+					category,
+					detail,
+					ref_no,
+					content,
+					reported_at
+				FROM REPORT
+				JOIN REPORT_TYPE USING (report_type)
+				WHERE resolved = 'N'
+					AND category = 'USERS'
+		    	) u 
+		    ORDER BY report_no
+		) WHERE rnum BETWEEN #{offset} + 1 AND #{offset} + #{limit}
+	</select>
+	
+	<select id="countCommReports" resultType="long">
+		SELECT COUNT(*)
+		FROM REPORT
+		JOIN REPORT_TYPE USING (report_type)
+	    WHERE resolved = 'N'
+	    	AND category NOT IN ('RECIPE', 'USERS')
+	</select>
+	
+	<select id="getCommReports" resultType="com.kh.ypjp.admin.model.dto.AdminDto$Report">
+		SELECT * FROM (
+		    SELECT ROWNUM AS rnum, c.* FROM (
+		        SELECT
+					report_no,
+					user_no,
+					category,
+					detail,
+					ref_no,
+					content,
+					reported_at
+				FROM REPORT
+				JOIN REPORT_TYPE USING (report_type)
+				WHERE resolved = 'N'
+					AND category NOT IN ('RECIPE', 'USERS')
+		    	)c
+		    ORDER BY report_no
+	    ) WHERE rnum BETWEEN #{offset} + 1 AND #{offset} + #{limit}
+	</select>
+</mapper>

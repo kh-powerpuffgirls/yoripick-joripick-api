@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.ibatis.session.SqlSession;
@@ -18,6 +17,24 @@ import lombok.RequiredArgsConstructor;
 public class UtilService {
 	
     private final SqlSession session;
+    
+    public PageInfo getPageInfo(Long listCount, int currentPage, int pageLimit, int itemLimit) {
+    	PageInfo pi = new PageInfo();
+		pi.setListCount(listCount);
+		pi.setCurrentPage(currentPage);
+		pi.setPageLimit(pageLimit);
+		pi.setItemLimit(itemLimit);
+		int maxPage = (int)Math.ceil((double)listCount / (double)itemLimit);
+		int startPage = (currentPage - 1) / pageLimit * pageLimit + 1;
+		int endPage = startPage + pageLimit - 1;
+		if (endPage > maxPage) {
+			endPage = maxPage;
+		}
+		pi.setStartPage(startPage);
+		pi.setEndPage(endPage);
+		pi.setMaxPage(maxPage);
+		return pi;
+    }
 	
 	public String getChangeName(MultipartFile upfile, String webPath) {
 		// webPath 예시: ".../{userNo}"
@@ -48,5 +65,5 @@ public class UtilService {
 	public Long getImageNo(Map<String, Object> param) {
 		return session.selectOne("util.getImageNo", param);
 	}
-
+	
 }
