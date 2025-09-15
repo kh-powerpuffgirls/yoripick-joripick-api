@@ -57,12 +57,13 @@ public class SecurityConfig {
                     res.sendError(HttpServletResponse.SC_FORBIDDEN, "FORBIDDEN");
                 })
             )
-            // 세션 관리 - 무상태(stateless) 설정
             .sessionManagement(management -> management.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            // 요청별 권한 설정
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/auth/**").permitAll()
-                .requestMatchers("/oauth2/**", "/login**", "/error").permitAll()
+                .requestMatchers("/oauth2/**", "/login/**", "/error").permitAll()
+                .requestMatchers("/chat/**").permitAll()
+                .requestMatchers("/ws/**").permitAll()
+                .requestMatchers("/images/**").permitAll()
                 .anyRequest().authenticated()
             )
             // OAuth2 로그인 핸들러

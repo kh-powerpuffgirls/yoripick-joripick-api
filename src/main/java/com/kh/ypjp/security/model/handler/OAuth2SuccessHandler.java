@@ -13,6 +13,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import com.kh.ypjp.model.dto.CustomOAuth2User;
 import com.kh.ypjp.security.controller.AuthController;
+import com.kh.ypjp.security.model.dto.AuthDto.User;
 import com.kh.ypjp.security.model.provider.JWTProvider;
 
 import jakarta.servlet.ServletException;
@@ -51,9 +52,11 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler{
 	        response.sendRedirect(redirect);
 	        return;
 	    }
+	    
+	    String provider = "kakao";
 
-	    String accessToken = jwt.createAccessToken(id, 30);
-	    String refreshToken = jwt.createRefreshToken(id, 7);
+	    String accessToken = jwt.createAccessToken(id, provider, 30);
+	    String refreshToken = jwt.createRefreshToken(id,provider, 7);
 
 	    ResponseCookie cookie = ResponseCookie.from(AuthController.REFRESH_COOKIE, refreshToken)
 	            .httpOnly(true)
