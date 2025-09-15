@@ -65,5 +65,5 @@ public class UtilService {
 	public Long getImageNo(Map<String, Object> param) {
 		return session.selectOne("util.getImageNo", param);
 	}
-	
+
 }

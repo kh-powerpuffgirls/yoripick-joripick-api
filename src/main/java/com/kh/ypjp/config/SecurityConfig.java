@@ -65,6 +65,7 @@ public class SecurityConfig {
                 .requestMatchers("/login/**", "/oauth2/**", "/error").permitAll()
                 .requestMatchers("/chat/**").permitAll()
                 .requestMatchers("/ws/**").permitAll()
+                .requestMatchers("/community/**").permitAll()
                 .requestMatchers("/images/**").permitAll()
                 .requestMatchers("/mealplan/**").authenticated()
                 .requestMatchers(HttpMethod.GET, 
