@@ -21,12 +21,14 @@ import org.springframework.web.bind.annotation.RestController;
 import com.kh.ypjp.security.model.dto.AuthDto.AuthResult;
 import com.kh.ypjp.security.model.dto.AuthDto.LoginRequest;
 import com.kh.ypjp.security.model.dto.AuthDto.User;
+import com.kh.ypjp.security.model.dto.AuthDto.UserIdentities;
 import com.kh.ypjp.security.model.provider.JWTProvider;
 import com.kh.ypjp.security.model.service.AuthService;
 import com.kh.ypjp.security.model.service.EmailService;
 import com.kh.ypjp.security.model.service.KakaoService;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -93,19 +95,27 @@ public class AuthController {
 	}
 
 	@PostMapping("/enroll/social")
-	public ResponseEntity<AuthResult> enrollSocial(@RequestBody Map<String, String> req) {
-		String email = req.get("email");
-		String username = req.get("username");
-		String provider = req.get("provider");
-		String providerUserId = req.get("providerUserId");
-		String accessToken = req.get("accessToken");
+	public ResponseEntity<Map<String, String>> enrollSocial(@RequestBody Map<String, String> req,
+	                                                        HttpServletResponse response) {
 
-		AuthResult result = authService.enrollSocial(email, username, provider, providerUserId, accessToken);
+	    String email = req.get("email");
+	    String username = req.get("username");
+	    String provider = req.get("provider");
+	    String providerUserId = req.get("providerUserId");
 
-		ResponseCookie refreshCookie = ResponseCookie.from(REFRESH_COOKIE, result.getRefreshToken()).httpOnly(true)
-				.secure(false).path("/").sameSite("Lax").maxAge(Duration.ofDays(7)).build();
-		return ResponseEntity.status(HttpStatus.CREATED).header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
-				.body(result);
+	    AuthResult result = authService.enrollSocial(email, username, provider, providerUserId);
+
+	    ResponseCookie refreshCookie = ResponseCookie.from(REFRESH_COOKIE, result.getRefreshToken())
+	            .httpOnly(true)
+	            .secure(false)
+	            .path("/")
+	            .sameSite("Lax")
+	            .maxAge(Duration.ofDays(7))
+	            .build();
+	    response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
+
+	    return ResponseEntity.status(HttpStatus.CREATED)
+	            .body(Map.of("accessToken", result.getAccessToken()));
 	}
 	
 	@GetMapping("/check-username")

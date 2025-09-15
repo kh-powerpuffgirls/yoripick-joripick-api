@@ -115,7 +115,8 @@ public class AuthService {
     
     @Transactional
     public AuthResult enrollSocial(String email, String username, String provider,
-                                   String providerUserId, String accessToken) {
+                                   String providerUserId) {
+
         authDao.findUserByEmail(email).ifPresent(u -> {
             throw new IllegalArgumentException("이미 사용중인 이메일입니다.");
         });
@@ -123,19 +124,14 @@ public class AuthService {
             throw new IllegalArgumentException("이미 사용중인 닉네임입니다.");
         });
 
+
         User user = User.builder()
                 .email(email)
                 .username(username)
+                .provider(provider)
                 .build();
         authDao.insertUser(user);
 
-        UserIdentities identities = UserIdentities.builder()
-                .provider(provider)
-                .providerUserId(providerUserId)
-                .accessToken(accessToken)
-                .userNo(user.getUserNo())
-                .build();
-        authDao.insertUserIdentities(identities);
 
         Authority authority = Authority.builder()
                 .userNo(user.getUserNo())
@@ -143,8 +139,17 @@ public class AuthService {
                 .build();
         authDao.insertUserRole(authority);
 
-        String newAccessToken = jwt.createAccessToken(user.getUserNo(),user.getProvider(), 30);
-        String refreshToken = jwt.createRefreshToken(user.getUserNo(),user.getProvider(), 7);
+        String newAccessToken = jwt.createAccessToken(user.getUserNo(), provider, 30);
+        String refreshToken = jwt.createRefreshToken(user.getUserNo(), provider, 7);
+
+
+        UserIdentities identities = UserIdentities.builder()
+                .provider(provider)
+                .providerUserId(providerUserId)
+                .accessToken(newAccessToken)
+                .userNo(user.getUserNo())
+                .build();
+        authDao.insertUserIdentities(identities);
 
         return AuthResult.builder()
                 .accessToken(newAccessToken)
@@ -152,6 +157,7 @@ public class AuthService {
                 .user(user)
                 .build();
     }
+
     
     public Optional<User> findUserByUsername(String username) {
     	return authDao.findUserByUsername(username);
