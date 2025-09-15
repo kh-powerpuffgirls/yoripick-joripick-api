@@ -46,7 +46,7 @@ public class AdminController {
         return ResponseEntity.ok(response);
     }
 	
-	@PatchMapping("/resolve/{formNo}")
+	@PatchMapping("/challenges/{formNo}")
     public ResponseEntity<Void> resolveChallenge(@PathVariable Long formNo) {
         service.resolveChallenge(formNo);
         return ResponseEntity.ok().build();
@@ -95,6 +95,12 @@ public class AdminController {
 	    response.put("list", list);
 	    response.put("pageInfo", pageInfo);
         return ResponseEntity.ok(response);
+    }
+	
+	@PatchMapping("/reports/{reportNo}")
+    public ResponseEntity<Void> resolveReports(@PathVariable Long reportNo) {
+        service.resolveReports(reportNo);
+        return ResponseEntity.ok().build();
     }
 	
 }

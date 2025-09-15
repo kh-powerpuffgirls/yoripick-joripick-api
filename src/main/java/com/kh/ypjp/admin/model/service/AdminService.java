@@ -26,10 +26,6 @@ public class AdminService {
 		return dao.getAllChallenges(param);
 	}
 
-	public int resolveChallenge(Long formNo) {
-		return dao.resolveChallenge(formNo);
-	}
-
 	public Long countRecipes() {
 		return dao.countRecipes();
 	}
@@ -52,6 +48,14 @@ public class AdminService {
 
 	public List<Report> getCommReports(Map<String, Object> param) {
 		return dao.getCommReports(param);
+	}
+
+	public int resolveChallenge(Long formNo) {
+		return dao.resolveChallenge(formNo);
+	}
+	
+	public int resolveReports(Long reportNo) {
+		return dao.resolveReports(reportNo);
 	}
 
 }

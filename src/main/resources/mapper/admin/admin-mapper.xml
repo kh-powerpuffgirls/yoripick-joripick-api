@@ -25,12 +25,6 @@
 		) WHERE rnum BETWEEN #{offset} + 1 AND #{offset} + #{limit}
 	</select>
 	
-	<update id="resolveChallenge">
-		UPDATE CHALLENGE_FORM
-	    SET resolved = 'Y'
-	    WHERE form_no = #{formNo}
-	</update>
-	
 	<select id="countRecipes" resultType="long">
 		SELECT (
 		    SELECT COUNT(*) FROM RECIPE 
@@ -153,4 +147,16 @@
 		    ORDER BY report_no
 	    ) WHERE rnum BETWEEN #{offset} + 1 AND #{offset} + #{limit}
 	</select>
+	
+	<update id="resolveChallenge">
+		UPDATE CHALLENGE_FORM
+	    SET resolved = 'Y'
+	    WHERE form_no = #{formNo}
+	</update>
+	
+	<update id="resolveReports">
+		UPDATE REPORT
+	    SET resolved = 'Y'
+	    WHERE report_no = #{reportNo}
+	</update>
 </mapper>

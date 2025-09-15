@@ -26,10 +26,6 @@ public class AdminDao {
 		return session.selectList("admin.getAllChallenges", param);
 	}
 
-	public int resolveChallenge(Long formNo) {
-		return session.update("admin.resolveChallenge", formNo);
-	}
-
 	public Long countRecipes() {
 		return session.selectOne("admin.countRecipes");
 	}
@@ -38,12 +34,12 @@ public class AdminDao {
 		return session.selectList("admin.getRecipes", param);
 	}
 
-	public List<Report> getUserReports(Map<String, Object> param) {
-		return session.selectList("admin.getUserReports", param);
-	}
-
 	public Long countUserReports() {
 		return session.selectOne("admin.countUserReports");
+	}
+	
+	public List<Report> getUserReports(Map<String, Object> param) {
+		return session.selectList("admin.getUserReports", param);
 	}
 
 	public Long countCommReports() {
@@ -52,6 +48,14 @@ public class AdminDao {
 
 	public List<Report> getCommReports(Map<String, Object> param) {
 		return session.selectList("admin.getCommReports", param);
+	}
+	
+	public int resolveChallenge(Long formNo) {
+		return session.update("admin.resolveChallenge", formNo);
+	}
+
+	public int resolveReports(Long reportNo) {
+		return session.update("admin.resolveReports", reportNo);
 	}
 
 }
