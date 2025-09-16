@@ -1,5 +1,6 @@
 package com.kh.ypjp.admin.controller;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,6 +18,8 @@ import com.kh.ypjp.admin.model.dto.AdminDto.ChallengeForm;
 import com.kh.ypjp.admin.model.dto.AdminDto.Recipe;
 import com.kh.ypjp.admin.model.dto.AdminDto.Report;
 import com.kh.ypjp.admin.model.service.AdminService;
+import com.kh.ypjp.chat.model.dto.ChatDto.ChatMsgDto;
+import com.kh.ypjp.chat.model.dto.ChatDto.ChatRoomDto;
 import com.kh.ypjp.common.PageInfo;
 import com.kh.ypjp.common.UtilService;
 
@@ -113,6 +116,14 @@ public class AdminController {
     public ResponseEntity<Void> resolveReports(@PathVariable Long reportNo) {
         service.resolveReports(reportNo);
         return ResponseEntity.ok().build();
+    }
+	
+	@GetMapping("/chatRooms/{userNo}")
+	public ResponseEntity<ChatRoomDto> getChatRooms(@PathVariable Long userNo) {
+		ChatRoomDto chatRoom = service.getChatRooms(userNo);
+		List<ChatMsgDto> chatMessages = service.getChatMessages(param);
+		chatRoom.setMessages(new ArrayList<>(chatMessages));
+        return ResponseEntity.ok(chatRoom);
     }
 	
 }
