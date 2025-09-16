@@ -12,6 +12,7 @@ import com.kh.ypjp.common.model.vo.Nutrient;
 import com.kh.ypjp.community.recipe.dto.UserRecipeDto;
 import com.kh.ypjp.community.recipe.dto.UserRecipeDto.RecipeDetailResponse;
 import com.kh.ypjp.community.recipe.dto.UserRecipeDto.UserRecipeResponse;
+import com.kh.ypjp.community.recipe.model.vo.CookingStep;
 import com.kh.ypjp.community.recipe.model.vo.RcpDetail;
 import com.kh.ypjp.community.recipe.model.vo.RcpIngredient;
 import com.kh.ypjp.community.recipe.model.vo.RcpMethod;
@@ -95,8 +96,8 @@ public class UserRecipeDaoImpl implements UserRecipeDao{
     
     // 상세 조회 메소드 구현
     @Override
-    public RecipeDetailResponse selectRecipeDetail(int rcpNo) {
-        return session.selectOne(NAMESPACE + "selectRecipeDetail", rcpNo);
+    public RecipeDetailResponse selectRecipeDetail(Map<String, Object> params) {
+        return session.selectOne(NAMESPACE + "selectRecipeDetail", params);
     }
 
     // 조회수 증가 메소드 구현
@@ -125,4 +126,24 @@ public class UserRecipeDaoImpl implements UserRecipeDao{
     public int countLikes(int rcpNo) {
         return session.selectOne(NAMESPACE + "countLikes", rcpNo);
     }
+
+	@Override
+	public int mergeLikeStatus(Map<String, Object> params) {
+		return session.update("userRecipeMapper.mergeLikeStatus", params);
+	}
+
+	@Override
+	public List<RcpIngredient> selectIngredientsByRcpNo(int rcpNo) {
+		return session.selectList(NAMESPACE + "selectIngredientsByRcpNo", rcpNo);
+	}
+
+	@Override
+	public List<CookingStep> selectStepsByRcpNo(int rcpNo) {
+        return session.selectList(NAMESPACE + "selectStepsByRcpNo", rcpNo);
+	}
+
+	@Override
+	public String findLikeStatus(Map<String, Object> params) {
+		return session.selectOne("userRecipeMapper.findLikeStatus", params);
+	}
 }

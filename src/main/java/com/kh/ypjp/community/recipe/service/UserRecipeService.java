@@ -23,7 +23,9 @@ public interface UserRecipeService {
 
     void createRecipe(UserRecipeDto.RecipeWriteRequest request, long userNo) throws Exception;
     
-    RecipeDetailResponse selectRecipeDetail(int rcpNo);
+    RecipeDetailResponse selectRecipeDetail(int rcpNo, Long userNo);
     
     UserRecipeDto.LikeResponse toggleLike(int rcpNo, long userNo);
+
+	void updateLikeStatus(int rcpNo, Long userNo, String status);
 }

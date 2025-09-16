@@ -26,6 +26,7 @@ import com.kh.ypjp.community.recipe.dto.UserRecipeDto.RecipeDetailResponse;
 import com.kh.ypjp.community.recipe.dto.UserRecipeDto.RecipePage;
 import com.kh.ypjp.community.recipe.dto.UserRecipeDto.RecipeWriteRequest;
 import com.kh.ypjp.community.recipe.dto.UserRecipeDto.UserRecipeResponse;
+import com.kh.ypjp.community.recipe.model.vo.CookingStep;
 import com.kh.ypjp.community.recipe.model.vo.RcpDetail;
 import com.kh.ypjp.community.recipe.model.vo.RcpIngredient;
 import com.kh.ypjp.community.recipe.model.vo.RcpMethod;
@@ -244,37 +245,51 @@ public class UserRecipeServiceImpl implements UserRecipeService {
     }
     
     
+    
     @Override
     @Transactional
-    public RecipeDetailResponse selectRecipeDetail(int rcpNo) {
+    public RecipeDetailResponse selectRecipeDetail(int rcpNo, Long userNo) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("rcpNo", rcpNo);
+        params.put("userNo", userNo);
         
-        // 1. 먼저 조회수를 1 증가시킵니다.
         dao.increaseViewCount(rcpNo);
-
-        // 2. 레시피 상세 정보를 조회합니다.
-        RecipeDetailResponse detail = dao.selectRecipeDetail(rcpNo);
+        RecipeDetailResponse recipe = dao.selectRecipeDetail(params);
         
-        // 3. 각 이미지 경로를 전체 URL로 변환합니다.
-        if (detail != null) {
-            // 메인 이미지
-//            if (detail.getMainImage() != null && !detail.getMainImage().isEmpty()) {
-//                detail.setMainImage(createFullUrl(detail.getMainImage()));
-//            }
-//            // 작성자 프로필 이미지
-//            if (detail.getWriter() != null && detail.getWriter().getServerName() != null && !detail.getWriter().getServerName().isEmpty()) {
-//                detail.getWriter().setServerName(createFullUrl(detail.getWriter().getServerName()));
-//            }
-//            // 요리 순서 이미지
-//            for (RecipeDetailResponse.Step step : detail.getSteps()) {
-//                if (step.getServerName() != null && !step.getServerName().isEmpty()) {
-//                    step.setServerName(createFullUrl(step.getServerName()));
-//                }
-//            }
+        if (recipe == null) {
+            return null;
         }
         
-        return detail;
+        // 이전에 만들어두신 findLike 쿼리를 활용
+        if (userNo != null) { // 비로그인 사용자가 아닐 경우에만 체크
+        	String likeStatus = dao.findLikeStatus(params); 
+            recipe.setMyLikeStatus(likeStatus);
+        }
+
+        recipe.setIngredients(dao.selectIngredientsByRcpNo(rcpNo));
+        recipe.setSteps(dao.selectStepsByRcpNo(rcpNo));
+
+        // 대표 이미지
+        if (recipe.getMainImage() != null && !recipe.getMainImage().isEmpty()) {
+            recipe.setMainImage(createFullUrl(recipe.getMainImage()));
+        }
+
+        //작성자 프로필 이미지
+        if (recipe.getWriter() != null && recipe.getWriter().getProfileImage() != null && !recipe.getWriter().getProfileImage().isEmpty()) {
+            recipe.getWriter().setProfileImage(createFullUrl(recipe.getWriter().getProfileImage()));
+        }
+        
+        // 요리 순서(Steps) 이미지 
+        if (recipe.getSteps() != null) {
+            for (CookingStep step : recipe.getSteps()) {
+                if (step.getServerName() != null && !step.getServerName().isEmpty()) {
+                    step.setServerName(createFullUrl(step.getServerName()));
+                }
+            }
+        }
+        
+        return recipe;
     }
-    
     
     // 이미지 경로를 완성된 URL로 만들어주는 private 헬퍼 메소드
     private String createFullUrl(String serverName) {
@@ -283,6 +298,8 @@ public class UserRecipeServiceImpl implements UserRecipeService {
                 .path(serverName)
                 .toUriString();
     }
+    
+    
     
     //좋아요 기능
     @Override
@@ -314,5 +331,15 @@ public class UserRecipeServiceImpl implements UserRecipeService {
 //        return new UserRecipeDto.LikeResponse(totalLikes, isLiked);
         return null;
     }
+
+	@Override
+	public void updateLikeStatus(int rcpNo, Long userNo, String status) {
+		Map<String, Object> params = new HashMap<>();
+        params.put("rcpNo", rcpNo);
+        params.put("userNo", userNo);
+        params.put("status", status);
+        
+        dao.mergeLikeStatus(params);
+	}
 
 }

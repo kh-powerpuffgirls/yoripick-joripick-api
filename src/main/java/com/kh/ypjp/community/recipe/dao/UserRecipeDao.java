@@ -8,6 +8,7 @@ import com.kh.ypjp.common.model.vo.Image;
 import com.kh.ypjp.common.model.vo.Nutrient;
 import com.kh.ypjp.community.recipe.dto.UserRecipeDto;
 import com.kh.ypjp.community.recipe.dto.UserRecipeDto.RecipeDetailResponse;
+import com.kh.ypjp.community.recipe.model.vo.CookingStep;
 import com.kh.ypjp.community.recipe.model.vo.RcpDetail;
 import com.kh.ypjp.community.recipe.model.vo.RcpIngredient;
 import com.kh.ypjp.community.recipe.model.vo.RcpMethod;
@@ -43,7 +44,7 @@ public interface UserRecipeDao {
     
     int insertNutrient(Nutrient nutrient);
     
-    RecipeDetailResponse selectRecipeDetail(int rcpNo);
+    RecipeDetailResponse selectRecipeDetail(Map<String, Object> params);
     
     int increaseViewCount(int rcpNo);
     
@@ -53,5 +54,13 @@ public interface UserRecipeDao {
     void insertLike(Map<String, Object> params);
     void deleteLike(Map<String, Object> params);
     int countLikes(int rcpNo);
+
+	int mergeLikeStatus(Map<String, Object> params);
+
+	List<RcpIngredient> selectIngredientsByRcpNo(int rcpNo);
+
+	List<CookingStep> selectStepsByRcpNo(int rcpNo);
+
+	String findLikeStatus(Map<String, Object> params);
 
 }

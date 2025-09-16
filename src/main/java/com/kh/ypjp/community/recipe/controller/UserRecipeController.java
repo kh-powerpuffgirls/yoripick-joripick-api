@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -21,6 +22,7 @@ import com.kh.ypjp.community.recipe.model.vo.RcpMethod;
 import com.kh.ypjp.community.recipe.model.vo.RcpSituation;
 import com.kh.ypjp.community.recipe.service.UserRecipeService;
 
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -57,6 +59,7 @@ public class UserRecipeController {
         return ResponseEntity.ok(list);
     }
 
+    
     @GetMapping("/options/methods")
     public ResponseEntity<List<RcpMethod>> getRcpMethods() {
         return ResponseEntity.ok(recipeService.selectRcpMethods());
@@ -102,25 +105,34 @@ public class UserRecipeController {
     }
     
     // 레시피 상세
-    @GetMapping("/community/recipe/{rcpNo}")
-    public ResponseEntity<RecipeDetailResponse> selectRecipeDetail(@PathVariable int rcpNo) {
-        RecipeDetailResponse recipeDetail = recipeService.selectRecipeDetail(rcpNo);
+    @GetMapping("/community/recipe/{rcpNo}/{userNo}")
+    public ResponseEntity<RecipeDetailResponse> selectRecipeDetail(
+    		@PathVariable int rcpNo,
+    		@PathVariable Long userNo
+    		) {
+    	RecipeDetailResponse recipeDetail = recipeService.selectRecipeDetail(rcpNo, userNo);
         
         if (recipeDetail == null) {
-            // 조회 결과가 없으면 404 Not Found 응답
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.notFound().build(); // 해당 레시피가 없을 경우 404 응답
         }
         
         return ResponseEntity.ok(recipeDetail);
     }
-    @PostMapping("/community/recipe/{rcpNo}/like")
-    public ResponseEntity<UserRecipeDto.LikeResponse> toggleLike(
+    // --- 좋아요 상태 변경 ---
+    @PostMapping("/community/recipe/{rcpNo}/like/{userNo}")
+    public ResponseEntity<Void> updateLikeStatus(
             @PathVariable int rcpNo,
-            @PathVariable Long userNo ) { // 실제 사용하는 유저 객체로 변경 필요
+            @PathVariable Long userNo, // ✨ @PathVariable로 받음
+            @RequestBody LikeRequest request) {
         
-        //  서비스 호출
-        UserRecipeDto.LikeResponse response = recipeService.toggleLike(rcpNo, userNo);
-        
-        return ResponseEntity.ok(response);
+        recipeService.updateLikeStatus(rcpNo, userNo, request.getStatus());
+        return ResponseEntity.ok().build();
     }
+    
+    @Data
+    public static class LikeRequest {
+        private String status;
+    }
+    
+ 
 }
