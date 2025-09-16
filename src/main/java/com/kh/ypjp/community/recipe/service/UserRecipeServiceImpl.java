@@ -257,19 +257,19 @@ public class UserRecipeServiceImpl implements UserRecipeService {
         // 3. 각 이미지 경로를 전체 URL로 변환합니다.
         if (detail != null) {
             // 메인 이미지
-            if (detail.getMainImage() != null && !detail.getMainImage().isEmpty()) {
-                detail.setMainImage(createFullUrl(detail.getMainImage()));
-            }
-            // 작성자 프로필 이미지
-            if (detail.getWriter() != null && detail.getWriter().getServerName() != null && !detail.getWriter().getServerName().isEmpty()) {
-                detail.getWriter().setServerName(createFullUrl(detail.getWriter().getServerName()));
-            }
-            // 요리 순서 이미지
-            for (RecipeDetailResponse.Step step : detail.getSteps()) {
-                if (step.getServerName() != null && !step.getServerName().isEmpty()) {
-                    step.setServerName(createFullUrl(step.getServerName()));
-                }
-            }
+//            if (detail.getMainImage() != null && !detail.getMainImage().isEmpty()) {
+//                detail.setMainImage(createFullUrl(detail.getMainImage()));
+//            }
+//            // 작성자 프로필 이미지
+//            if (detail.getWriter() != null && detail.getWriter().getServerName() != null && !detail.getWriter().getServerName().isEmpty()) {
+//                detail.getWriter().setServerName(createFullUrl(detail.getWriter().getServerName()));
+//            }
+//            // 요리 순서 이미지
+//            for (RecipeDetailResponse.Step step : detail.getSteps()) {
+//                if (step.getServerName() != null && !step.getServerName().isEmpty()) {
+//                    step.setServerName(createFullUrl(step.getServerName()));
+//                }
+//            }
         }
         
         return detail;

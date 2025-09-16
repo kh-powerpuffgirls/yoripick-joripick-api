@@ -170,6 +170,11 @@
 	    JOIN NUTRIENT N ON I.NUTRIENT_NO = N.NUTRIENT_NO
 	    WHERE I.ING_NO = #{ingNo}
 	</select>
+	
+	
+	
+	
+	
 	<update id="increaseViewCount" parameterType="_int">
         UPDATE RECIPE
         SET VIEWS = VIEWS + 1
