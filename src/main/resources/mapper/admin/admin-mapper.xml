@@ -92,6 +92,18 @@
 		WHERE rnum BETWEEN #{offset} + 1 AND #{offset} + #{limit}
 	</select>
 	
+	<update id="disproveRecipe">
+		UPDATE RECIPE
+	    SET approval = 'C'
+	    WHERE rcp_no = #{rcpNo}
+	</update>
+	
+	<update id="approveRecipe">
+		UPDATE RECIPE
+	    SET approval = 'Y'
+	    WHERE rcp_no = #{rcpNo}
+	</update>
+	
 	<select id="countUserReports" resultType="long">
 		SELECT COUNT(*)
 		FROM REPORT

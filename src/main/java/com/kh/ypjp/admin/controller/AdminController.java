@@ -46,9 +46,15 @@ public class AdminController {
         return ResponseEntity.ok(response);
     }
 	
-	@PatchMapping("/challenges/{formNo}")
-    public ResponseEntity<Void> resolveChallenge(@PathVariable Long formNo) {
-        service.resolveChallenge(formNo);
+	@PatchMapping("/recipes/disprove/{rcpNo}")
+    public ResponseEntity<Void> disproveRecipe(@PathVariable Long rcpNo) {
+        service.disproveRecipe(rcpNo);
+        return ResponseEntity.ok().build();
+    }
+	
+	@PatchMapping("/recipes/approve/{rcpNo}")
+    public ResponseEntity<Void> approveRecipe(@PathVariable Long rcpNo) {
+        service.approveRecipe(rcpNo);
         return ResponseEntity.ok().build();
     }
 	
@@ -65,6 +71,12 @@ public class AdminController {
 	    response.put("list", list);
 	    response.put("pageInfo", pageInfo);
         return ResponseEntity.ok(response);
+    }
+	
+	@PatchMapping("/challenges/{formNo}")
+    public ResponseEntity<Void> resolveChallenge(@PathVariable Long formNo) {
+        service.resolveChallenge(formNo);
+        return ResponseEntity.ok().build();
     }
 	
 	@GetMapping("/reports/user")

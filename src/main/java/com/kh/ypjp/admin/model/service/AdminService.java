@@ -58,4 +58,12 @@ public class AdminService {
 		return dao.resolveReports(reportNo);
 	}
 
+	public int disproveRecipe(Long rcpNo) {
+		return dao.disproveRecipe(rcpNo);
+	}
+
+	public int approveRecipe(Long rcpNo) {
+		return dao.approveRecipe(rcpNo);
+	}
+
 }

@@ -58,4 +58,12 @@ public class AdminDao {
 		return session.update("admin.resolveReports", reportNo);
 	}
 
+	public int disproveRecipe(Long rcpNo) {
+		return session.update("admin.disproveRecipe", rcpNo);
+	}
+
+	public int approveRecipe(Long rcpNo) {
+		return session.update("admin.approveRecipe", rcpNo);
+	}
+
 }
