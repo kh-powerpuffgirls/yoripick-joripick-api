@@ -40,14 +40,10 @@ public class AuthDto {
         private String email;
         private String username;
         private Long imageNo;
-        private String sikBti;
-        private boolean msgNoti;
-        private boolean replyNoti;
-        private boolean rvwNoti;
-        private boolean expNoti;
         private String status;
         private LocalDate inactiveDate;
         private List<String> roles;
+        private String provider;
     }
 
     @Data

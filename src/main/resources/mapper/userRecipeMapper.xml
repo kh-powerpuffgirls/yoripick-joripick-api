@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="userRecipeMapper">
+    
+    <sql id="recipeSearchCondition">
+        <where>
+            R.DELETE_STATUS = 'N'
+            <if test="rcpMthNo != null and rcpMthNo != ''">
+                AND R.RCP_MTH_NO = #{rcpMthNo}
+            </if>
+            <if test="rcpStaNo != null and rcpStaNo != ''">
+                AND R.RCP_STA_NO = #{rcpStaNo}
+            </if>
+            <if test="ingredientList != null and !ingredientList.isEmpty()">
+                <foreach item="ingredientName" collection="ingredientList">
+                    AND EXISTS (
+                        SELECT 1 
+                        FROM RCP_INGREDIENT RI
+                        JOIN INGREDIENT I ON RI.ING_NO = I.ING_NO
+                        WHERE RI.RCP_NO = R.RCP_NO AND I.ING_NAME LIKE '%' || #{ingredientName} || '%'
+                    )
+                </foreach>
+            </if>
+        </where>
+    </sql>
+
+    <select id="selectRecipeList" parameterType="map" resultType="com.kh.ypjp.community.recipe.dto.UserRecipeDto$UserRecipeResponse">
+        SELECT * FROM (
+            SELECT
+                R.RCP_NO        AS rcpNo,
+                R.RCP_NAME      AS rcpName,
+                R.CREATED_AT    AS createdAt,
+                U.USERNAME,
+                U.SIK_BTI       AS sikBti,
+                RI.SERVER_NAME   AS serverName,
+                UI.SERVER_NAME   AS userProfileImage,
+                NVL(V.AVG_STARS, 0) AS avgStars,
+                NVL(V.REVIEW_COUNT, 0) AS reviewCount
+            FROM RECIPE R
+            JOIN USERS U ON (R.USER_NO = U.USER_NO)
+            LEFT JOIN IMAGE RI ON (R.IMAGE_NO = RI.IMAGE_NO)
+            LEFT JOIN IMAGE UI ON (U.IMAGE_NO = UI.IMAGE_NO)
+            LEFT JOIN (
+                SELECT REF_NO, AVG(STARS) AS AVG_STARS, COUNT(*) AS REVIEW_COUNT
+                FROM REVIEW WHERE RCP_SOURCE = 'RCP' GROUP BY REF_NO
+            ) V ON R.RCP_NO = V.REF_NO
+            <include refid="recipeSearchCondition"/>
+            <choose>
+                <when test="sort == 'stars'">
+                    ORDER BY avgStars DESC, R.CREATED_AT DESC
+                </when>
+                <otherwise>
+                    ORDER BY R.CREATED_AT DESC
+                </otherwise>
+            </choose>
+        )
+        OFFSET (#{page} * #{pageSize}) ROWS
+        FETCH NEXT #{pageSize} ROWS ONLY
+    </select>
+
+    <select id="selectRecipeCount" parameterType="map" resultType="_long">
+        SELECT COUNT(*)
+        FROM RECIPE R
+        <include refid="recipeSearchCondition"/>
+    </select>
+
+    <select id="selectRankingRecipes" resultType="com.kh.ypjp.community.recipe.dto.UserRecipeDto$UserRecipeResponse">
+         SELECT * FROM (
+        SELECT
+            R.RCP_NO        AS rcpNo,
+            R.RCP_NAME      AS rcpName,
+            R.CREATED_AT    AS createdAt,
+            U.USERNAME,
+            U.SIK_BTI       AS sikBti,
+            RI.SERVER_NAME   AS serverName,
+            UI.SERVER_NAME   AS userProfileImage,
+            NVL(V.AVG_STARS, 0) AS avgStars,
+            NVL(V.REVIEW_COUNT, 0) AS reviewCount,
+            L.LIKE_COUNT 
+        FROM RECIPE R
+        JOIN USERS U ON (R.USER_NO = U.USER_NO)
+        LEFT JOIN IMAGE  RI ON (R.IMAGE_NO = RI.IMAGE_NO)
+        LEFT JOIN IMAGE  UI ON (U.IMAGE_NO = UI.IMAGE_NO)
+        LEFT JOIN (
+            SELECT REF_NO, AVG(STARS) AS AVG_STARS, COUNT(*) AS REVIEW_COUNT
+            FROM REVIEWS WHERE RCP_SOURCE = 'RCP' GROUP BY REF_NO
+        ) V ON R.RCP_NO = V.REF_NO
+        LEFT JOIN (
+            SELECT
+                RCP_NO,
+                COUNT(*) AS LIKE_COUNT
+            FROM RECIPE_LIKES
+           
+            WHERE CREATED_AT >= TRUNC(SYSDATE, 'IW') AND CREATED_AT &lt; TRUNC(SYSDATE, 'IW') + 7
+            GROUP BY RCP_NO
+        ) L ON R.RCP_NO = L.RCP_NO
+        WHERE R.DELETE_STATUS = 'N'
+        ORDER BY NVL(L.LIKE_COUNT, 0) DESC, R.CREATED_AT DESC
+    )
+    FETCH FIRST 4 ROWS ONLY
+</select>
+
+    <select id="selectRcpMethods" resultType="com.kh.ypjp.community.recipe.model.vo.RcpMethod">
+        SELECT RCP_MTH_NO, RCP_METHOD 
+        FROM RCP_METHOD
+    </select>
+
+    <select id="selectRcpSituations" resultType="com.kh.ypjp.community.recipe.model.vo.RcpSituation">
+        SELECT RCP_STA_NO, RCP_SITUATION 
+        FROM RCP_SITUATION
+    </select>
+
+    <select id="searchIngredients" parameterType="string" resultType="com.kh.ypjp.community.recipe.dto.UserRecipeDto$IngredientInfo">
+        SELECT I.ING_NO AS ingNo, I.ING_NAME AS ingName, N.ENERGY, N.CARB, N.PROTEIN, N.FAT, N.SODIUM
+        FROM INGREDIENT I
+        JOIN NUTRIENT N ON I.NUTRIENT_NO = N.NUTRIENT_NO
+        WHERE I.ING_NAME LIKE '%' || #{keyword} || '%'
+    </select>
+
+
+
+    <insert id="insertImage" parameterType="map">
+		<selectKey keyProperty="imageNo" resultType="_int" order="BEFORE">
+			SELECT SEQ_IMAGE_NO.NEXTVAL FROM DUAL
+		</selectKey>
+		INSERT INTO IMG (IMAGE_NO, ORIGIN_NAME, SERVER_NAME)
+		VALUES (#{imageNo}, #{originName}, #{serverName})
+	</insert>
+
+    <insert id="insertNutrient" parameterType="Nutrient">
+        <selectKey keyProperty="nutrientNo" resultType="_int" order="BEFORE">
+            SELECT SEQ_NUTRIENT_NO.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO NUTRIENT (NUTRIENT_NO, ENERGY, CARB, PROTEIN, FAT, SODIUM)
+        VALUES (#{nutrientNo}, #{energy}, #{carb}, #{protein}, #{fat}, #{sodium})
+    </insert>
+	
+    <select id="getNextRcpNo" resultType="_long">
+        SELECT SEQ_RECIPE_NO.NEXTVAL FROM DUAL
+    </select>
+    
+    <insert id="insertRecipe" parameterType="Recipe">
+        INSERT INTO RECIPE (
+            RCP_NO, USER_NO, RCP_NAME, RCP_INFO, RCP_MTH_NO,
+            RCP_STA_NO, TAG, IMAGE_NO, NUTRIENT_NO
+        ) VALUES (
+            #{rcpNo}, #{userNo}, #{rcpName}, #{rcpInfo}, #{rcpMthNo},
+            #{rcpStaNo}, #{tag}, #{imageNo}, #{nutrientNo}
+        )
+    </insert>
+
+    <insert id="insertRcpIngredient" parameterType="com.kh.ypjp.community.recipe.model.vo.RcpIngredient">
+	    INSERT INTO RCP_INGREDIENT (RCP_NO, ING_NO, QUANTITY, WEIGHT)
+	    VALUES (#{rcpNo}, #{ingNo}, #{quantity}, #{weight})
+	</insert>
+
+    <insert id="insertRcpDetail" parameterType="com.kh.ypjp.community.recipe.model.vo.RcpDetail">
+	    INSERT INTO RCP_DETAIL (RCP_NO, RCP_ORDER, DESCRIPTION, IMAGE_NO)
+	    VALUES (#{rcpNo}, #{rcpOrder}, #{description}, #{imageNo})
+	</insert>
+	
+	<select id="findNutrientsByIngNo" parameterType="_int" resultType="Nutrient">
+	    SELECT
+	        N.NUTRIENT_NO AS nutrientNo,
+	        N.ENERGY,
+	        N.CARB,
+	        N.PROTEIN,
+	        N.FAT,
+	        N.SODIUM
+	    FROM INGREDIENT I
+	    JOIN NUTRIENT N ON I.NUTRIENT_NO = N.NUTRIENT_NO
+	    WHERE I.ING_NO = #{ingNo}
+</select>
+	
+	
+
+</mapper>

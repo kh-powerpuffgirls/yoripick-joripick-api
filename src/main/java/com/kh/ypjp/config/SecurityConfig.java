@@ -23,6 +23,8 @@ import com.kh.ypjp.security.model.provider.JWTProvider;
 
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+//임의추가 -> url접근때문에 
+import org.springframework.http.HttpMethod;
 
 @Configuration
 @RequiredArgsConstructor
@@ -57,12 +59,20 @@ public class SecurityConfig {
                     res.sendError(HttpServletResponse.SC_FORBIDDEN, "FORBIDDEN");
                 })
             )
-            // 세션 관리 - 무상태(stateless) 설정
             .sessionManagement(management -> management.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            // 요청별 권한 설정
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/auth/**").permitAll()
-                .requestMatchers("/oauth2/**", "/login**", "/error").permitAll()
+                .requestMatchers("/login/**", "/oauth2/**", "/error").permitAll()
+                .requestMatchers("/chat/**").permitAll()
+                .requestMatchers("/ws/**").permitAll()
+                .requestMatchers("/community/**").permitAll()
+                .requestMatchers("/images/**").permitAll()
+                .requestMatchers("/mealplan/**").authenticated()
+                .requestMatchers(HttpMethod.GET, 
+				        "/api/community/recipe/**", 
+				        "/api/options/**", 
+				        "/api/ingredients/search"
+				    ).permitAll()
                 .anyRequest().authenticated()
             )
             // OAuth2 로그인 핸들러
