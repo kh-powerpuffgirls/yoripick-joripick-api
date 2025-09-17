@@ -25,6 +25,7 @@ import com.kh.ypjp.community.recipe.dto.UserRecipeDto.IngredientJsonDto;
 import com.kh.ypjp.community.recipe.dto.UserRecipeDto.RecipeDetailResponse;
 import com.kh.ypjp.community.recipe.dto.UserRecipeDto.RecipePage;
 import com.kh.ypjp.community.recipe.dto.UserRecipeDto.RecipeWriteRequest;
+import com.kh.ypjp.community.recipe.dto.UserRecipeDto.ReviewWriteRequest;
 import com.kh.ypjp.community.recipe.dto.UserRecipeDto.UserRecipeResponse;
 import com.kh.ypjp.community.recipe.model.vo.CookingStep;
 import com.kh.ypjp.community.recipe.model.vo.RcpDetail;
@@ -32,8 +33,11 @@ import com.kh.ypjp.community.recipe.model.vo.RcpIngredient;
 import com.kh.ypjp.community.recipe.model.vo.RcpMethod;
 import com.kh.ypjp.community.recipe.model.vo.RcpSituation;
 import com.kh.ypjp.community.recipe.model.vo.Recipe;
+import com.kh.ypjp.community.recipe.model.vo.Review;
 
 import jakarta.servlet.ServletContext;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -219,41 +223,17 @@ public class UserRecipeServiceImpl implements UserRecipeService {
         return total;
     }
 
-    /**
-     * MultipartFile을 서버에 저장하고 Image VO 객체를 반환하는 private 헬퍼 메서드
-     */
-    private Image saveImage(MultipartFile file) throws IOException {
-        if (file == null || file.isEmpty()) {
-            return null;
-        }
-
-        String savePath = servletContext.getRealPath("/resources/upload/recipe/");
-        File uploadDir = new File(savePath);
-        if (!uploadDir.exists()) {
-            uploadDir.mkdirs();
-        }
-        
-        String originName = file.getOriginalFilename();
-        String serverName = UUID.randomUUID().toString() + "_" + originName;
-        
-        file.transferTo(new File(savePath + serverName));
-
-        Image image = new Image();
-        image.setOriginName(originName);
-        image.setServerName(serverName);
-        return image;
-    }
-    
-    
-    
     @Override
     @Transactional
-    public RecipeDetailResponse selectRecipeDetail(int rcpNo, Long userNo) {
+    public RecipeDetailResponse selectRecipeDetail(int rcpNo, Long userNo, boolean increaseViewCount) {
+    	if (increaseViewCount) {
+    		dao.increaseViewCount(rcpNo);
+    	}
+    	
         Map<String, Object> params = new HashMap<>();
         params.put("rcpNo", rcpNo);
         params.put("userNo", userNo);
         
-        dao.increaseViewCount(rcpNo);
         RecipeDetailResponse recipe = dao.selectRecipeDetail(params);
         
         if (recipe == null) {
@@ -340,6 +320,43 @@ public class UserRecipeServiceImpl implements UserRecipeService {
         params.put("status", status);
         
         dao.mergeLikeStatus(params);
+	}
+
+	@Override
+    @Transactional(rollbackFor = Exception.class)
+	public void createReview(int rcpNo, long userNo, ReviewWriteRequest request) {
+		
+		long imageNo = 0;
+		
+		// 리뷰 이미지 저장 (이미지가 있을 경우에만)
+        MultipartFile imageFile = request.getImage();
+        if (imageFile != null && !imageFile.isEmpty()) {
+            String webPath = "community/review/" + rcpNo; // 리뷰 이미지 저장 경로
+            String changeName = utilService.getChangeName(imageFile, webPath);
+            String serverNameForDb = webPath + "/" + changeName;
+            
+            Map<String, Object> imageParam = new HashMap<>();
+            imageParam.put("originName", imageFile.getOriginalFilename());
+            imageParam.put("serverName", serverNameForDb);
+            
+            utilService.insertImage(imageParam);
+            imageNo = utilService.getImageNo(imageParam);
+        }
+
+        // 2. Review 객체 생성 및 데이터 설정
+        Review review = new Review();
+        review.setRefNo(rcpNo);      // 어느 레시피에 대한 리뷰인지
+        review.setUserNo(userNo);      // 누가 작성했는지
+        review.setContent(request.getContent()); // 내용
+        review.setStars(request.getStars());       // 별점
+        review.setImageNo((int)imageNo);         // 이미지 번호
+        review.setRcpSource("COMM"); // '사용자 레시피'에 대한 리뷰임을 표시
+
+        // 3. DAO를 호출하여 DB에 저장
+        dao.insertReview(review);
+		
+		
+		
 	}
 
 }

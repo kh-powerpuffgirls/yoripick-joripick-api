@@ -6,6 +6,7 @@ import java.util.List;
 import com.kh.ypjp.community.recipe.dto.UserRecipeDto;
 import com.kh.ypjp.community.recipe.dto.UserRecipeDto.RecipeDetailResponse;
 import com.kh.ypjp.community.recipe.dto.UserRecipeDto.RecipePage;
+import com.kh.ypjp.community.recipe.dto.UserRecipeDto.ReviewWriteRequest;
 import com.kh.ypjp.community.recipe.model.vo.RcpMethod;
 import com.kh.ypjp.community.recipe.model.vo.RcpSituation;
 
@@ -23,9 +24,11 @@ public interface UserRecipeService {
 
     void createRecipe(UserRecipeDto.RecipeWriteRequest request, long userNo) throws Exception;
     
-    RecipeDetailResponse selectRecipeDetail(int rcpNo, Long userNo);
+    RecipeDetailResponse selectRecipeDetail(int rcpNo, Long userNo, boolean increaseViewCount);
     
     UserRecipeDto.LikeResponse toggleLike(int rcpNo, long userNo);
 
 	void updateLikeStatus(int rcpNo, Long userNo, String status);
+
+	void createReview(int rcpNo, long userNo, ReviewWriteRequest request);
 }

@@ -18,6 +18,7 @@ import com.kh.ypjp.community.recipe.model.vo.RcpIngredient;
 import com.kh.ypjp.community.recipe.model.vo.RcpMethod;
 import com.kh.ypjp.community.recipe.model.vo.RcpSituation;
 import com.kh.ypjp.community.recipe.model.vo.Recipe;
+import com.kh.ypjp.community.recipe.model.vo.Review;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -145,5 +146,11 @@ public class UserRecipeDaoImpl implements UserRecipeDao{
 	@Override
 	public String findLikeStatus(Map<String, Object> params) {
 		return session.selectOne("userRecipeMapper.findLikeStatus", params);
+	}
+
+	@Override
+	public int insertReview(Review review) {
+		System.out.println(review);
+		 return session.insert("userRecipeMapper.insertReview", review);
 	}
 }

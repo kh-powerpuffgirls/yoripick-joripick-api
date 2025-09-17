@@ -1,5 +1,6 @@
 package com.kh.ypjp.community.recipe.controller;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
@@ -22,6 +23,9 @@ import com.kh.ypjp.community.recipe.model.vo.RcpMethod;
 import com.kh.ypjp.community.recipe.model.vo.RcpSituation;
 import com.kh.ypjp.community.recipe.service.UserRecipeService;
 
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -108,13 +112,46 @@ public class UserRecipeController {
     @GetMapping("/community/recipe/{rcpNo}/{userNo}")
     public ResponseEntity<RecipeDetailResponse> selectRecipeDetail(
     		@PathVariable int rcpNo,
-    		@PathVariable Long userNo
+    		@PathVariable Long userNo,
+    		HttpServletRequest req,
+    		HttpServletResponse res
     		) {
-    	RecipeDetailResponse recipeDetail = recipeService.selectRecipeDetail(rcpNo, userNo);
-        
-        if (recipeDetail == null) {
-            return ResponseEntity.notFound().build(); // 해당 레시피가 없을 경우 404 응답
+    	// 조회수 쿠키로직
+    	String cookieName = "readRecipeNo"; // 쿠키 이름을 레시피용으로 변경
+        String readRecipeNoCookie = null;
+        Cookie[] cookies = req.getCookies();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if (cookie.getName().equals(cookieName)) {
+                    readRecipeNoCookie = cookie.getValue();
+                    break;
+                }
+            }
         }
+        
+        boolean increase = false;
+        if (readRecipeNoCookie == null) {
+            increase = true;
+            readRecipeNoCookie = String.valueOf(rcpNo);
+        } else if (!Arrays.asList(readRecipeNoCookie.split("/")).contains(String.valueOf(rcpNo))) {
+            increase = true;
+            readRecipeNoCookie += "/" + rcpNo;
+        }
+        
+    	RecipeDetailResponse recipeDetail = recipeService.selectRecipeDetail(rcpNo, userNo, increase);
+
+        if (recipeDetail == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        // 조회수를 증가시켜야 하는 경우에만 새 쿠키를 응답에 추가합니다.
+        if (increase) {
+            Cookie newCookie = new Cookie(cookieName, readRecipeNoCookie);
+            newCookie.setPath("/");
+            newCookie.setMaxAge(60 * 60 * 24); // 24시간
+            res.addCookie(newCookie);
+        }
+        
         
         return ResponseEntity.ok(recipeDetail);
     }
@@ -132,6 +169,23 @@ public class UserRecipeController {
     @Data
     public static class LikeRequest {
         private String status;
+    }
+    
+    
+    //리뷰작성
+    @PostMapping(value = "/community/recipe/{rcpNo}/reviews/{userNo}", consumes = "multipart/form-data")
+    public ResponseEntity<Void> createReview(
+            @PathVariable int rcpNo,
+            @PathVariable long userNo,
+            @ModelAttribute UserRecipeDto.ReviewWriteRequest request) {
+        
+        try {
+            recipeService.createReview(rcpNo, userNo, request);
+            return ResponseEntity.status(HttpStatus.CREATED).build(); // 201 Created 응답
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
     
  

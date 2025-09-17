@@ -201,12 +201,12 @@
 	        <result property="profileImage" column="writer.profileImage"/>
 	    </association>
 	
-	    <association property="totalNutrient" javaType="com.kh.ypjp.common.model.vo.Nutrient">
-	        <result property="energy" column="totalNutrient.energy"/>
-	        <result property="carb" column="totalNutrient.carb"/>
-	        <result property="protein" column="totalNutrient.protein"/>
-	        <result property="fat" column="totalNutrient.fat"/>
-	        <result property="sodium" column="totalNutrient.sodium"/>
+	     <association property="totalNutrient" javaType="com.kh.ypjp.community.recipe.dto.UserRecipeDto$NutrientDetailDto">
+	        <result property="calories" column="totalNutrient.energy"/>
+	        <result property="carbs"    column="totalNutrient.carb"/>
+	        <result property="protein"  column="totalNutrient.protein"/>
+	        <result property="fat"      column="totalNutrient.fat"/>
+	        <result property="sodium"   column="totalNutrient.sodium"/>
 	    </association>
 	</resultMap>
 	
@@ -252,9 +252,31 @@
 	    SELECT LIKE_STATUS
 	    FROM LIKES
 	    WHERE USER_NO = #{userNo}
-	      AND REF_TYPE = 'RCP'
+	      AND REF_TYPE = 'RECIPE'
 	      AND REF_NO = #{rcpNo}
 	</select>
+	
+	<update id="mergeLikeStatus" parameterType="map">
+	  <choose>
+	    <when test="status == 'COMMON'">
+	      DELETE FROM LIKES
+	      WHERE REF_NO = #{rcpNo}
+	        AND USER_NO = #{userNo}
+	        AND REF_TYPE = 'RECIPE'
+	    </when>
+	    
+	    <otherwise>
+	      MERGE INTO LIKES L
+	      USING (SELECT 1 FROM DUAL)
+	      ON (L.REF_NO = #{rcpNo} AND L.USER_NO = #{userNo} AND L.REF_TYPE = 'RECIPE')
+	      WHEN MATCHED THEN
+	          UPDATE SET L.LIKE_STATUS = #{status}, L.LIKED_AT = SYSDATE
+	      WHEN NOT MATCHED THEN
+	          INSERT (L.USER_NO, L.REF_TYPE, L.REF_NO, L.LIKE_STATUS)
+	          VALUES (#{userNo}, 'RECIPE', #{rcpNo}, #{status})
+	    </otherwise>
+	  </choose>
+	</update>
 	
 	<select id="selectIngredientsByRcpNo" parameterType="_int" resultType="com.kh.ypjp.community.recipe.model.vo.RcpIngredient">
 	    SELECT
@@ -277,6 +299,28 @@
 	    ORDER BY RD.RCP_ORDER ASC
 	</select>
 
+
+	<insert id="insertReview" parameterType="com.kh.ypjp.community.recipe.model.vo.Review">
+	    INSERT INTO REVIEW (
+	        REVIEW_NO,
+	        USER_NO,
+	        REVIEW_DATE,
+	        STARS,
+	        CONTENT,
+	        IMAGE_NO,
+	        RCP_SOURCE,
+	        REF_NO
+	    ) VALUES (
+	        SEQ_REVIEW_NO.NEXTVAL,
+	        #{userNo},
+	        SYSDATE, 
+	        #{stars},
+	        #{content},
+	        #{imageNo},
+	        #{rcpSource},
+	        #{refNo}
+	    )
+	</insert>
     
 
 </mapper>

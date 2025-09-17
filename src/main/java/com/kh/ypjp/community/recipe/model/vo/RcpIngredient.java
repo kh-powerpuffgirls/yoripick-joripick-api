@@ -10,5 +10,6 @@ public class RcpIngredient {
     private int ingNo;
     private String quantity;
     private int weight;
+    private String ingName;
 
 }

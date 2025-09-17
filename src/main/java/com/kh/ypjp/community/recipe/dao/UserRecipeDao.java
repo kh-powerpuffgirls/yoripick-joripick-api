@@ -14,6 +14,7 @@ import com.kh.ypjp.community.recipe.model.vo.RcpIngredient;
 import com.kh.ypjp.community.recipe.model.vo.RcpMethod;
 import com.kh.ypjp.community.recipe.model.vo.RcpSituation;
 import com.kh.ypjp.community.recipe.model.vo.Recipe;
+import com.kh.ypjp.community.recipe.model.vo.Review;
 
 
 public interface UserRecipeDao {
@@ -62,5 +63,7 @@ public interface UserRecipeDao {
 	List<CookingStep> selectStepsByRcpNo(int rcpNo);
 
 	String findLikeStatus(Map<String, Object> params);
+
+	int insertReview(Review review);
 
 }

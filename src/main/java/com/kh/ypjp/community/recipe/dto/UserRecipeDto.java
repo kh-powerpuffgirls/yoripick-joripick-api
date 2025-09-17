@@ -5,7 +5,6 @@ import java.util.List;
 
 import org.springframework.web.multipart.MultipartFile;
 
-import com.kh.ypjp.common.model.vo.Nutrient;
 import com.kh.ypjp.community.recipe.model.vo.CookingStep;
 import com.kh.ypjp.community.recipe.model.vo.RcpIngredient;
 
@@ -77,6 +76,15 @@ public class UserRecipeDto {
     }
     
     @Data
+    public static class NutrientDetailDto {
+        private double calories; // 프론트엔드의 NutrientData 필드명과 일치
+        private double carbs;
+        private double protein;
+        private double fat;
+        private double sodium;
+    }
+    
+    @Data
 	@NoArgsConstructor
 	public static class RecipeDetailResponse {
     	private int rcpNo;
@@ -103,7 +111,7 @@ public class UserRecipeDto {
         private Writer writer;
 
         // 영양 정보 객체
-        private Nutrient totalNutrient;
+        private NutrientDetailDto totalNutrient;
 
         // 목록 정보 (서비스단에서 별도 조회 후 채워넣을 필드)
         private List<RcpIngredient> ingredients;
@@ -126,5 +134,13 @@ public class UserRecipeDto {
         private int likeCount;
         private int dislikeCount;
         private boolean isLiked;	//좋아요 상태
+    }
+    
+    //리뷰
+    @Data
+    public static class ReviewWriteRequest {
+        private String content; // 리뷰 내용
+        private double stars;      // 별점
+        private MultipartFile image;  // 리뷰 이미지 (선택 사항)
     }
 }
