@@ -47,8 +47,5 @@ public class UserController {
             }
         }
 
-//    @GetMapping("/{userNo}")
-//    public ResponseEntity<Map<String, Object>> getMypageInfo(@PathVariable Long userNo) {
-//        return ResponseEntity.ok(userService.getMypageInfo(userNo));
-//    }
+
 }
