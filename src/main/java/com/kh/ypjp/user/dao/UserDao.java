@@ -22,4 +22,8 @@ public class UserDao {
     public Map<String, Object> getMypageInfo(Long userNo) {
         return session.selectOne("user.getMypageInfo", userNo);
     }
+    
+    public int updateUser(Map<String, Object> param) {
+        return session.update("user.updateUser", param);
+    }
 }

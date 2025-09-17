@@ -1,7 +1,6 @@
 package com.kh.ypjp.security.controller;
 
 import java.time.Duration;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -9,7 +8,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -22,12 +20,11 @@ import com.kh.ypjp.common.exception.AuthException;
 import com.kh.ypjp.security.model.dto.AuthDto.AuthResult;
 import com.kh.ypjp.security.model.dto.AuthDto.LoginRequest;
 import com.kh.ypjp.security.model.dto.AuthDto.User;
-import com.kh.ypjp.security.model.dto.AuthDto.UserIdentities;
 import com.kh.ypjp.security.model.provider.JWTProvider;
 import com.kh.ypjp.security.model.service.AuthService;
 import com.kh.ypjp.security.model.service.EmailService;
 import com.kh.ypjp.security.model.service.KakaoService;
-
+import com.kh.ypjp.user.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -37,11 +34,14 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AuthController {
 
+    private final UserService userService;
+
 	private final KakaoService kakaoService;
 	private final AuthService authService;
 	private final JWTProvider jwt;
 	private final EmailService emailService;
 	public static final String REFRESH_COOKIE = "REFRESH_TOKEN";
+	
 
 	@PostMapping("/login")
 	public ResponseEntity<?> login(@RequestBody LoginRequest req) {
@@ -134,6 +134,9 @@ public class AuthController {
 	    if (username == null || username.isBlank()) {
 	        throw new AuthException("INVALID_USERNAME");
 	    }
+	    
+	    authService.validateUsername(username);
+	    
 	    Optional<User> userOpt = authService.findUserByUsername(username);
 	    boolean available = userOpt.isEmpty();
 	    return ResponseEntity.ok(Map.of("available", available));
@@ -144,7 +147,7 @@ public class AuthController {
 			@CookieValue(name = REFRESH_COOKIE, required = false) String refreshCookie) {
 		System.out.println(refreshCookie);
 		if (refreshCookie == null || refreshCookie.isBlank()) {
-			throw new AuthException("UNAU	THORIZED");
+			throw new AuthException("UNAUTHORIZED");
 		}
 		AuthResult result = authService.refreshByCookie(refreshCookie);
 		return ResponseEntity.ok(result);
@@ -192,25 +195,27 @@ public class AuthController {
 	}
 
 
-    @PostMapping("/email-codes")
-    public ResponseEntity<Map<String, Object>> sendEnrollCode(@RequestBody Map<String, String> req) {
-        String email = req.get("email");
+	@PostMapping("/email-codes")
+	public ResponseEntity<Map<String, Object>> sendEnrollCode(@RequestBody Map<String, String> req) {
+	    String email = req.get("email");
 
-        if (email == null || email.isEmpty()) {
-            throw new AuthException("INVALID_EMAIL");
-        }
+	    if (email == null || email.isEmpty()) {
+	        throw new AuthException("INVALID_EMAIL");
+	    }
 
-        if (authService.findUserByEmail(email).isPresent()) {
-            throw new AuthException("EMAIL_ALREADY_EXISTS");
-        }
+	    boolean available = authService.findUserByEmail(email).isEmpty();
+	    if (!available) {
+	        throw new AuthException("EMAIL_ALREADY_EXISTS");
+	    }
 
-        emailService.createAndSendCode(email);
+	    emailService.createAndSendCode(email);
 
-        return ResponseEntity.ok(Map.of(
-                "success", true,
-                "message", "인증번호 전송 완료"
-        ));
-    }
+	    return ResponseEntity.ok(Map.of(
+	            "success", true,
+	            "message", "인증번호 전송 완료",
+	            "available", available
+	    ));
+	}
 
     @PostMapping("/email-codes/reset")
     public ResponseEntity<Map<String, Object>> sendResetCode(@RequestBody Map<String, String> req) {

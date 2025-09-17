@@ -8,7 +8,9 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import com.kh.ypjp.common.UtilService;
 import com.kh.ypjp.common.exception.AuthException;
 import com.kh.ypjp.config.SecurityConfig;
 import com.kh.ypjp.security.model.dao.AuthDao;
@@ -31,6 +33,7 @@ public class AuthService {
     private final AuthDao authDao;
     private final PasswordEncoder encoder;
     private final JWTProvider jwt;
+    private final UtilService utilService;
     
     private static final int ACCESS_TOKEN_EXPIRE_MINUTES = 30;
     private static final int REFRESH_TOKEN_EXPIRE_DAYS = 7;
@@ -42,7 +45,7 @@ public class AuthService {
     private static final Pattern PASSWORD_PATTERN =
             Pattern.compile("^(?=.*[A-Za-z])(?=.*\\d)(?=.*[~!@#$%^&*]).{8,15}$");
 
-    private void validateEmail(String email) {
+    public void validateEmail(String email) {
         if (email == null || !EMAIL_PATTERN.matcher(email).matches()) {
             throw new AuthException("INVALID_EMAIL");
         }
@@ -64,7 +67,7 @@ public class AuthService {
         return byteLength;
     }
 
-    private void validateUsername(String username) {
+    public void validateUsername(String username) {
         if (username == null) throw new AuthException("INVALID_USERNAME");
         int byteLength = getByteLength(username);
         if (!USERNAME_PATTERN.matcher(username).matches() || byteLength < 4 || byteLength > 16) {
@@ -72,7 +75,7 @@ public class AuthService {
         }
     }
 
-    private void validatePassword(String password) {
+    public void validatePassword(String password) {
         if (password == null || !PASSWORD_PATTERN.matcher(password).matches()) {
             throw new AuthException("INVALID_PASSWORD");
         }
@@ -119,7 +122,6 @@ public class AuthService {
         User user = User.builder()
                 .email(email)
                 .username(username)
-                .provider("local")
                 .build();
         authDao.insertUser(user);
 

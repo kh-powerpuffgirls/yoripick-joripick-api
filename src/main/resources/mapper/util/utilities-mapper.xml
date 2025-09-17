@@ -11,4 +11,9 @@
 		WHERE origin_name = #{originName}
 			AND server_name = #{serverName}
 	</select>
+	
+	<select id="getChangeName" resultType="string">
+		SELECT server_name FROM IMAGE
+		WHERE image_no = #{imageNo}
+	</select>
 </mapper>

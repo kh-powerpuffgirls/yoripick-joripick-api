@@ -44,6 +44,8 @@ public class AuthDto {
         private LocalDate inactiveDate;
         private List<String> roles;
         private String provider;
+        
+        private String profile;
     }
 
     @Data
