@@ -121,6 +121,9 @@ public class AdminController {
 	@GetMapping("/chatRooms/{userNo}")
 	public ResponseEntity<ChatRoomDto> getChatRooms(@PathVariable Long userNo) {
 		ChatRoomDto chatRoom = service.getChatRooms(userNo);
+		Map<String, Object> param = new HashMap<>();
+		param.put("refNo", chatRoom.getRoomNo());
+		param.put("msgType", "CSERVICE");
 		List<ChatMsgDto> chatMessages = service.getChatMessages(param);
 		chatRoom.setMessages(new ArrayList<>(chatMessages));
         return ResponseEntity.ok(chatRoom);

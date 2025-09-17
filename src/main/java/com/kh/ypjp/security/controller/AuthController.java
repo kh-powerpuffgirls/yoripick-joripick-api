@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.kh.ypjp.security.model.dto.AuthDto.AuthResult;
 import com.kh.ypjp.security.model.dto.AuthDto.LoginRequest;
 import com.kh.ypjp.security.model.dto.AuthDto.User;
+import com.kh.ypjp.security.model.dto.UserNotiDto;
 import com.kh.ypjp.security.model.provider.JWTProvider;
 import com.kh.ypjp.security.model.service.AuthService;
 import com.kh.ypjp.security.model.service.EmailService;
@@ -39,6 +41,19 @@ public class AuthController {
 	private final JWTProvider jwt;
 	private final EmailService emailService;
 	public static final String REFRESH_COOKIE = "REFRESH_TOKEN";
+	
+	@GetMapping("/noti/{userNo}")
+	public ResponseEntity<UserNotiDto> getUserNotificationSettings(@PathVariable String userNo) {
+		if (userNo == null) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+		}
+		UserNotiDto settings = authService.getNotiByUserNo(userNo);
+		if (settings != null) {
+			return ResponseEntity.ok(settings);
+		} else {
+			return ResponseEntity.notFound().build();
+		}
+	}
 
 	@PostMapping("/login")
 	public ResponseEntity<?> login(@RequestBody LoginRequest req) {

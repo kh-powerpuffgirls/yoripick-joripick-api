@@ -4,11 +4,15 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.kh.ypjp.admin.model.dao.AdminDao;
 import com.kh.ypjp.admin.model.dto.AdminDto.ChallengeForm;
 import com.kh.ypjp.admin.model.dto.AdminDto.Recipe;
 import com.kh.ypjp.admin.model.dto.AdminDto.Report;
+import com.kh.ypjp.chat.model.dao.ChatDao;
+import com.kh.ypjp.chat.model.dto.ChatDto.ChatMsgDto;
+import com.kh.ypjp.chat.model.dto.ChatDto.ChatRoomDto;
 
 import lombok.RequiredArgsConstructor;
 
@@ -17,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 public class AdminService {
 
 	private final AdminDao dao;
+	private final ChatDao chatDao;
 	
 	public Long countAllChallenges() {
 		return dao.countAllChallenges();
@@ -64,6 +69,21 @@ public class AdminService {
 
 	public int approveRecipe(Long rcpNo) {
 		return dao.approveRecipe(rcpNo);
+	}
+
+	@Transactional
+	public ChatRoomDto getChatRooms(Long userNo) {
+		ChatRoomDto chatroom = dao.getChatRooms(userNo);
+		if (chatroom == null) {
+			if (chatDao.insertCservice(userNo) > 0) {
+				chatroom = dao.getChatRooms(userNo);
+			}
+		}
+		return chatroom;
+	}
+
+	public List<ChatMsgDto> getChatMessages(Map<String, Object> param) {
+		return dao.getChatMessages(param);
 	}
 
 }

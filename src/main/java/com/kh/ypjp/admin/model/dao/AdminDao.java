@@ -9,6 +9,8 @@ import org.springframework.stereotype.Repository;
 import com.kh.ypjp.admin.model.dto.AdminDto.ChallengeForm;
 import com.kh.ypjp.admin.model.dto.AdminDto.Recipe;
 import com.kh.ypjp.admin.model.dto.AdminDto.Report;
+import com.kh.ypjp.chat.model.dto.ChatDto.ChatMsgDto;
+import com.kh.ypjp.chat.model.dto.ChatDto.ChatRoomDto;
 
 import lombok.RequiredArgsConstructor;
 
@@ -64,6 +66,14 @@ public class AdminDao {
 
 	public int approveRecipe(Long rcpNo) {
 		return session.update("admin.approveRecipe", rcpNo);
+	}
+
+	public ChatRoomDto getChatRooms(Long userNo) {
+		return session.selectOne("admin.getChatRooms", userNo);
+	}
+
+	public List<ChatMsgDto> getChatMessages(Map<String, Object> param) {
+		return session.selectList("admin.getChatMessages", param);
 	}
 
 }
