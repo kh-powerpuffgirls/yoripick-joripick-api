@@ -30,9 +30,11 @@ import com.kh.ypjp.chat.model.service.ChatService;
 import com.kh.ypjp.common.UtilService;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @RequestMapping("/chat")
+@Slf4j
 @RequiredArgsConstructor
 public class ChatController {
 
@@ -42,6 +44,7 @@ public class ChatController {
 
 	@MessageMapping("/{roomNo}")
 	public void sendMessage(@DestinationVariable Long roomNo, MessageDto message) {
+		log.debug("mess {} ", message);
 		messagingTemplate.convertAndSend("/topic/" + roomNo, message);
 	}
 

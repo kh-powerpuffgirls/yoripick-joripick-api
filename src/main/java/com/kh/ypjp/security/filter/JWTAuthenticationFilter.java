@@ -24,10 +24,23 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter{
    
    private final JWTProvider jwt;
    // accessToken인증 확인용 필터
+   
+   
    @Override
    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
          throws ServletException, IOException {
 	    System.out.println("JWTAuthenticationFilter - request URI: " + request.getRequestURI());
+	    
+	    // 현재 요청 경로를 가져옵니다.
+	      String requestURI = request.getRequestURI();
+
+	      // /auth/refresh 경로는 토큰 검증을 건너뜁니다.
+	      if ("/auth/refresh".equals(requestURI)) {
+	          filterChain.doFilter(request, response);
+	          return; // 이 필터의 나머지 로직을 실행하지 않고 종료
+	      }
+	    
+	    
       // 1) 요청 header에서 Authorization 추출
       String header = request.getHeader("Authorization");
       if(header != null && header.startsWith("Bearer")) {

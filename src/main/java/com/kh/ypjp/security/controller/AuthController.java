@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -21,14 +22,13 @@ import org.springframework.web.bind.annotation.RestController;
 import com.kh.ypjp.security.model.dto.AuthDto.AuthResult;
 import com.kh.ypjp.security.model.dto.AuthDto.LoginRequest;
 import com.kh.ypjp.security.model.dto.AuthDto.User;
-import com.kh.ypjp.security.model.dto.AuthDto.UserIdentities;
+import com.kh.ypjp.security.model.dto.UserNotiDto;
 import com.kh.ypjp.security.model.provider.JWTProvider;
 import com.kh.ypjp.security.model.service.AuthService;
 import com.kh.ypjp.security.model.service.EmailService;
 import com.kh.ypjp.security.model.service.KakaoService;
 
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -41,6 +41,19 @@ public class AuthController {
 	private final JWTProvider jwt;
 	private final EmailService emailService;
 	public static final String REFRESH_COOKIE = "REFRESH_TOKEN";
+	
+	@GetMapping("/noti/{userNo}")
+	public ResponseEntity<UserNotiDto> getUserNotificationSettings(@PathVariable String userNo) {
+		if (userNo == null) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+		}
+		UserNotiDto settings = authService.getNotiByUserNo(userNo);
+		if (settings != null) {
+			return ResponseEntity.ok(settings);
+		} else {
+			return ResponseEntity.notFound().build();
+		}
+	}
 
 	@PostMapping("/login")
 	public ResponseEntity<?> login(@RequestBody LoginRequest req) {
@@ -95,27 +108,19 @@ public class AuthController {
 	}
 
 	@PostMapping("/enroll/social")
-	public ResponseEntity<Map<String, String>> enrollSocial(@RequestBody Map<String, String> req,
-	                                                        HttpServletResponse response) {
+	public ResponseEntity<AuthResult> enrollSocial(@RequestBody Map<String, String> req) {
+		String email = req.get("email");
+		String username = req.get("username");
+		String provider = req.get("provider");
+		String providerUserId = req.get("providerUserId");
+		String accessToken = req.get("accessToken");
 
-	    String email = req.get("email");
-	    String username = req.get("username");
-	    String provider = req.get("provider");
-	    String providerUserId = req.get("providerUserId");
+		AuthResult result = authService.enrollSocial(email, username, provider, providerUserId, accessToken);
 
-	    AuthResult result = authService.enrollSocial(email, username, provider, providerUserId);
-
-	    ResponseCookie refreshCookie = ResponseCookie.from(REFRESH_COOKIE, result.getRefreshToken())
-	            .httpOnly(true)
-	            .secure(false)
-	            .path("/")
-	            .sameSite("Lax")
-	            .maxAge(Duration.ofDays(7))
-	            .build();
-	    response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
-
-	    return ResponseEntity.status(HttpStatus.CREATED)
-	            .body(Map.of("accessToken", result.getAccessToken()));
+		ResponseCookie refreshCookie = ResponseCookie.from(REFRESH_COOKIE, result.getRefreshToken()).httpOnly(true)
+				.secure(false).path("/").sameSite("Lax").maxAge(Duration.ofDays(7)).build();
+		return ResponseEntity.status(HttpStatus.CREATED).header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
+				.body(result);
 	}
 	
 	@GetMapping("/check-username")

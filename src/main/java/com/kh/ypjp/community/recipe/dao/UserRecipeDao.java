@@ -5,8 +5,11 @@ import java.util.List;
 
 import com.kh.ypjp.common.model.vo.Image;
 import com.kh.ypjp.common.model.vo.Nutrient;
+import com.kh.ypjp.community.recipe.dto.UserRecipeDto;
 import com.kh.ypjp.community.recipe.dto.UserRecipeDto.IngredientInfo;
 import com.kh.ypjp.community.recipe.dto.UserRecipeDto.UserRecipeResponse;
+import com.kh.ypjp.community.recipe.model.vo.RcpDetail;
+import com.kh.ypjp.community.recipe.model.vo.RcpIngredient;
 import com.kh.ypjp.community.recipe.model.vo.RcpMethod;
 import com.kh.ypjp.community.recipe.model.vo.RcpSituation;
 import com.kh.ypjp.community.recipe.model.vo.Recipe;
@@ -15,23 +18,30 @@ import com.kh.ypjp.community.recipe.model.vo.RecipeStep;
 
 public interface UserRecipeDao {
 
-	
-	List<UserRecipeResponse> selectRecipe(HashMap<String, Object> param);
+	List<UserRecipeDto.UserRecipeResponse> selectRecipeList(HashMap<String, Object> params);
 
-	List<RcpMethod> selectRcpMethods();
+    long selectRecipeCount(HashMap<String, Object> params);
 
+    List<UserRecipeDto.UserRecipeResponse> selectRankingRecipes();
 
-	void insertImage(Image mainImageVo);
+    List<RcpMethod> selectRcpMethods();
+    
+    List<RcpSituation> selectRcpSituations();
 
-	void insertNutrient(Nutrient totalNutrient);
+    List<UserRecipeDto.IngredientInfo> searchIngredients(String keyword);
+    
+    Nutrient findNutrientsByIngNo(int ingNo);
 
-	void insertRecipeStep(RecipeStep recipe);
+    int insertImage(Image image);
 
-	void insertRecipe(Recipe step);
-
-	List<RcpSituation> selectRcpSituations();
-
-	List<IngredientInfo> searchIngredients(String keyword);
-
+    long getNextRcpNo(); 
+    
+    int insertRecipe(Recipe recipe);
+    
+    int insertRcpIngredient(RcpIngredient ingredient);
+    
+    int insertRcpDetail(RcpDetail detail);
+    
+    int insertNutrient(Nutrient nutrient);
 
 }
