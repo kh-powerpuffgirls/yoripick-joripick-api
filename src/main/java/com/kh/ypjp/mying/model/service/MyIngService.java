@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.kh.ypjp.mying.model.dao.MyIngDao;
+import com.kh.ypjp.mying.model.dto.MyIngDto.MyIngPost;
 import com.kh.ypjp.mying.model.dto.MyIngDto.MyIngPut;
 import com.kh.ypjp.mying.model.dto.MyIngDto.MyIngResponse;
 
@@ -30,6 +31,10 @@ public class MyIngService {
 
 	public int deleteMying(HashMap param) {
 		return dao.deleteMying(param);
+	}
+
+	public int insertMying(MyIngPost mying) {
+		return dao.insertMying(mying);
 	}
 
 }

@@ -64,6 +64,9 @@ public class SecurityConfig {
                 .requestMatchers("/chat/**").permitAll()
                 .requestMatchers("/ws/**").permitAll()
                 .requestMatchers("/images/**").permitAll()
+                .requestMatchers("/inglist/**").authenticated()
+                .requestMatchers("/api/ingdata/**").permitAll()
+                .requestMatchers("/ingpedia/**").permitAll()
                 .anyRequest().authenticated()
             )
             // OAuth2 로그인 핸들러

@@ -1,5 +1,9 @@
 package com.kh.ypjp.ing.model.dto;
 
+import java.util.List;
+
+import com.kh.ypjp.common.PageInfo;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -14,6 +18,22 @@ public class IngDto {
 		private long userNo;
 		private long ingNo;
 		private String ingName;
+		private long ingCode;
+		private String ingCodeName;
+	}
+	
+	@Data
+	@NoArgsConstructor
+	@AllArgsConstructor
+	public static class IngListResponse {
+	    private List<IngDto.IngResponse> list;
+	    private PageInfo pageInfo;
+	}
+	
+	@Data
+	@NoArgsConstructor
+	@AllArgsConstructor
+	public static class IngCodeResponse {
 		private long ingCode;
 		private String ingCodeName;
 	}

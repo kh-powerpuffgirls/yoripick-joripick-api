@@ -1,5 +1,6 @@
 package com.kh.ypjp.mying.controller;
 
+import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
 
@@ -7,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -14,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.kh.ypjp.mying.model.dto.MyIngDto;
+import com.kh.ypjp.mying.model.dto.MyIngDto.MyIngPost;
 import com.kh.ypjp.mying.model.dto.MyIngDto.MyIngPut;
 import com.kh.ypjp.mying.model.dto.MyIngDto.MyIngResponse;
 import com.kh.ypjp.mying.model.service.MyIngService;
@@ -37,11 +40,8 @@ public class MyIngController {
 			@RequestParam HashMap<String, Object> param // 검색 파라미터값
 			){
 		
-		param.put("userNo", userNo);
-		
 		List<MyIngDto.MyIngResponse> list = myingService.selectMyIngs(param);
 		
-		log.debug("listAAAAAAAAAA : {}", list);
 		
 		return ResponseEntity.ok(list);
 	}
@@ -62,6 +62,25 @@ public class MyIngController {
 			return ResponseEntity.notFound().build();
 		} else {
 			return ResponseEntity.ok().body(myIng);
+		}
+	}
+	
+	// 등록
+	@PostMapping("/detail")
+	public ResponseEntity<MyIngResponse> insertMying(
+			@RequestBody MyIngPost mying
+			){
+		
+		int result = myingService.insertMying(mying);
+		
+		if(result > 0) {
+//			URI location = URI.create("/detail/"+mying.getIngNo()+"/"+mying.getUserNo());
+			URI location = URI.create("/"+mying.getUserNo());
+			// 201 Created
+			return ResponseEntity.created(location).build();
+		} else {
+			// 400 bad Request
+			return ResponseEntity.badRequest().build();
 		}
 	}
 	

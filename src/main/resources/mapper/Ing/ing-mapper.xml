@@ -10,24 +10,46 @@
 		<result property="ingCode" column="ING_CODE" />
 		<result property="ingCodeName" column="ING_CODE_NAME" />
 	</resultMap>
-		
-	<select id="selectIngs" resultMap="IngResult">
+	
+	<sql id="commonSelect">
 		SELECT
 		    I.USER_NO, I.ING_NO,
 		    I.ING_NAME, I.ING_CODE,
 		    C.ING_CODE_NAME
 		FROM INGREDIENT I
 		JOIN ING_CODE C ON I.ING_CODE = C.ING_CODE
-		WHERE 1 = 1
-		<if test="ingCode != 0 and ingCode != null">
-			and I.ING_CODE LIKE '%' || #{ingCode} || '%'
-		</if>
-		<if test="keyword != '' and keyword != null">
-			and I.ING_NAME LIKE '%' || #{keyword} || '%'
-		</if>
+		<where>
+			<if test="ingCode != 0">
+				AND I.ING_CODE LIKE '%' || #{ingCode} || '%'
+			</if>
+			<if test="keyword != '' and keyword != null">
+				AND I.ING_NAME LIKE '%' || #{keyword} || '%'
+			</if>			
+		</where>
 		ORDER BY I.ING_CODE, I.ING_NAME
+	</sql>
+	
+	<select id="selectTotalIngs" resultType="long">
+		SELECT COUNT(*) 
+			FROM (
+		    	<include refid="commonSelect" />
+		    )
 	</select>
-
-
+	
+	<select id="selectIngs" resultMap="IngResult">
+		SELECT * FROM (
+		    SELECT N.*, ROW_NUMBER() OVER (ORDER BY N.ING_CODE, N.ING_NAME) RNUM
+		    FROM (
+		    	<include refid="commonSelect" />
+		    ) N
+       	) TMP
+       	<![CDATA[WHERE TMP.RNUM <= #{endRow} AND TMP.RNUM > #{startRow}]]>
+	</select>
+	
+	<select id="selectIngCodes" parameterType="map"
+		resultType="com.kh.ypjp.ing.model.dto.IngDto$IngCodeResponse">
+		SELECT * FROM ING_CODE
+		ORDER BY ING_CODE
+	</select>
 	
 </mapper>

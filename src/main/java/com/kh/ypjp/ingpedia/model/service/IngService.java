@@ -1,4 +1,4 @@
-package com.kh.ypjp.ing.model.service;
+package com.kh.ypjp.ingpedia.model.service;
 
 import java.util.HashMap;
 import java.util.List;

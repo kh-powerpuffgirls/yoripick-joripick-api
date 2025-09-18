@@ -7,6 +7,7 @@ import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
+import com.kh.ypjp.mying.model.dto.MyIngDto.MyIngPost;
 import com.kh.ypjp.mying.model.dto.MyIngDto.MyIngPut;
 import com.kh.ypjp.mying.model.dto.MyIngDto.MyIngResponse;
 
@@ -29,6 +30,10 @@ public class MyIngDao {
 
 	public int deleteMying(HashMap param) {
 		return session.delete("mying.deleteMying", param);
+	}
+
+	public int insertMying(MyIngPost mying) {
+		return session.insert("mying.insertMying", mying);
 	}
 
 }

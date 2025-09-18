@@ -1,4 +1,4 @@
-package com.kh.ypjp.ing.controller;
+package com.kh.ypjp.ingpedia.controller;
 
 import java.util.HashMap;
 import java.util.List;

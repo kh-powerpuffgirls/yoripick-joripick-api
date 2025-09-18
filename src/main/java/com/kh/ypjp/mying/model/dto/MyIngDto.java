@@ -37,6 +37,25 @@ public class MyIngDto {
 	@Data
 	@NoArgsConstructor
 	@AllArgsConstructor
+	public static class MyIngPost {
+//		GROCERY
+		private long userNo;
+		private long ingNo;
+		private Date createdAt;
+		private Date expDate;
+		private String quantity;		
+		
+//		INGREDIENT
+		private String ingName;
+		private long ingCode;
+		
+//		ING_CODE
+		private String ingCodeName;
+	}
+	
+	@Data
+	@NoArgsConstructor
+	@AllArgsConstructor
 	public static class MyIngPut {
 		private long userNo;
 		private long ingNo;

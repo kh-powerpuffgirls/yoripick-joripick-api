@@ -24,7 +24,21 @@
 		JOIN INGREDIENT I ON G.ING_NO = I.ING_NO
 		JOIN ING_CODE C ON I.ING_CODE = C.ING_CODE
 		WHERE G.USER_NO = #{userNo}
-		ORDER BY I.ING_CODE, G.EXP_DATE
+		<if test="keyword != '' and keyword != null">
+			AND I.ING_NAME LIKE '%' || #{keyword} || '%'
+		</if>
+		<choose>
+			<when test="sortNo == 1">
+				ORDER BY G.EXP_DATE
+			</when>
+			<when test="sortNo == 2">
+				ORDER BY G.CREATED_AT
+			</when>
+			<when test="sortNo == 3">
+				ORDER BY I.ING_NAME
+			</when>
+		</choose>
+		
 	</select>
 
 	<select id="selectMyIngDetail" resultMap="MyIngResult">
@@ -38,6 +52,17 @@
 		WHERE G.USER_NO = #{userNo} AND G.ING_NO = #{ingNo}
 		ORDER BY I.ING_CODE, G.EXP_DATE
 	</select>
+	
+	<insert id="insertMying">
+		INSERT INTO GROCERY
+		VALUES (
+			#{userNo},
+			#{ingNo},
+			#{createdAt},
+			#{expDate},
+			#{quantity}
+		)
+	</insert>
 	
 	<update id="updateMying">
 		UPDATE GROCERY SET
