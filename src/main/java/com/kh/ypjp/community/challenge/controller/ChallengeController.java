@@ -5,6 +5,7 @@ import com.kh.ypjp.community.challenge.service.ChallengeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -79,27 +80,32 @@ public class ChallengeController {
             @RequestParam(value = "videoUrl", required = false) String videoUrl,
             @RequestParam(value = "file", required = false) MultipartFile file,
             @RequestParam(value = "title", required = false) String title,
-            Principal principal) {
+            @AuthenticationPrincipal Long userNo, // @AuthenticationPrincipal로 userNo를 직접 받음
+            Authentication authentication) { // Authentication 객체를 받아 권한 확인
 
-        if (principal == null) {
+        if (userNo == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 후 이용해주세요.");
         }
-        Long userNo = Long.parseLong(principal.getName());
+
+        // 사용자의 권한(Authorities) 중 ROLE_ADMIN이 있는지 확인
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
 
         ChallengeDto challengeDto = new ChallengeDto();
         challengeDto.setChallengeNo(id);
-        challengeDto.setUserNo(userNo);
+        challengeDto.setUserNo(userNo); // 작성자 확인을 위해 필요
         challengeDto.setChInfoNo(chInfoNo);
         challengeDto.setVideoUrl(videoUrl);
         challengeDto.setTitle(title);
 
         try {
-            Optional<ChallengeDto> updatedPost = challengeService.updatePost(id, challengeDto, file, userNo);
+            // isAdmin 정보를 서비스 레이어로 전달
+            Optional<ChallengeDto> updatedPost = challengeService.updatePost(id, challengeDto, file, userNo, isAdmin);
             if (updatedPost.isPresent()) {
                 return ResponseEntity.ok("게시글이 성공적으로 수정되었습니다.");
             } else {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body("게시글 수정에 실패했습니다. 작성자만 수정할 수 있습니다.");
+                        .body("게시글 수정에 실패했습니다. 작성자 또는 관리자만 수정할 수 있습니다.");
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -110,17 +116,26 @@ public class ChallengeController {
 
     // 게시글 삭제
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> deletePost(@PathVariable Long id, Principal principal) {
-        if (principal == null) {
+    public ResponseEntity<String> deletePost(
+            @PathVariable Long id,
+            @AuthenticationPrincipal Long userNo, // @AuthenticationPrincipal로 userNo를 직접 받음
+            Authentication authentication) { // Authentication 객체를 받아 권한 확인
+
+        if (userNo == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 후 이용해주세요.");
         }
-        Long userNo = Long.parseLong(principal.getName());
 
-        boolean deleted = challengeService.deletePost(id, userNo);
+        // 사용자의 권한(Authorities) 중 ROLE_ADMIN이 있는지 확인
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+        // isAdmin 정보를 서비스 레이어로 전달
+        boolean deleted = challengeService.deletePost(id, userNo, isAdmin);
         if (deleted) return ResponseEntity.ok("게시글이 성공적으로 삭제되었습니다.");
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body("게시글 삭제에 실패했거나 권한이 없습니다.");
+                .body("게시글 삭제에 실패했거나 권한이 없습니다. 작성자 또는 관리자만 삭제할 수 있습니다.");
     }
+
 
     // 댓글 전체 조회
     @GetMapping("/replies/{challengeNo}")
@@ -165,6 +180,27 @@ public class ChallengeController {
         if (deleted) return ResponseEntity.ok("댓글이 성공적으로 삭제되었습니다.");
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body("댓글 삭제에 실패했습니다. 권한을 확인해주세요.");
     }
+    
+ // 신고 등록
+    @PostMapping("/report")
+    public ResponseEntity<String> createReport(@RequestBody ChallengeReportDto reportDto,
+                                               @AuthenticationPrincipal Long userNo) {
+        if (userNo == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 후 이용해주세요.");
+        }
+        reportDto.setUserNo(userNo);
+        int result = challengeService.createReport(reportDto);
+        if (result > 0) return ResponseEntity.status(HttpStatus.CREATED).body("신고가 성공적으로 등록되었습니다.");
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("신고 등록에 실패했습니다.");
+    }
+
+    // 신고 목록 조회
+    @GetMapping("/report")
+    public ResponseEntity<List<ChallengeReportDto>> getAllReports() {
+        List<ChallengeReportDto> reports = challengeService.getAllReports();
+        return ResponseEntity.ok(reports);
+    }
+
 
     // 진행 중인 챌린지 정보 조회
     @GetMapping("/active")

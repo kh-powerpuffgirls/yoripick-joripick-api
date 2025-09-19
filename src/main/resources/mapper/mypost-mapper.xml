@@ -16,7 +16,7 @@
                user_no AS userId,
                'BOARD' AS category
         FROM BOARD
-        WHERE user_no = #{userId}
+        WHERE user_no = #{userId} AND delete_status = 'N'
         UNION ALL
         SELECT rcp_no AS id,
                rcp_name AS title,
@@ -26,17 +26,18 @@
                user_no AS userId,
                'RECIPE' AS category
         FROM RECIPE
-        WHERE user_no = #{userId}
+        WHERE user_no = #{userId} AND delete_status = 'N'
         UNION ALL
-        SELECT challenge_no AS id,
-               '' AS title,
-               '' AS description,
-               created_at AS createdDate,
-               views,
-               user_no AS userId,
-               'CHALLENGE' AS category
-        FROM CHALLENGE
-        WHERE user_no = #{userId}
+       SELECT challenge_no AS id,
+       ci.title AS title,
+       '' AS description,
+       created_at AS createdDate,
+       views,
+       user_no AS userId,
+       'CHALLENGE' AS category
+		FROM CHALLENGE c
+		JOIN CHALLENGE_INFO ci ON c.ch_info_no = ci.ch_info_no
+		WHERE c.user_no = #{userId} AND c.delete_status = 'N'
         UNION ALL
         SELECT product_id AS id,
                title,
@@ -46,7 +47,7 @@
                user_no AS userId,
                'MARKET' AS category
         FROM MARKETPLACE
-        WHERE user_no = #{userId}
+        WHERE user_no = #{userId} AND delete_status = 'N'
     ) temp
     ORDER BY createdDate DESC
 </select>
@@ -54,46 +55,52 @@
 
     <!-- 게시글 상세 조회 -->
     <select id="findPostDetail" parameterType="map" resultType="com.kh.ypjp.community.mypost.dto.MyPostDto">
-        <choose>
-            <when test="category == 'BOARD'">
-                SELECT board_no AS id, title, content AS description, created_at AS CREATED_DATE, views, user_no AS userId, 'BOARD' AS category
-                FROM BOARD
-                WHERE board_no = #{id}
-            </when>
-            <when test="category == 'RECIPE'">
-                SELECT rcp_no, rcp_name, rcp_info, created_at AS CREATED_DATE, views, user_no, 'RECIPE'
-                FROM RECIPE
-                WHERE rcp_no = #{id}
-            </when>
-            <when test="category == 'CHALLENGE'">
-                SELECT challenge_no, '' AS title, '' AS description, created_at AS CREATED_DATE, views, user_no, 'CHALLENGE'
-                FROM CHALLENGE
-                WHERE challenge_no = #{id}
-            </when>
-            <when test="category == 'MARKET'">
-                SELECT product_id, title, detail AS description, created_at AS CREATED_DATE, views, user_no, 'MARKET'
-                FROM MARKETPLACE
-                WHERE product_id = #{id}
-            </when>
-        </choose>
-    </select>
+    <choose>
+        <when test="category == 'BOARD'">
+            SELECT board_no AS id, title, content AS description, created_at AS CREATED_DATE, views, user_no AS userId, 'BOARD' AS category
+            FROM BOARD
+            WHERE board_no = #{id} AND delete_status = 'N'
+        </when>
+        <when test="category == 'RECIPE'">
+            SELECT rcp_no, rcp_name, rcp_info, created_at AS CREATED_DATE, views, user_no, 'RECIPE'
+            FROM RECIPE
+            WHERE rcp_no = #{id} AND delete_status = 'N'
+        </when>
+		<when test="category == 'CHALLENGE'">
+		    SELECT c.challenge_no AS id,
+		           ci.title AS title,
+		           '' AS description,
+		           c.created_at AS createdDate,
+		           c.views AS views,
+		           c.user_no AS userId,
+		           'CHALLENGE' AS category
+		    FROM CHALLENGE c
+		    JOIN CHALLENGE_INFO ci ON c.ch_info_no = ci.ch_info_no
+		    WHERE c.challenge_no = #{id} AND c.delete_status = 'N'
+		</when>
+        <when test="category == 'MARKET'">
+            SELECT product_id, title, detail AS description, created_at AS CREATED_DATE, views, user_no, 'MARKET'
+            FROM MARKETPLACE
+            WHERE product_id = #{id} AND delete_status = 'N'
+        </when>
+    </choose>
+</select>
 
-    <!-- 조회수 증가 -->
-    <update id="incrementViews" parameterType="map">
-        <choose>
-            <when test="category == 'BOARD'">
-                UPDATE BOARD SET views = views + 1 WHERE board_no = #{id}
-            </when>
-            <when test="category == 'RECIPE'">
-                UPDATE RECIPE SET views = views + 1 WHERE rcp_no = #{id}
-            </when>
-            <when test="category == 'CHALLENGE'">
-                UPDATE CHALLENGE SET views = views + 1 WHERE challenge_no = #{id}
-            </when>
-            <when test="category == 'MARKET'">
-                UPDATE MARKETPLACE SET views = views + 1 WHERE product_id = #{id}
-            </when>
-        </choose>
-    </update>
+<update id="incrementViews" parameterType="map">
+    <choose>
+        <when test="category == 'BOARD'">
+            UPDATE BOARD SET views = views + 1 WHERE board_no = #{id} AND delete_status = 'N'
+        </when>
+        <when test="category == 'RECIPE'">
+            UPDATE RECIPE SET views = views + 1 WHERE rcp_no = #{id} AND delete_status = 'N'
+        </when>
+        <when test="category == 'CHALLENGE'">
+            UPDATE CHALLENGE SET views = views + 1 WHERE challenge_no = #{id} AND delete_status = 'N'
+        </when>
+        <when test="category == 'MARKET'">
+            UPDATE MARKETPLACE SET views = views + 1 WHERE product_id = #{id} AND delete_status = 'N'
+        </when>
+    </choose>
+</update>
 
 </mapper>

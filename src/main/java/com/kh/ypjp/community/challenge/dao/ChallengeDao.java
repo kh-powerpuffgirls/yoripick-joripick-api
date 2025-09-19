@@ -23,6 +23,14 @@ public interface ChallengeDao {
     List<ChallengeInfoDto> findActiveChallengeInfo();
     List<ChallengeReplyDto> selectAllRepliesByChallengeId(@Param("challengeNo") Long challengeNo);
     
+    
+ // 신고 등록
+    int insertReport(ChallengeReportDto reportDto);
+
+    // 신고 전체 조회
+    List<ChallengeReportDto> selectAllReports();
+
+    
     int insertReply(ChallengeReplyDto replyDto);
     int updateReply(ChallengeReplyDto replyDto);
     ChallengeReplyDto selectReplyById(@Param("replyNo") Long replyNo);

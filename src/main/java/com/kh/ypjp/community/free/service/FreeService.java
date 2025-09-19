@@ -42,7 +42,7 @@ public class FreeService {
 
         // 파일이 있을 경우 이미지 저장 및 게시글에 이미지 번호 업데이트
         if (file != null && !file.isEmpty()) {
-            String webPath = "messages/" + freeDto.getUserNo();
+            String webPath = "free/" + freeDto.getUserNo();
             String changeName = utilService.getChangeName(file, webPath);
             String serverName = webPath + "/" + changeName;
 
@@ -61,9 +61,19 @@ public class FreeService {
         return result;
     }
 
-    // 게시글 수정 및 이미지 업데이트 처리
+ // 게시글 수정 및 이미지 업데이트 처리
     @Transactional
-    public int updateBoard(FreeDto freeDto, MultipartFile file) {
+    public int updateBoard(FreeDto freeDto, MultipartFile file, int userNo, boolean isAdmin) {
+        FreeDto existingPost = freeDao.selectBoardByNo(freeDto.getBoardNo());
+        if (existingPost == null) {
+            return 0; // 게시글이 존재하지 않음
+        }
+
+        // 수정 권한 확인: 게시글 작성자이거나 관리자여야 함
+        if (existingPost.getUserNo() != userNo && !isAdmin) {
+            return 0; // 권한 없음
+        }
+
         int result = freeDao.updateBoard(freeDto);
 
         // 파일이 있을 경우 기존 이미지 삭제 후 새 이미지 저장 및 게시글에 이미지 번호 업데이트
@@ -73,7 +83,7 @@ public class FreeService {
                 freeDao.deleteImageByImageNo(oldImageNo);
             }
 
-            String webPath = "messages/" + freeDto.getUserNo();
+            String webPath = "free/" + freeDto.getUserNo();
             String changeName = utilService.getChangeName(file, webPath);
             String serverName = webPath + "/" + changeName;
 
@@ -94,15 +104,14 @@ public class FreeService {
 
     // 삭제 안하고 걍 Y로 바꾸기
     @Transactional
-    public boolean softDeleteBoard(int boardNo, int userNo) {
+    public boolean softDeleteBoard(int boardNo, int userNo, boolean isAdmin) {
         FreeDto existingPost = freeDao.selectBoardByNo(boardNo);
-        // 작성자 본인인지 확인
-        if (existingPost != null && existingPost.getUserNo() == userNo) {
+        // 삭제 권한 확인: 게시글 작성자이거나 관리자여야 함
+        if (existingPost != null && (existingPost.getUserNo() == userNo || isAdmin)) {
             return freeDao.updateBoardDeleteStatus(boardNo, "Y") > 0;
         }
         return false;
     }
-
     // 게시글 조회수 증가
     @Transactional
     public int incrementViews(int boardNo) {

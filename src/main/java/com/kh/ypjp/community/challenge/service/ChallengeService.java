@@ -46,6 +46,18 @@ public class ChallengeService {
 
         return Optional.of(post);
     }
+    
+ // 신고 등록
+    @Transactional
+    public int createReport(ChallengeReportDto reportDto) {
+        return challengeDao.insertReport(reportDto);
+    }
+
+    // 신고 목록 조회
+    public List<ChallengeReportDto> getAllReports() {
+        return challengeDao.selectAllReports();
+    }
+
 
 
     // 게시글 등록 및 이미지 저장
@@ -70,7 +82,7 @@ public class ChallengeService {
             throw new IllegalArgumentException("챌린지 이미지는 필수입니다.");
         }
 
-        String webPath = "challenges/" + challengeDto.getUserNo();
+        String webPath = "challenge/" + challengeDto.getUserNo();
         String savedFileName = utilService.getChangeName(file, webPath);
         String serverName = webPath + "/" + savedFileName;
 
@@ -98,16 +110,19 @@ public class ChallengeService {
 
     // 게시글 수정 및 이미지 업데이트
     @Transactional
-    public Optional<ChallengeDto> updatePost(Long id, ChallengeDto challengeDto, MultipartFile file, Long userNo) {
+    public Optional<ChallengeDto> updatePost(Long id, ChallengeDto challengeDto, MultipartFile file, Long userNo, boolean isAdmin) {
         Long authorNo = challengeDao.findUserNoById(id);
-        if (authorNo == null || !authorNo.equals(userNo)) {
+
+        // 수정 권한 확인: 게시글 작성자이거나 관리자여야 함
+        if (authorNo == null || (!authorNo.equals(userNo) && !isAdmin)) {
+            log.warn("게시글 수정 권한 없음: challengeNo={}, userNo={}", id, userNo);
             return Optional.empty();
         }
 
         challengeDto.setChallengeNo(id);
 
         if (file != null && !file.isEmpty()) {
-            String webPath = "challenges/" + challengeDto.getUserNo();
+            String webPath = "challenge/" + challengeDto.getUserNo();
             String savedFileName = utilService.getChangeName(file, webPath);
             String serverName = webPath + "/" + savedFileName;
 
@@ -133,11 +148,15 @@ public class ChallengeService {
         return Optional.of(challengeDao.findByIdWithImage(id));
     }
 
+
     // 게시글 삭제
     @Transactional
-    public boolean deletePost(Long id, Long userNo) {
+    public boolean deletePost(Long id, Long userNo, boolean isAdmin) {
         Long authorNo = challengeDao.findUserNoById(id);
-        if (authorNo == null || !authorNo.equals(userNo)) {
+
+        // 삭제 권한 확인: 게시글 작성자이거나 관리자여야 함
+        if (authorNo == null || (!authorNo.equals(userNo) && !isAdmin)) {
+            log.warn("게시글 삭제 권한 없음: challengeNo={}, userNo={}", id, userNo);
             return false;
         }
         return challengeDao.updateDeleteStatus(id, "Y") > 0;
