@@ -19,7 +19,6 @@ import com.kh.ypjp.security.model.dto.AuthDto.Authority;
 import com.kh.ypjp.security.model.dto.AuthDto.User;
 import com.kh.ypjp.security.model.dto.AuthDto.UserCredential;
 import com.kh.ypjp.security.model.dto.AuthDto.UserIdentities;
-import com.kh.ypjp.security.model.dto.UserNotiDto;
 import com.kh.ypjp.security.model.provider.JWTProvider;
 
 import lombok.RequiredArgsConstructor;
@@ -81,10 +80,6 @@ public class AuthService {
         }
     }
 
-    
-    public UserNotiDto getNotiByUserNo(String userNo) {
-    	return authDao.getNotiByUserNo(userNo);
-    }
 
     public AuthResult login(String email, String password) {
         User user = authDao.findUserByEmail(email)

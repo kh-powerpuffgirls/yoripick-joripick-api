@@ -44,8 +44,11 @@ public class AuthDto {
         private LocalDate inactiveDate;
         private List<String> roles;
         private String provider;
-        
         private String profile;
+        private String msgNoti;
+        private String replyNoti;
+        private String rvwNoti;
+        private String expNoti;
     }
 
     @Data

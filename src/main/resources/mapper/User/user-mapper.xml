@@ -8,6 +8,7 @@
 		WHERE USER_NO = #{userNo}
 	</update>
 
+
 	<select id="getMypageInfo" parameterType="long" resultType="map">
 		SELECT U.USER_NO,
 		U.USERNAME,
@@ -18,6 +19,15 @@
 		WHERE U.USER_NO = #{userNo}
 	</select>
 
+	<select id="getUserImageNo" parameterType="long" resultType="long">
+		SELECT IMAGE_NO FROM USERS WHERE USER_NO = #{userNo}
+	</select>
+
+	<delete id="deleteImage" parameterType="long">
+		DELETE FROM IMAGE WHERE IMAGE_NO = #{imageNo}
+	</delete>
+
+
 	<update id="updateUser" parameterType="map"> UPDATE users <set>
 			<if test="username != null">
 				username = #{username},
@@ -26,6 +36,27 @@
 				email = #{email},
 			</if>
 		</set> WHERE user_no =
-		#{userNo} </update>
+		#{userNo}
+	</update>
+	
+<update id="updateAlarm">
+    UPDATE USERS
+    SET 
+        MSG_NOTI = #{msgNoti},
+        REPLY_NOTI = #{replyNoti},
+        RVW_NOTI = #{rvwNoti},
+        EXP_NOTI = #{expNoti}
+    WHERE USER_NO = #{userNo}
+</update>
 
+<select id="getAlarmSettings" resultType="map">
+    SELECT 
+        MSG_NOTI as msgNoti,
+        REPLY_NOTI as replyNoti,
+        RVW_NOTI as rvwNoti,
+        EXP_NOTI as expNoti
+    FROM USERS
+    WHERE USER_NO = #{userNo}
+</select>
+	
 </mapper>

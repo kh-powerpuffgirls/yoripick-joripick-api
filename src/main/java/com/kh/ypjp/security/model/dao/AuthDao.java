@@ -10,7 +10,6 @@ import com.kh.ypjp.security.model.dto.AuthDto.Authority;
 import com.kh.ypjp.security.model.dto.AuthDto.User;
 import com.kh.ypjp.security.model.dto.AuthDto.UserCredential;
 import com.kh.ypjp.security.model.dto.AuthDto.UserIdentities;
-import com.kh.ypjp.security.model.dto.UserNotiDto;
 
 import lombok.RequiredArgsConstructor;
 
@@ -19,10 +18,6 @@ import lombok.RequiredArgsConstructor;
 public class AuthDao {
 
 	private final SqlSessionTemplate session;
-	
-	public UserNotiDto getNotiByUserNo(String userNo) {
-		return session.selectOne("auth.getNotiByUserNo", userNo);
-	}
 
 	public Optional<User> findUserByEmail(String email) {
 		List<User> users = session.selectList("auth.findUserByEmail", email);
