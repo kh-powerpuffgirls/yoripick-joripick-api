@@ -1,6 +1,8 @@
 package com.kh.ypjp.admin.controller;
 
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -10,6 +12,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -17,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.kh.ypjp.admin.model.dto.AdminDto.ChallengeForm;
 import com.kh.ypjp.admin.model.dto.AdminDto.Recipe;
 import com.kh.ypjp.admin.model.dto.AdminDto.Report;
+import com.kh.ypjp.admin.model.dto.AdminDto.UserInfo;
 import com.kh.ypjp.admin.model.service.AdminService;
 import com.kh.ypjp.chat.model.dto.ChatDto.ChatMsgDto;
 import com.kh.ypjp.chat.model.dto.ChatDto.ChatRoomDto;
@@ -128,5 +132,23 @@ public class AdminController {
 		chatRoom.setMessages(new ArrayList<>(chatMessages));
         return ResponseEntity.ok(chatRoom);
     }
+	
+	@PostMapping("/users/{userNo}/{banDur}")
+	public ResponseEntity<Void> banUsers(@PathVariable Long userNo, @PathVariable int banDur) {
+		Map<String, Object> param = new HashMap<>();
+		Date startDate = Calendar.getInstance().getTime();
+		Date endDate = new Date(startDate.getTime() + (1000 * 60 * 60 * 24 * banDur));
+		param.put("userNo", userNo);
+		param.put("startDate", startDate);
+		param.put("endDate", endDate);
+		service.banUsers(param);
+		return ResponseEntity.ok().build();
+	}
+	
+	@GetMapping("/users")
+	public ResponseEntity<List<UserInfo>> getUsers() {
+		List<UserInfo> users = service.getUsers();
+		return ResponseEntity.ok(users);
+	}
 	
 }

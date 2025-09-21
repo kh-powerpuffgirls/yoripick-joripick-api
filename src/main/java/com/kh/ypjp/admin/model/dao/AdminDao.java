@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 import com.kh.ypjp.admin.model.dto.AdminDto.ChallengeForm;
 import com.kh.ypjp.admin.model.dto.AdminDto.Recipe;
 import com.kh.ypjp.admin.model.dto.AdminDto.Report;
+import com.kh.ypjp.admin.model.dto.AdminDto.UserInfo;
 import com.kh.ypjp.chat.model.dto.ChatDto.ChatMsgDto;
 import com.kh.ypjp.chat.model.dto.ChatDto.ChatRoomDto;
 
@@ -74,6 +75,14 @@ public class AdminDao {
 
 	public List<ChatMsgDto> getChatMessages(Map<String, Object> param) {
 		return session.selectList("admin.getChatMessages", param);
+	}
+
+	public int banUsers(Map<String, Object> param) {
+		return session.insert("admin.banUsers", param);
+	}
+
+	public List<UserInfo> getUsers() {
+		return session.selectList("admin.getUsers");
 	}
 
 }

@@ -207,4 +207,44 @@
 	    	AND M.msg_type = #{msgType}
 		ORDER BY M.time
 	</select>
+	
+	<insert id="banUsers">
+		INSERT INTO USER_BANNED VALUES
+		(SEQ_BAN_NO.NEXTVAL, #{userNo}, #{startDate}, #{endDate})
+	</insert>
+	
+	<select id="getUsers" resultType="com.kh.ypjp.admin.model.dto.AdminDto$UserInfo">
+		SELECT
+		    u.user_no,
+		    u.username,
+		    u.status,
+		    NVL(b.banDays, 0) AS banDays,
+		    NVL(r.reportNo, 0) AS reportNo,
+		    NVL(rcp.officialRcp, 0) AS officialRcp,
+		    NVL(c.chRequest, 0) AS chRequest
+		FROM USERS u
+		LEFT JOIN (
+		    SELECT user_no, SUM(end_date - start_date) AS banDays
+		    FROM USER_BANNED
+		    GROUP BY user_no
+		) b ON u.user_no = b.user_no
+		LEFT JOIN (
+		    SELECT user_no, COUNT(*) AS reportNo
+		    FROM REPORT
+		    GROUP BY user_no
+		) r ON u.user_no = r.user_no
+		LEFT JOIN (
+		    SELECT user_no, COUNT(*) AS officialRcp
+		    FROM RECIPE
+		    WHERE approval = 'Y'
+		    GROUP BY user_no
+		) rcp ON u.user_no = rcp.user_no
+		LEFT JOIN (
+		    SELECT user_no, COUNT(*) AS chRequest
+		    FROM CHALLENGE_FORM
+		    GROUP BY user_no
+		) c ON u.user_no = c.user_no
+		WHERE u.user_no > 0
+		ORDER BY u.user_no
+	</select>
 </mapper>

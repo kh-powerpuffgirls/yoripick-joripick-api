@@ -10,6 +10,7 @@ import com.kh.ypjp.admin.model.dao.AdminDao;
 import com.kh.ypjp.admin.model.dto.AdminDto.ChallengeForm;
 import com.kh.ypjp.admin.model.dto.AdminDto.Recipe;
 import com.kh.ypjp.admin.model.dto.AdminDto.Report;
+import com.kh.ypjp.admin.model.dto.AdminDto.UserInfo;
 import com.kh.ypjp.chat.model.dao.ChatDao;
 import com.kh.ypjp.chat.model.dto.ChatDto.ChatMsgDto;
 import com.kh.ypjp.chat.model.dto.ChatDto.ChatRoomDto;
@@ -84,6 +85,14 @@ public class AdminService {
 
 	public List<ChatMsgDto> getChatMessages(Map<String, Object> param) {
 		return dao.getChatMessages(param);
+	}
+
+	public int banUsers(Map<String, Object> param) {
+		return dao.banUsers(param);
+	}
+
+	public List<UserInfo> getUsers() {
+		return dao.getUsers();
 	}
 
 }

@@ -47,4 +47,17 @@ public class AdminDto {
 		private String content;
 		private Date reportedAt;
 	}
+	
+	@Data
+	@NoArgsConstructor
+	@AllArgsConstructor
+	public static class UserInfo {
+		private Long userNo;
+		private String userName;
+		private String status;
+		private int banDays;
+		private int reportNo;
+		private int officialRcp;
+		private int chRequest;
+	}
 }
