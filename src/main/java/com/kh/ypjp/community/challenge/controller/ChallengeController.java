@@ -3,44 +3,80 @@ package com.kh.ypjp.community.challenge.controller;
 import com.kh.ypjp.community.challenge.dto.*;
 import com.kh.ypjp.community.challenge.service.ChallengeService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.security.Principal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import jakarta.servlet.http.HttpServletRequest;
 
-// principal 제거함 -> 시큐리티에서 @AuthenticationPrincipal 이거 사용중이라서!!
 
 @CrossOrigin(origins = "http://localhost:5173")
 @RestController
 @RequestMapping("/community/challenge")
 @RequiredArgsConstructor
+@Slf4j
 public class ChallengeController {
 
     private final ChallengeService challengeService;
 
     // 전체 게시글 조회
     @GetMapping
-    public ResponseEntity<List<ChallengeDto>> getAllPosts() {
-        return ResponseEntity.ok(challengeService.getAllPosts());
+    public ResponseEntity<List<ChallengeDto>> getAllPosts(HttpServletRequest request) {
+        List<ChallengeDto> challengeList = challengeService.getAllPosts();
+
+        String baseUrl = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort();
+
+        for (ChallengeDto challenge : challengeList) {
+            if (challenge.getServerName() != null && !challenge.getServerName().isEmpty()) {
+                String imageUrl = UriComponentsBuilder.fromUriString(baseUrl)
+                        .path("/images/")
+                        .path(challenge.getServerName())
+                        .toUriString();
+                challenge.setImageUrl(imageUrl);
+            }
+        }
+        return ResponseEntity.ok(challengeList);
     }
 
     // 게시글 단건 조회
     @GetMapping("/{id}")
     public ResponseEntity<ChallengeDto> getPost(
             @PathVariable Long id,
-            @AuthenticationPrincipal Long userNo) {
+            @AuthenticationPrincipal Long userNo,
+            HttpServletRequest request) {
 
-        Optional<ChallengeDto> post = challengeService.getPostAndIncrementViews(id, userNo);
-        return post.map(ResponseEntity::ok)
-                   .orElse(ResponseEntity.notFound().build());
+        Optional<ChallengeDto> optionalPost = challengeService.getPostAndIncrementViews(id, userNo);
+        
+        if (optionalPost.isPresent()) {
+            ChallengeDto post = optionalPost.get();
+            if (post.getServerName() != null && !post.getServerName().isEmpty()) {
+                String baseUrl = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort();
+                String imageUrl = UriComponentsBuilder.fromUriString(baseUrl)
+                        .path("/images/")
+                        .path(post.getServerName())
+                        .toUriString();
+                post.setImageUrl(imageUrl);
+            }
+            return ResponseEntity.ok(post);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
+    
+    @GetMapping("/navigation/{challengeNo}")
+    public ResponseEntity<Map<String, Long>> getNavigation(@PathVariable Long challengeNo) {
+        Map<String, Long> navigation = challengeService.getNavigation(challengeNo);
+        return ResponseEntity.ok(navigation);
     }
 
     // 게시글 등록
@@ -65,11 +101,11 @@ public class ChallengeController {
             response.put("challengeNo", newChallengeNo);
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("게시글 등록 실패: {}", e.getMessage());
+            log.error("Stack trace:", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                                  .body(Map.of("error", "게시글 등록 실패"));
         }
-
     }
 
     // 게시글 수정
@@ -80,26 +116,24 @@ public class ChallengeController {
             @RequestParam(value = "videoUrl", required = false) String videoUrl,
             @RequestParam(value = "file", required = false) MultipartFile file,
             @RequestParam(value = "title", required = false) String title,
-            @AuthenticationPrincipal Long userNo, // @AuthenticationPrincipal로 userNo를 직접 받음
-            Authentication authentication) { // Authentication 객체를 받아 권한 확인
+            @AuthenticationPrincipal Long userNo,
+            Authentication authentication) {
 
         if (userNo == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 후 이용해주세요.");
         }
 
-        // 사용자의 권한(Authorities) 중 ROLE_ADMIN이 있는지 확인
         boolean isAdmin = authentication.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
 
         ChallengeDto challengeDto = new ChallengeDto();
         challengeDto.setChallengeNo(id);
-        challengeDto.setUserNo(userNo); // 작성자 확인을 위해 필요
+        challengeDto.setUserNo(userNo);
         challengeDto.setChInfoNo(chInfoNo);
         challengeDto.setVideoUrl(videoUrl);
         challengeDto.setTitle(title);
 
         try {
-            // isAdmin 정보를 서비스 레이어로 전달
             Optional<ChallengeDto> updatedPost = challengeService.updatePost(id, challengeDto, file, userNo, isAdmin);
             if (updatedPost.isPresent()) {
                 return ResponseEntity.ok("게시글이 성공적으로 수정되었습니다.");
@@ -108,7 +142,8 @@ public class ChallengeController {
                         .body("게시글 수정에 실패했습니다. 작성자 또는 관리자만 수정할 수 있습니다.");
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("게시글 수정 중 오류 발생: {}", e.getMessage());
+            log.error("Stack trace:", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("게시글 수정 중 오류가 발생했습니다.");
         }
@@ -118,24 +153,21 @@ public class ChallengeController {
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deletePost(
             @PathVariable Long id,
-            @AuthenticationPrincipal Long userNo, // @AuthenticationPrincipal로 userNo를 직접 받음
-            Authentication authentication) { // Authentication 객체를 받아 권한 확인
+            @AuthenticationPrincipal Long userNo,
+            Authentication authentication) {
 
         if (userNo == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 후 이용해주세요.");
         }
 
-        // 사용자의 권한(Authorities) 중 ROLE_ADMIN이 있는지 확인
         boolean isAdmin = authentication.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
 
-        // isAdmin 정보를 서비스 레이어로 전달
         boolean deleted = challengeService.deletePost(id, userNo, isAdmin);
         if (deleted) return ResponseEntity.ok("게시글이 성공적으로 삭제되었습니다.");
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body("게시글 삭제에 실패했거나 권한이 없습니다. 작성자 또는 관리자만 삭제할 수 있습니다.");
     }
-
 
     // 댓글 전체 조회
     @GetMapping("/replies/{challengeNo}")
@@ -149,7 +181,7 @@ public class ChallengeController {
                                            @AuthenticationPrincipal Long userNo) {
         if (replyDto.getCategory() == null || replyDto.getCategory().isEmpty())
             replyDto.setCategory("CHALLENGE");
-        replyDto.setUserNo(userNo);  // Long 그대로 사용
+        replyDto.setUserNo(userNo);
         challengeService.insertReply(replyDto);
         return ResponseEntity.status(HttpStatus.CREATED).body("댓글이 성공적으로 등록되었습니다.");
     }
@@ -181,7 +213,7 @@ public class ChallengeController {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body("댓글 삭제에 실패했습니다. 권한을 확인해주세요.");
     }
     
- // 신고 등록
+    // 신고 등록
     @PostMapping("/report")
     public ResponseEntity<String> createReport(@RequestBody ChallengeReportDto reportDto,
                                                @AuthenticationPrincipal Long userNo) {
@@ -200,7 +232,6 @@ public class ChallengeController {
         List<ChallengeReportDto> reports = challengeService.getAllReports();
         return ResponseEntity.ok(reports);
     }
-
 
     // 진행 중인 챌린지 정보 조회
     @GetMapping("/active")
@@ -254,7 +285,8 @@ public class ChallengeController {
             int count = challengeService.getLikesCount(challengeNo);
             return ResponseEntity.ok(count);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("좋아요 개수 조회 실패: {}", e.getMessage());
+            log.error("Stack trace:", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(0);
         }
     }

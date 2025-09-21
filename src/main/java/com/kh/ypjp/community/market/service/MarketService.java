@@ -8,7 +8,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.util.HashMap;
 import java.util.List;
@@ -36,58 +35,72 @@ public class MarketService {
     public List<MarketDto> getRecentPosts() {
         return marketDao.getRecentPosts();
     }
-
-    // 게시글 상세 조회 및 조회수 증가
-    @Transactional
-    public Optional<MarketDto> getPostAndIncrementViews(Long productId, Long userNo) {
+    
+ // 내 판매 목록 조회
+    public List<MarketDto> getMyPosts(int userNo) {
+        return marketDao.getMyPosts(userNo);
+    }
+    
+    /**
+     * 게시글 상세 조회
+     * 조회수 증가 로직은 컨트롤러에서 처리합니다.
+     * @param productId 조회할 게시글 ID
+     * @return 조회된 게시글 DTO
+     */
+    public Optional<MarketDto> getPost(Long productId) {
         MarketDto post = marketDao.getPostDetail(productId);
-
-        if (post == null) {
-            return Optional.empty();
+        
+        if (post != null) {
+            // 게시글 작성자의 식BTI를 조회하여 DTO에 설정합니다.
+            String sikBti = marketDao.selectSikBtiByUserNo(post.getUserNo().intValue());
+            post.setSikBti(sikBti);
         }
         
-        // 작성자 본인이 아니면 조회수 증가
-        if (userNo == null || !userNo.equals(post.getUserNo())) {
-            marketDao.incrementViews(productId);
-            // DTO에 조회수 반영 (클라이언트에게 최신 정보 전달)
-            // post.setViews(post.getViews() + 1); // DTO에 views가 있다면 사용
-        }
-
-        return Optional.of(post);
+        return Optional.ofNullable(post);
     }
-
+    
+    /**
+     * 게시글 조회수 증가
+     * @param productId 조회수를 증가시킬 게시글 ID
+     */
     @Transactional
-    public void registerPost(MarketDto marketDto, MultipartFile image) throws Exception {
+    public void incrementViews(Long productId) {
+        marketDao.incrementViews(productId);
+    }
+    
+    // 게시글 등록
+    @Transactional
+    public Long registerPost(MarketDto marketDto, MultipartFile image) throws Exception {
         if (marketDto.getUserNo() == null) {
             throw new IllegalArgumentException("로그인 후 이용할 수 있습니다.");
         }
         
-        // 이미지 업로드 로직을 개선하여 IMAGE_NO를 먼저 받아옴
+        Long imageNo = null;
+
         if (image != null && !image.isEmpty()) {
             String webPath = "market/" + marketDto.getUserNo();
             String savedFileName = utilService.getChangeName(image, webPath);
             String serverName = webPath + "/" + savedFileName;
 
+            log.info("이미지 저장 경로: {}", serverName);
+            
             Map<String, Object> param = new HashMap<>();
             param.put("serverName", serverName);
             param.put("originName", image.getOriginalFilename());
             
-            // 1. IMAGE 테이블에 이미지 정보를 먼저 저장하고,
             utilService.insertImage(param);
+            imageNo = utilService.getImageNo(param);
             
-            // 2. 저장된 이미지의 고유 번호(imageNo)를 가져와 DTO에 설정합니다.
-            Long imageNo = utilService.getImageNo(param);
+            log.info("DB에 저장된 imageNo: {}", imageNo);
             
-            String imageUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
-                .path("/images/")
-                .path(serverName)
-                .toUriString();
-            
-            marketDto.setImageUrl(imageUrl);
-            marketDto.setImageNo(imageNo.intValue()); // Long을 int로 변환하여 할당
+            marketDto.setImageNo(imageNo.intValue());
+            marketDto.setServerName(serverName);
+            marketDto.setOriginName(image.getOriginalFilename());
         }
         
         marketDao.registerPost(marketDto);
+
+        return marketDto.getProductId();
     }
     
     @Transactional
@@ -112,14 +125,10 @@ public class MarketService {
             param.put("originName", image.getOriginalFilename());
             
             utilService.insertImage(param);
-            Long imageNo = utilService.getImageNo(param); // Long 타입으로 변경
+            Long imageNo = utilService.getImageNo(param);
 
-            String imageUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
-                .path("/images/")
-                .path(serverName)
-                .toUriString();
-
-            marketDto.setImageUrl(imageUrl);
+            marketDto.setServerName(serverName);
+            marketDto.setOriginName(image.getOriginalFilename());
             marketDto.setImageNo(imageNo.intValue());
         }
         

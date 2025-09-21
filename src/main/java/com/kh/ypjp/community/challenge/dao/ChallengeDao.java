@@ -42,4 +42,10 @@ public interface ChallengeDao {
     void insertLike(@Param("userNo") Long userNo, @Param("challengeNo") Long challengeNo);
     void deleteLike(@Param("userNo") Long userNo, @Param("challengeNo") Long challengeNo);
     int getLikesCount(@Param("challengeNo") Long challengeNo);
+    
+    // 다음 게시글 번호 찾기 (현재 번호보다 크면서 가장 작은 번호)
+    Long findNextChallenge(@Param("challengeNo") Long challengeNo);
+
+    // 이전 게시글 번호 찾기 (현재 번호보다 작으면서 가장 큰 번호)
+    Long findPreviousChallenge(@Param("challengeNo") Long challengeNo);
 }

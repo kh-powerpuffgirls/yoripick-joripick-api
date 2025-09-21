@@ -8,7 +8,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.time.LocalDate;
 import java.util.HashMap;
@@ -47,7 +46,14 @@ public class ChallengeService {
         return Optional.of(post);
     }
     
- // 신고 등록
+    public Map<String, Long> getNavigation(Long challengeNo) {
+        Map<String, Long> navigation = new HashMap<>();
+        navigation.put("next", challengeDao.findNextChallenge(challengeNo));
+        navigation.put("prev", challengeDao.findPreviousChallenge(challengeNo));
+        return navigation;
+    }
+    
+    // 신고 등록
     @Transactional
     public int createReport(ChallengeReportDto reportDto) {
         return challengeDao.insertReport(reportDto);
@@ -57,8 +63,6 @@ public class ChallengeService {
     public List<ChallengeReportDto> getAllReports() {
         return challengeDao.selectAllReports();
     }
-
-
 
     // 게시글 등록 및 이미지 저장
     @Transactional
@@ -82,6 +86,7 @@ public class ChallengeService {
             throw new IllegalArgumentException("챌린지 이미지는 필수입니다.");
         }
 
+        // 이미지 파일 저장 및 serverName 생성
         String webPath = "challenge/" + challengeDto.getUserNo();
         String savedFileName = utilService.getChangeName(file, webPath);
         String serverName = webPath + "/" + savedFileName;
@@ -89,12 +94,7 @@ public class ChallengeService {
         challengeDto.setServerName(serverName);
         challengeDto.setOriginName(file.getOriginalFilename());
 
-        String imageUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
-                .path("/images/")
-                .path(serverName)
-                .toUriString();
-        challengeDto.setImageUrl(imageUrl);
-
+        // 이미지 정보 DB에 저장
         Map<String, Object> param = new HashMap<>();
         param.put("serverName", serverName);
         param.put("originName", file.getOriginalFilename());
@@ -113,7 +113,6 @@ public class ChallengeService {
     public Optional<ChallengeDto> updatePost(Long id, ChallengeDto challengeDto, MultipartFile file, Long userNo, boolean isAdmin) {
         Long authorNo = challengeDao.findUserNoById(id);
 
-        // 수정 권한 확인: 게시글 작성자이거나 관리자여야 함
         if (authorNo == null || (!authorNo.equals(userNo) && !isAdmin)) {
             log.warn("게시글 수정 권한 없음: challengeNo={}, userNo={}", id, userNo);
             return Optional.empty();
@@ -122,18 +121,13 @@ public class ChallengeService {
         challengeDto.setChallengeNo(id);
 
         if (file != null && !file.isEmpty()) {
+            // 새 이미지로 업데이트
             String webPath = "challenge/" + challengeDto.getUserNo();
             String savedFileName = utilService.getChangeName(file, webPath);
             String serverName = webPath + "/" + savedFileName;
 
             challengeDto.setServerName(serverName);
             challengeDto.setOriginName(file.getOriginalFilename());
-
-            String imageUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
-                    .path("/images/")
-                    .path(serverName)
-                    .toUriString();
-            challengeDto.setImageUrl(imageUrl);
 
             Map<String, Object> param = new HashMap<>();
             param.put("serverName", serverName);
@@ -148,13 +142,11 @@ public class ChallengeService {
         return Optional.of(challengeDao.findByIdWithImage(id));
     }
 
-
     // 게시글 삭제
     @Transactional
     public boolean deletePost(Long id, Long userNo, boolean isAdmin) {
         Long authorNo = challengeDao.findUserNoById(id);
 
-        // 삭제 권한 확인: 게시글 작성자이거나 관리자여야 함
         if (authorNo == null || (!authorNo.equals(userNo) && !isAdmin)) {
             log.warn("게시글 삭제 권한 없음: challengeNo={}, userNo={}", id, userNo);
             return false;
@@ -162,7 +154,7 @@ public class ChallengeService {
         return challengeDao.updateDeleteStatus(id, "Y") > 0;
     }
 
-    // 좋아요 👍👍👍
+    // 좋아요
     @Transactional
     public boolean toggleLike(Long challengeNo, Long userNo) {
         boolean liked = challengeDao.checkIfLiked(userNo, challengeNo) > 0;

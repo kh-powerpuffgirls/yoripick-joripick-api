@@ -1,3 +1,4 @@
+// CkclassService.java
 package com.kh.ypjp.community.ckclass.service;
 
 import com.kh.ypjp.common.UtilService;
@@ -123,13 +124,13 @@ public class CkclassService {
     public void markMessagesRead(int roomNo, int userNo) {
         ckclassDao.markMessagesRead(roomNo, userNo);
     }
-    
+
+    /** 조건에 따라 전체 클래스 목록을 조회합니다. */
     public List<CkclassDto> findAllClasses(boolean excludeCode) {
         Map<String, Object> paramMap = new HashMap<>();
         paramMap.put("excludeCode", excludeCode);
         return ckclassDao.selectAllClasses(paramMap);
     }
-
 
     /** 클래스 검색 */
     public List<CkclassDto> searchClasses(String searchType, String keyword, boolean excludeCode, Integer userNo) {
@@ -138,7 +139,7 @@ public class CkclassService {
         paramMap.put("userNo", userNo);
 
         // 검색어 없고 searchType이 null or all → 전체 목록
-        if ((keyword == null || keyword.isBlank()) && 
+        if ((keyword == null || keyword.isBlank()) &&
             (searchType == null || "all".equals(searchType))) {
             return ckclassDao.selectAllClasses(paramMap);
         }
@@ -154,5 +155,4 @@ public class CkclassService {
         paramMap.put("keyword", keyword);
         return ckclassDao.selectClassesForSearch(paramMap);
     }
-
 }

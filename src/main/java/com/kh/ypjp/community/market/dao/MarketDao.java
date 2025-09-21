@@ -17,7 +17,7 @@ public interface MarketDao {
     List<MarketDto> getMyPosts(Long userNo);
     MarketDto getPostDetail(Long productId);
     void incrementViews(Long productId);
-    void registerPost(MarketDto marketDto);
+    int registerPost(MarketDto marketDto);
     void registerPurchaseForm(MarketDto marketDto);
     void decreaseQuantity(@Param("productId") Long productId, @Param("count") int count);
     int getProductQuantity(Long productId);
@@ -33,4 +33,9 @@ public interface MarketDao {
 
     // 게시글 ID를 기준으로 작성자의 userNo를 찾는 메서드 (추가)
     Long findUserNoById(Long productId);
+    
+    String selectSikBtiByUserNo(int userNo);
+
+ // 내 판매 목록 조회
+    List<MarketDto> getMyPosts(int userNo);
 }
