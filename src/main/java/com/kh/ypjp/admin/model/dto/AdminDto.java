@@ -16,8 +16,12 @@ public class AdminDto {
 	@AllArgsConstructor
 	public static class ChatInfo {
 		private Long roomNo;
+		private String className;
 		private List<ChatMsg> messages;
 		
+		@Data
+		@NoArgsConstructor
+		@AllArgsConstructor
 		public static class ChatMsg {
 			private Long messageNo;
 			private Long userNo;

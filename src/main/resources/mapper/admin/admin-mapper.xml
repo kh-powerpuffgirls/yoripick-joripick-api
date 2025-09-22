@@ -424,7 +424,37 @@
 		SELECT count(*) FROM COOKING_CLASS
 	</select>
 	
-	<select id="getChatRoom" resultMap="">
-		
+	<resultMap id="ChatInfoResultMap" type="com.kh.ypjp.admin.model.dto.AdminDto$ChatInfo">
+		<id property="roomNo" column="room_no"/>
+		<result property="className" column="class_name"/>
+		<collection property="messages" ofType="com.kh.ypjp.admin.model.dto.AdminDto$ChatInfo$ChatMsg" resultMap="ChatMsgResultMap"/>
+	</resultMap>
+	
+	<resultMap id="ChatMsgResultMap" type="com.kh.ypjp.admin.model.dto.AdminDto$ChatInfo$ChatMsg">
+		<id property="messageNo" column="message_no"/>
+	    <result property="userNo" column="user_no"/>
+	    <result property="username" column="username"/>
+	    <result property="content" column="content"/>
+	    <result property="time" column="time"/>
+	    <result property="hidden" column="hidden"/>
+	    <result property="imageNo" column="image_no"/>
+	</resultMap>
+	
+	<select id="getChatRoom" resultMap="ChatInfoResultMap">
+		SELECT
+			C.room_no,
+			C.class_name,
+			M.message_no,
+			C.user_no,
+			U.username,
+			M.content,
+			M.time,
+			M.hidden,
+			M.image_no
+		FROM COOKING_CLASS C
+		LEFT JOIN USERS U ON C.user_no = U.user_no
+		LEFT JOIN MESSAGE M ON C.room_no = M.ref_no
+		WHERE M.msg_type = 'CCLASS'
+		ORDER BY M.time
 	</select>
 </mapper>
