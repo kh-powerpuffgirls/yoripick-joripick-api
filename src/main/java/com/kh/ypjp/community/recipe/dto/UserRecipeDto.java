@@ -7,6 +7,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.kh.ypjp.community.recipe.model.vo.CookingStep;
 import com.kh.ypjp.community.recipe.model.vo.RcpIngredient;
+import com.kh.ypjp.community.recipe.model.vo.Review;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -91,11 +92,15 @@ public class UserRecipeDto {
         private String rcpName;
         private String rcpInfo;
         private Date createdAt;
+        private Date updatedAt; 
         private int views;
         private String tag;
         private boolean isOfficial;
         
         private String myLikeStatus; 
+        
+        private Integer rcpMethodId;
+        private Integer rcpSituationId;
 
         // JOIN된 정보
         private String rcpMethod;
@@ -143,4 +148,29 @@ public class UserRecipeDto {
         private double stars;      // 별점
         private MultipartFile image;  // 리뷰 이미지 (선택 사항)
     }
+    
+    @Data
+    @AllArgsConstructor // 모든 필드를 받는 생성자를 추가해주는 Lombok 어노테이션
+    public static class ReviewPageResponse {
+    	private List<ReviewResponseDto> reviews;
+        private int totalPages;
+    }
+    
+    @Data
+    public static class ReviewWriterDto {
+        private long userNo;
+        private String username;
+        private String profileImage;
+        private String sikBti;
+    }
+    @Data
+    public static class ReviewResponseDto {
+        private int reviewNo;
+        private ReviewWriterDto userInfo; // ◀️ 프론트엔드가 원하는 userInfo 객체
+        private double stars;
+        private String content;
+        private String serverName; // serverName -> imageUrl
+        private Date reviewDate;
+    }
 }
+

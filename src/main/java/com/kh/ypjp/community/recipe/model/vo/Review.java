@@ -20,5 +20,11 @@ public class Review {
 	    private int imageNo;
 	    private String rcpSource;
 	    private int refNo;
-	    private String deleteStatus; 
+	    private String deleteStatus;
+	    
+	    private String username;          // USERS 테이블에서 JOIN
+	    private String userProfileImage;  // IMAGE 테이블에서 JOIN (작성자 프로필)
+	    private String serverName;
+	    
+	    private String sikBti;
 }

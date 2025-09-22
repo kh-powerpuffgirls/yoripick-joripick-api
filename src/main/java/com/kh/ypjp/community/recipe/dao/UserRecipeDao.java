@@ -66,4 +66,21 @@ public interface UserRecipeDao {
 
 	int insertReview(Review review);
 
+	long selectReviewCount(int rcpNo);
+
+	List<Review> selectReviewList(Map<String, Object> params);
+
+	List<Review> selectPhotoReviewList(int rcpNo);
+
+	int updateReviewDeleteStatus(Map<String, Object> params);
+
+	int deleteRcpIngredients(int rcpNo);
+
+	int deleteRcpDetails(int rcpNo);
+
+	int updateRecipe(Recipe recipe);
+
+	Recipe selectRecipeByNo(int rcpNo);
+
+	int updateRecipeDeleteStatus(int rcpNo);
 }

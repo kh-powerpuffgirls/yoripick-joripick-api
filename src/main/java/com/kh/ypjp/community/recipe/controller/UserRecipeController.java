@@ -7,10 +7,12 @@ import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -19,6 +21,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.kh.ypjp.community.recipe.dto.UserRecipeDto;
 import com.kh.ypjp.community.recipe.dto.UserRecipeDto.RecipeDetailResponse;
 import com.kh.ypjp.community.recipe.dto.UserRecipeDto.RecipePage;
+import com.kh.ypjp.community.recipe.dto.UserRecipeDto.ReviewPageResponse;
+import com.kh.ypjp.community.recipe.dto.UserRecipeDto.ReviewResponseDto;
 import com.kh.ypjp.community.recipe.model.vo.RcpMethod;
 import com.kh.ypjp.community.recipe.model.vo.RcpSituation;
 import com.kh.ypjp.community.recipe.service.UserRecipeService;
@@ -108,6 +112,35 @@ public class UserRecipeController {
         }
     }
     
+    
+    // 리뷰 목록 조회 API 
+    @GetMapping("/community/recipe/{rcpNo}/reviews")
+    public ResponseEntity<UserRecipeDto.ReviewPageResponse> selectReviewList(
+            @PathVariable int rcpNo,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "latest") String sort) {
+        
+    	ReviewPageResponse reviewPage = recipeService.selectReviewPage(rcpNo, page, sort);
+        return ResponseEntity.ok(reviewPage);
+    }
+    
+    //  포토 리뷰 목록 조회 API 
+    @GetMapping("/community/recipe/{rcpNo}/reviews/photos")
+    public ResponseEntity<List<ReviewResponseDto>> selectPhotoReviewList(@PathVariable int rcpNo) {
+    	List<ReviewResponseDto> photoReviews = recipeService.selectPhotoReviewList(rcpNo);
+        return ResponseEntity.ok(photoReviews);
+    }
+    
+    @GetMapping("/community/recipe/{rcpNo}")
+    public ResponseEntity<RecipeDetailResponse> selectRecipeDetailForGuest(
+            @PathVariable int rcpNo,
+            HttpServletRequest req,
+            HttpServletResponse res) {
+        
+        // 기존 상세 조회 메소드를 호출하되, userNo를 null로 전달합니다.
+        return selectRecipeDetail(rcpNo, null, req, res);
+    }
+    
     // 레시피 상세
     @GetMapping("/community/recipe/{rcpNo}/{userNo}")
     public ResponseEntity<RecipeDetailResponse> selectRecipeDetail(
@@ -152,9 +185,9 @@ public class UserRecipeController {
             res.addCookie(newCookie);
         }
         
-        
         return ResponseEntity.ok(recipeDetail);
     }
+    
     // --- 좋아요 상태 변경 ---
     @PostMapping("/community/recipe/{rcpNo}/like/{userNo}")
     public ResponseEntity<Void> updateLikeStatus(
@@ -182,6 +215,52 @@ public class UserRecipeController {
         try {
             recipeService.createReview(rcpNo, userNo, request);
             return ResponseEntity.status(HttpStatus.CREATED).build(); // 201 Created 응답
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+    
+    //리뷰 삭제 
+    @DeleteMapping("/community/recipe/{rcpNo}/reviews/{reviewNo}/{userNo}")
+    public ResponseEntity<Void> deleteReview(
+    		@PathVariable int rcpNo,
+            @PathVariable int reviewNo,
+            @PathVariable long userNo) {
+        
+        try {
+            recipeService.deleteReview(reviewNo, userNo);
+            return ResponseEntity.ok().build(); // 성공 시 200 OK 응답
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+    
+    // 레시피 수정
+    @PutMapping(value = "/community/recipe/{rcpNo}/{userNo}", consumes = "multipart/form-data")
+    public ResponseEntity<Void> updateRecipe(
+            @PathVariable int rcpNo,
+            @PathVariable long userNo,
+            @ModelAttribute UserRecipeDto.RecipeWriteRequest request) {
+        
+        try {
+            recipeService.updateRecipe(rcpNo, userNo, request);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+    
+    //레시피 삭제 
+    @DeleteMapping("/community/recipe/{rcpNo}")
+    public ResponseEntity<Void> deleteRecipe(
+    		@PathVariable int rcpNo) {
+        
+        try {
+            recipeService.deleteRecipe(rcpNo);
+            return ResponseEntity.ok().build(); // 성공 시 200 OK 응답
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();

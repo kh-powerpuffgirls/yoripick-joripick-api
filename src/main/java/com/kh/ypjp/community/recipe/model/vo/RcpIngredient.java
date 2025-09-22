@@ -1,5 +1,7 @@
 package com.kh.ypjp.community.recipe.model.vo;
 
+import com.kh.ypjp.common.model.vo.Nutrient;
+
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -11,5 +13,6 @@ public class RcpIngredient {
     private String quantity;
     private int weight;
     private String ingName;
+    private Nutrient nutrients;
 
 }

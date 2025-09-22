@@ -145,12 +145,57 @@ public class UserRecipeDaoImpl implements UserRecipeDao{
 
 	@Override
 	public String findLikeStatus(Map<String, Object> params) {
-		return session.selectOne("userRecipeMapper.findLikeStatus", params);
+		return session.selectOne(NAMESPACE + "findLikeStatus", params);
 	}
 
 	@Override
 	public int insertReview(Review review) {
 		System.out.println(review);
-		 return session.insert("userRecipeMapper.insertReview", review);
+		 return session.insert(NAMESPACE + "insertReview", review);
+	}
+
+	@Override
+	public long selectReviewCount(int rcpNo) {
+		 return session.selectOne(NAMESPACE + "selectReviewCount", rcpNo);
+	}
+
+	@Override
+	public List<Review> selectReviewList(Map<String, Object> params) {
+		return session.selectList(NAMESPACE + "selectReviewList", params);
+	}
+
+	@Override
+	public List<Review> selectPhotoReviewList(int rcpNo) {
+		return session.selectList(NAMESPACE + "selectPhotoReviewList", rcpNo);
+	}
+
+	@Override
+	public int updateReviewDeleteStatus(Map<String, Object> params) {
+		return session.update( NAMESPACE + "updateReviewDeleteStatus",params);
+	}
+
+	@Override
+	public int deleteRcpIngredients(int rcpNo) {
+		return session.delete(NAMESPACE + "deleteRcpIngredients",rcpNo);
+	}
+
+	@Override
+	public int deleteRcpDetails(int rcpNo) {
+		return session.delete(NAMESPACE + "deleteRcpDetails",rcpNo);
+	}
+
+	@Override
+	public int updateRecipe(Recipe recipe) {
+		return session.update(NAMESPACE + "updateRecipe",recipe);
+	}
+
+	@Override
+	public Recipe selectRecipeByNo(int rcpNo) {
+		return session.selectOne(NAMESPACE + "selectRecipeByNo",rcpNo);
+	}
+
+	@Override
+	public int updateRecipeDeleteStatus(int rcpNo) {
+		return session.update(NAMESPACE+"updateRecipeDeleteStatus",rcpNo);
 	}
 }
