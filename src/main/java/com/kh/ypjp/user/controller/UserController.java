@@ -1,11 +1,11 @@
 package com.kh.ypjp.user.controller;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -17,7 +17,8 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.kh.ypjp.common.UtilService;
 import com.kh.ypjp.common.exception.AuthException;
-import com.kh.ypjp.security.model.dto.AuthDto;
+import com.kh.ypjp.model.dto.AllergyDto;
+import com.kh.ypjp.model.dto.AllergyDto.AllergyList;
 import com.kh.ypjp.security.model.dto.AuthDto.User;
 import com.kh.ypjp.security.model.service.AuthService;
 import com.kh.ypjp.user.service.UserService;
@@ -118,4 +119,33 @@ public class UserController {
 	        return ResponseEntity.badRequest().body("알림 설정 업데이트 실패");
 	    }
 	}
+	
+    @GetMapping("/users/allergy-list")
+    public ResponseEntity<List<AllergyList>> getAllergyList() {
+        try {
+            List<AllergyList> allergyTree = userService.getAllergyTree();
+            return ResponseEntity.ok(allergyTree);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+    
+    @GetMapping("/users/allergy")
+    public ResponseEntity<List<Long>> getUserAllergyNos(@RequestParam Long userNo) {
+        List<Long> allergyNos = userService.getUserAllergies(userNo);
+        return ResponseEntity.ok(allergyNos);
+    }
+    
+    @PostMapping("/update/users/allergy")
+    public ResponseEntity updateUserAllergy(@RequestBody Map<String, Object> body) {
+        Long userNo = ((Number) body.get("userNo")).longValue();
+        List<Integer> allergyNos = (List<Integer>) body.get("allergyNos");
+
+        userService.updateUserAllergies(userNo, allergyNos.stream()
+                .map(Long::valueOf)
+                .toList());
+
+        return ResponseEntity.ok().build();
+    }
 }

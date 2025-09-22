@@ -1,8 +1,9 @@
 package com.kh.ypjp.user.service;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -11,6 +12,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.kh.ypjp.common.UtilService;
+import com.kh.ypjp.model.dto.AllergyDto.AllergyList;
 import com.kh.ypjp.security.model.dao.AuthDao;
 import com.kh.ypjp.security.model.dto.AuthDto;
 import com.kh.ypjp.security.model.dto.AuthDto.User;
@@ -133,5 +135,47 @@ public class UserService {
 
 	    return userDao.getAlarmSettings(userNo);
 	}
+		
+	public List<AllergyList> getAllergyTree() {
+	    List<AllergyList> flatList = userDao.getAllergyList();
+	    Map<Integer, AllergyList> map = new HashMap<>();
+	    List<AllergyList> roots = new ArrayList<>();
+
+	    for (AllergyList dto : flatList) {
+	        dto.setChildren(new ArrayList<>());
+	        map.put(dto.getAllergyNo(), dto);
+	    }
+
+	    for (AllergyList dto : flatList) {
+	        if (dto.getCategory() != null && map.containsKey(dto.getCategory())) {
+	        	AllergyList parent = map.get(dto.getCategory());
+	            parent.getChildren().add(dto);
+	        } else {
+	            roots.add(dto);
+	        }
+	    }
+
+	    return roots;
+	}
+	
+    public List<Long> getUserAllergies(Long userNo) {
+        return userDao.getUserAllergies(userNo);
+    }
+    
+    public void updateUserAllergies(Long userNo, List<Long> updatedAllergies) {
+        List<Long> existing = userDao.getUserAllergies(userNo);
+
+        for (Long allergyNo : updatedAllergies) {
+            if (!existing.contains(allergyNo)) {
+                userDao.insertUserAllergy(userNo, allergyNo);
+            }
+        }
+
+        for (Long allergyNo : existing) {
+            if (!updatedAllergies.contains(allergyNo)) {
+                userDao.deleteUserAllergy(userNo, allergyNo);
+            }
+        }
+    }
 
 }

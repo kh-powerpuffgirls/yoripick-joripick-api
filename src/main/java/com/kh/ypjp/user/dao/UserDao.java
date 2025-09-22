@@ -1,11 +1,12 @@
 package com.kh.ypjp.user.dao;
 
+import java.util.List;
 import java.util.Map;
 
 import org.apache.ibatis.session.SqlSession;
 import org.springframework.stereotype.Repository;
 
-import com.kh.ypjp.security.model.dto.AuthDto.User;
+import com.kh.ypjp.model.dto.AllergyDto.AllergyList;
 
 import lombok.RequiredArgsConstructor;
 
@@ -45,5 +46,24 @@ public class UserDao {
     public Map<String, Object> getAlarmSettings(Long userNo) {
         return session.selectOne("user.getAlarmSettings", userNo);
     }
+    
+    public List<AllergyList> getAllergyList() {
+        return session.selectList("util.getAllergyList");
+    }
+
+    public List<Long> getUserAllergies(Long userNo) {
+        return session.selectList("user.getUserAllergies", userNo);
+    }
+
+    public int insertUserAllergy(Long userNo, Long allergyNo) {
+        return session.insert("user.insertUserAllergy",
+                Map.of("userNo", userNo, "allergyNo", allergyNo));
+    }
+
+    public int deleteUserAllergy(Long userNo, Long allergyNo) {
+        return session.delete("user.deleteUserAllergy",
+                Map.of("userNo", userNo, "allergyNo", allergyNo));
+    }
+
 
 }
