@@ -6,8 +6,14 @@ import java.util.Map;
 import org.apache.ibatis.session.SqlSession;
 import org.springframework.stereotype.Repository;
 
+import com.kh.ypjp.admin.model.dto.AdminDto.Announcement;
+import com.kh.ypjp.admin.model.dto.AdminDto.Challenge;
 import com.kh.ypjp.admin.model.dto.AdminDto.ChallengeForm;
+import com.kh.ypjp.admin.model.dto.AdminDto.ChatInfo;
+import com.kh.ypjp.admin.model.dto.AdminDto.ClassInfo;
+import com.kh.ypjp.admin.model.dto.AdminDto.CommInfo;
 import com.kh.ypjp.admin.model.dto.AdminDto.Recipe;
+import com.kh.ypjp.admin.model.dto.AdminDto.RecipeInfo;
 import com.kh.ypjp.admin.model.dto.AdminDto.Report;
 import com.kh.ypjp.admin.model.dto.AdminDto.UserInfo;
 import com.kh.ypjp.chat.model.dto.ChatDto.ChatMsgDto;
@@ -81,8 +87,56 @@ public class AdminDao {
 		return session.insert("admin.banUsers", param);
 	}
 
-	public List<UserInfo> getUsers() {
-		return session.selectList("admin.getUsers");
+	public List<UserInfo> getUsers(Map<String, Object> param) {
+		return session.selectList("admin.getUsers", param);
+	}
+
+	public int insertChallenges(Challenge challenge) {
+		return session.insert("admin.insertChallenges", challenge);
+	}
+
+	public List<Challenge> getChallenges(Challenge challenge) {
+		return session.selectList("admin.getChallenges", challenge);
+	}
+
+	public int insertAnnouncements(Announcement announcement) {
+		return session.insert("admin.insertAnnouncements", announcement);
+	}
+
+	public List<Announcement> getAnnouncements(Announcement announcement) {
+		return session.selectList("admin.getAnnouncements", announcement);
+	}
+
+	public Long countAllUsers() {
+		return session.selectOne("admin.countAllUsers");
+	}
+
+	public Long countAllRecipes() {
+		return session.selectOne("admin.countAllRecipes");
+	}
+
+	public List<RecipeInfo> getAllRecipes(Map<String, Object> param) {
+		return session.selectList("admin.getAllRecipes", param);
+	}
+
+	public Long countCommunities() {
+		return session.selectOne("admin.countCommunities");
+	}
+
+	public List<CommInfo> getCommunities(Map<String, Object> param) {
+		return session.selectList("admin.getCommunities", param);
+	}
+
+	public Long countClasses() {
+		return session.selectOne("admin.countClasses");
+	}
+
+	public List<ClassInfo> getClasses(Map<String, Object> param) {
+		return session.selectList("admin.getClasses", param);
+	}
+
+	public ChatInfo getChatRoom(Long roomNo) {
+		return session.selectOne("admin.getChatRoom", roomNo);
 	}
 
 }

@@ -7,18 +7,28 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
+import com.kh.ypjp.admin.model.dto.AdminDto.Announcement;
+import com.kh.ypjp.admin.model.dto.AdminDto.Challenge;
 import com.kh.ypjp.admin.model.dto.AdminDto.ChallengeForm;
+import com.kh.ypjp.admin.model.dto.AdminDto.ChatInfo;
+import com.kh.ypjp.admin.model.dto.AdminDto.ClassInfo;
+import com.kh.ypjp.admin.model.dto.AdminDto.CommInfo;
 import com.kh.ypjp.admin.model.dto.AdminDto.Recipe;
+import com.kh.ypjp.admin.model.dto.AdminDto.RecipeInfo;
 import com.kh.ypjp.admin.model.dto.AdminDto.Report;
 import com.kh.ypjp.admin.model.dto.AdminDto.UserInfo;
 import com.kh.ypjp.admin.model.service.AdminService;
@@ -137,7 +147,7 @@ public class AdminController {
 	public ResponseEntity<Void> banUsers(@PathVariable Long userNo, @PathVariable int banDur) {
 		Map<String, Object> param = new HashMap<>();
 		Date startDate = Calendar.getInstance().getTime();
-		Date endDate = new Date(startDate.getTime() + (1000 * 60 * 60 * 24 * banDur));
+		Date endDate = new Date(startDate.getTime() + (1000L * 60 * 60 * 24 * banDur));
 		param.put("userNo", userNo);
 		param.put("startDate", startDate);
 		param.put("endDate", endDate);
@@ -145,10 +155,106 @@ public class AdminController {
 		return ResponseEntity.ok().build();
 	}
 	
+	@PostMapping(value = "/challenges", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	public ResponseEntity<Void> insertChallenges(
+			@RequestPart("title") String title,
+	        @RequestPart("startDate") String startDate,
+	        @RequestPart("endDate") String endDate,
+			@RequestPart(value = "upfile", required = false) MultipartFile upfile
+			) {
+		Challenge challenge = new Challenge(null, title, startDate, endDate, null);
+		List<Challenge> challengeList = service.getChallenges(challenge);
+		if (!challengeList.isEmpty()) {
+			return ResponseEntity.badRequest().build();
+		}
+		service.insertChallenges(challenge, upfile);
+		return ResponseEntity.ok().build();
+	}
+	
+	@PostMapping("/announcements")
+	public ResponseEntity<Void> insertAnnouncements(
+			@RequestBody Announcement announcement) {
+		List<Announcement> ancmtList = service.getAnnouncements(announcement);
+		if (!ancmtList.isEmpty()) {
+			return ResponseEntity.badRequest().build();
+		}
+		service.insertAnnouncements(announcement);
+		return ResponseEntity.ok().build();
+	}
+	
+	@GetMapping("/reports")
+	public ResponseEntity<Long> getTotalReports() {
+		Long ch = service.countAllChallenges();
+		Long co = service.countCommReports();
+		Long r = service.countRecipes();
+		Long u = service.countUserReports();
+		return ResponseEntity.ok(ch+co+r+u);
+	}
+	
 	@GetMapping("/users")
-	public ResponseEntity<List<UserInfo>> getUsers() {
-		List<UserInfo> users = service.getUsers();
-		return ResponseEntity.ok(users);
+	public ResponseEntity<Map<String, Object>> getUsers(
+			@RequestParam int page, @RequestParam int size) {
+		Map<String, Object> param = new HashMap<>();
+	    param.put("offset", (page - 1) * size);
+	    param.put("limit", size);
+		List<UserInfo> list = service.getUsers(param);
+		Long listCount = service.countAllUsers();
+		PageInfo pageInfo = utilService.getPageInfo(listCount, page, 10, size);
+	    Map<String, Object> response = new HashMap<>();
+	    response.put("list", list);
+	    response.put("pageInfo", pageInfo);
+		return ResponseEntity.ok(response);
+	}
+	
+	@GetMapping("/all-recipes")
+	public ResponseEntity<Map<String, Object>> getAllRecipes(
+			@RequestParam int page, @RequestParam int size) {
+		Map<String, Object> param = new HashMap<>();
+	    param.put("offset", (page - 1) * size);
+	    param.put("limit", size);
+		List<RecipeInfo> list = service.getAllRecipes(param);
+		Long listCount = service.countAllRecipes();
+		PageInfo pageInfo = utilService.getPageInfo(listCount, page, 10, size);
+	    Map<String, Object> response = new HashMap<>();
+	    response.put("list", list);
+	    response.put("pageInfo", pageInfo);
+		return ResponseEntity.ok(response);
+	}
+	
+	@GetMapping("/communities")
+	public ResponseEntity<Map<String, Object>> getCommunities(
+			@RequestParam int page, @RequestParam int size) {
+		Map<String, Object> param = new HashMap<>();
+	    param.put("offset", (page - 1) * size);
+	    param.put("limit", size);
+		List<CommInfo> list = service.getCommunities(param);
+		Long listCount = service.countCommunities();
+		PageInfo pageInfo = utilService.getPageInfo(listCount, page, 10, size);
+	    Map<String, Object> response = new HashMap<>();
+	    response.put("list", list);
+	    response.put("pageInfo", pageInfo);
+		return ResponseEntity.ok(response);
+	}
+	
+	@GetMapping("/classes")
+	public ResponseEntity<Map<String, Object>> getClasses(
+			@RequestParam int page, @RequestParam int size) {
+		Map<String, Object> param = new HashMap<>();
+	    param.put("offset", (page - 1) * size);
+	    param.put("limit", size);
+		List<ClassInfo> list = service.getClasses(param);
+		Long listCount = service.countClasses();
+		PageInfo pageInfo = utilService.getPageInfo(listCount, page, 10, size);
+	    Map<String, Object> response = new HashMap<>();
+	    response.put("list", list);
+	    response.put("pageInfo", pageInfo);
+		return ResponseEntity.ok(response);
+	}
+	
+	@GetMapping("/classes/{roomNo}")
+	public ResponseEntity<ChatInfo> getClassInfo(@PathVariable Long roomNo) {
+		ChatInfo chatroom = service.getChatRoom(roomNo);
+		return ResponseEntity.ok(chatroom);
 	}
 	
 }

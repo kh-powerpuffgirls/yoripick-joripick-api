@@ -214,37 +214,217 @@
 	</insert>
 	
 	<select id="getUsers" resultType="com.kh.ypjp.admin.model.dto.AdminDto$UserInfo">
+		SELECT * FROM (
+		    SELECT ROWNUM AS rnum, u.* FROM (
+		        SELECT
+                    u.user_no,
+                    u.username,
+                    u.status,
+                    NVL(b.banDays, 0) AS banDays,
+                    NVL(r.reportNo, 0) AS reportNo,
+                    NVL(rcp.officialRcp, 0) AS officialRcp,
+                    NVL(c.chRequest, 0) AS chRequest
+                FROM USERS u
+                LEFT JOIN (
+                    SELECT user_no, SUM(end_date - start_date) AS banDays
+                    FROM USER_BANNED
+                    GROUP BY user_no
+                ) b ON u.user_no = b.user_no
+                LEFT JOIN (
+                    SELECT user_no, COUNT(*) AS reportNo
+                    FROM REPORT
+                    GROUP BY user_no
+                ) r ON u.user_no = r.user_no
+                LEFT JOIN (
+                    SELECT user_no, COUNT(*) AS officialRcp
+                    FROM RECIPE
+                    WHERE approval = 'Y'
+                    GROUP BY user_no
+                ) rcp ON u.user_no = rcp.user_no
+                LEFT JOIN (
+                    SELECT user_no, COUNT(*) AS chRequest
+                    FROM CHALLENGE_FORM
+                    GROUP BY user_no
+                ) c ON u.user_no = c.user_no
+                WHERE u.user_no > 0
+		    	) u 
+		    ORDER BY u.user_no
+		) WHERE rnum BETWEEN #{offset} + 1 AND #{offset} + #{limit}
+	</select>
+	
+	<insert id="insertChallenges">
+		INSERT INTO CHALLENGE_INFO VALUES
+		(SEQ_CH_INFO_NO.NEXTVAL, #{title}, #{startDate}, #{endDate}, #{imageNo})
+	</insert>
+	
+	<select id="getChallenges" resultType="com.kh.ypjp.admin.model.dto.AdminDto$Challenge">
+		SELECT * FROM CHALLENGE_INFO
+		WHERE start_date <![CDATA[<=]]> #{endDate}
+		 	AND end_date >= #{startDate}
+	</select>
+	
+	<insert id="insertAnnouncements">
+		INSERT INTO ANNOUNCEMENT VALUES
+		(SEQ_ANCMT_NO.NEXTVAL, #{content}, #{startDate}, #{endDate})
+	</insert>
+	
+	<select id="getAnnouncements" resultType="com.kh.ypjp.admin.model.dto.AdminDto$Announcement">
+		SELECT * FROM ANNOUNCEMENT
+		WHERE start_date <![CDATA[<=]]> #{endDate}
+		 	AND end_date >= #{startDate}
+	</select>
+	
+	<select id="countAllUsers" resultType="long">
+		SELECT count(*) FROM USERS
+	</select>
+	
+	<select id="countAllRecipes" resultType="long">
+		SELECT count(*) FROM RECIPE
+	</select>
+	
+	<select id="getAllRecipes" resultType="com.kh.ypjp.admin.model.dto.AdminDto$RecipeInfo">
+		SELECT * FROM (
+		    SELECT ROWNUM AS rnum, u.* FROM (
+				SELECT
+				    R.rcp_no,
+				    R.rcp_name,
+				    R.views,
+				    R.approval,
+				    NVL(L.likes, 0) AS likes,
+				    NVL(D.dislikes, 0) AS dislikes,
+				    NVL(B.bookmarks, 0) AS bookmarks
+				FROM RECIPE R
+				LEFT JOIN (
+				    SELECT
+				        ref_no,
+				        COUNT(*) AS likes
+				    FROM LIKES
+				    WHERE ref_type = 'RECIPE' AND like_status = 'LIKE'
+				    GROUP BY ref_no
+				) L ON R.rcp_no = L.ref_no
+				LEFT JOIN (
+				    SELECT
+				        ref_no,
+				        COUNT(*) AS dislikes
+				    FROM LIKES
+				    WHERE ref_type = 'RECIPE' AND like_status = 'DISLIKE'
+				    GROUP BY ref_no
+				) D ON R.rcp_no = D.ref_no
+				LEFT JOIN (
+				    SELECT
+				        ref_no,
+				        COUNT(*) AS bookmarks
+				    FROM BOOKMARK
+				    WHERE rcp_source = 'COMM'
+				    GROUP BY ref_no
+				) B ON R.rcp_no = B.ref_no
+				ORDER BY R.rcp_no
+			) u
+		) WHERE rnum BETWEEN #{offset} + 1 AND #{offset} + #{limit}
+	</select>
+	
+	<select id="countCommunities" resultType="long">
 		SELECT
-		    u.user_no,
-		    u.username,
-		    u.status,
-		    NVL(b.banDays, 0) AS banDays,
-		    NVL(r.reportNo, 0) AS reportNo,
-		    NVL(rcp.officialRcp, 0) AS officialRcp,
-		    NVL(c.chRequest, 0) AS chRequest
-		FROM USERS u
-		LEFT JOIN (
-		    SELECT user_no, SUM(end_date - start_date) AS banDays
-		    FROM USER_BANNED
-		    GROUP BY user_no
-		) b ON u.user_no = b.user_no
-		LEFT JOIN (
-		    SELECT user_no, COUNT(*) AS reportNo
-		    FROM REPORT
-		    GROUP BY user_no
-		) r ON u.user_no = r.user_no
-		LEFT JOIN (
-		    SELECT user_no, COUNT(*) AS officialRcp
-		    FROM RECIPE
-		    WHERE approval = 'Y'
-		    GROUP BY user_no
-		) rcp ON u.user_no = rcp.user_no
-		LEFT JOIN (
-		    SELECT user_no, COUNT(*) AS chRequest
-		    FROM CHALLENGE_FORM
-		    GROUP BY user_no
-		) c ON u.user_no = c.user_no
-		WHERE u.user_no > 0
-		ORDER BY u.user_no
+			(SELECT count(*) FROM BOARD)
+			+
+			(SELECT count(*) FROM MARKETPLACE)
+			+
+			(SELECT count(*) FROM CHALLENGE)
+		FROM DUAL
+	</select>
+	
+	<select id="getCommunities" resultType="com.kh.ypjp.admin.model.dto.AdminDto$CommInfo">
+		SELECT * FROM (
+		    SELECT ROWNUM AS rnum, T.* FROM (
+		        SELECT
+		            'board' AS category,
+		            B.board_no AS commNo,
+		            B.title,
+		            U.username,
+		            B.created_at,
+		            B.views,
+		            NVL(L.likes, 0) AS likes
+		        FROM BOARD B
+		        JOIN USERS U ON B.user_no = U.user_no
+		        LEFT JOIN (
+		            SELECT
+		                ref_no,
+		                COUNT(*) AS likes
+		            FROM LIKES
+		            WHERE ref_type = 'BOARD'
+		            GROUP BY ref_no
+		        ) L ON B.board_no = L.ref_no
+		        
+		        UNION ALL
+		        
+		        SELECT
+		            'market' AS category,
+		            M.product_id AS commNo,
+		            M.title,
+		            U.username,
+		            M.created_at,
+		            M.views,
+		            0 AS likes
+		        FROM MARKETPLACE M
+		        JOIN USERS U ON M.user_no = U.user_no
+		        
+		        UNION ALL
+		        
+		        SELECT
+		            'challenge' AS category,
+		            C.challenge_no AS commNo,
+		            CI.title,
+		            U.username,
+		            C.created_at,
+		            C.views,
+		            NVL(L.likes, 0) AS likes
+		        FROM CHALLENGE C
+		        JOIN USERS U ON C.user_no = U.user_no
+		        JOIN CHALLENGE_INFO CI ON C.CH_INFO_NO = CI.CH_INFO_NO
+		        LEFT JOIN (
+		            SELECT
+		                ref_no,
+		                COUNT(*) AS likes
+		            FROM LIKES
+		            WHERE ref_type = 'CHALLENGE'
+		            GROUP BY ref_no
+		        ) L ON C.challenge_no = L.ref_no
+		        ORDER BY 5, 2
+		    ) T
+		)
+		WHERE rnum BETWEEN #{offset} + 1 AND #{offset} + #{limit}
+	</select>
+	
+	<select id="getClasses" resultType="com.kh.ypjp.admin.model.dto.AdminDto$ClassInfo">
+		SELECT * FROM (
+		    SELECT ROWNUM AS rnum, T.* FROM (
+		        SELECT
+		            CK.room_no,
+		            CK.class_name,
+		            U.username,
+		            CK.passcode,
+		            NVL(CE.numPpl, 0) AS numPpl,
+		            CK.delete_status
+		        FROM COOKING_CLASS CK
+		        JOIN USERS U ON CK.user_no = U.user_no
+		        LEFT JOIN (
+					SELECT
+						room_no,
+						COUNT(*) AS numPpl
+					FROM CLASS_ENROLL
+					GROUP BY room_no
+				) CE ON CK.room_no = CE.room_no
+				ORDER BY 1
+			) T
+		)
+		WHERE rnum BETWEEN #{offset} + 1 AND #{offset} + #{limit}
+	</select>
+	
+	<select id="countClasses" resultType="long">
+		SELECT count(*) FROM COOKING_CLASS
+	</select>
+	
+	<select id="getChatRoom" resultMap="">
+		
 	</select>
 </mapper>

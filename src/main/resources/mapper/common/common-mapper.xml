@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="common">
+	<select id="getTodayAnnouncement" resultType="com.kh.ypjp.admin.model.dto.AdminDto$Announcement">
+		SELECT * FROM ANNOUNCEMENT
+		WHERE SYSDATE >= start_date
+			AND SYSDATE <![CDATA[<]]> (end_date + 1)
+	</select>
+</mapper>

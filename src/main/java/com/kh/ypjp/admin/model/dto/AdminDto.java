@@ -1,12 +1,92 @@
 package com.kh.ypjp.admin.model.dto;
 
 import java.util.Date;
+import java.util.List;
+
+import com.kh.ypjp.chat.model.dto.ChatDto.MessageDto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 public class AdminDto {
+	
+	@Data
+	@NoArgsConstructor
+	@AllArgsConstructor
+	public static class ChatInfo {
+		private Long roomNo;
+		private List<ChatMsg> messages;
+		
+		public static class ChatMsg {
+			private Long messageNo;
+			private Long userNo;
+			private String username;
+			private String content;
+			private Date time;
+			private String hidden;
+			private Long imageNo;
+		}
+	}
+	
+	@Data
+	@NoArgsConstructor
+	@AllArgsConstructor
+	public static class ClassInfo {
+		private Long roomNo;
+		private String className;
+		private String username;
+		private Integer passcode;
+		private Long numPpl;
+		private String deleteStatus;
+	}
+	
+	@Data
+	@NoArgsConstructor
+	@AllArgsConstructor
+	public static class CommInfo {
+		private String category;
+		private Long commNo;
+		private String title;
+		private String username;
+		private String createdAt;
+		private Long views;
+		private Long likes;
+	}
+	
+	@Data
+	@NoArgsConstructor
+	@AllArgsConstructor
+	public static class RecipeInfo {
+		private Long rcpNo;
+		private String rcpName;
+		private Long views;
+		private String approval;
+		private Long likes;
+		private Long dislikes;
+		private Long bookmarks;
+	}
+	
+	@Data
+	@NoArgsConstructor
+	@AllArgsConstructor
+	public static class Announcement {
+		private Long ancmtNo;
+		private String content;
+		private String startDate;
+		private String endDate;
+	}
+	
+	@Data
+	@NoArgsConstructor
+	@AllArgsConstructor
+	public static class Challenge {
+		private Long chInfoNo;
+		private String title;
+		private String startDate;
+		private String endDate;
+		private Long imageNo;
+	}
 
 	@Data
 	@NoArgsConstructor
