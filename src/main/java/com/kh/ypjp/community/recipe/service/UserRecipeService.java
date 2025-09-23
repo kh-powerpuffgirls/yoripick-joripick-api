@@ -44,4 +44,6 @@ public interface UserRecipeService {
 	void updateRecipe(int rcpNo, long userNo, UserRecipeDto.RecipeWriteRequest request) throws Exception;
 
 	void deleteRecipe(int rcpNo);
+
+	RecipeDetailResponse selectOfficialRecipeDetail(int rcpNo, boolean increaseViewCount);
 }

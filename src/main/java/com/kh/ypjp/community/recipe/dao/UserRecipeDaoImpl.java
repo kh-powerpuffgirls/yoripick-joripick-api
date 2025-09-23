@@ -15,6 +15,7 @@ import com.kh.ypjp.community.recipe.dto.UserRecipeDto.UserRecipeResponse;
 import com.kh.ypjp.community.recipe.model.vo.CookingStep;
 import com.kh.ypjp.community.recipe.model.vo.RcpDetail;
 import com.kh.ypjp.community.recipe.model.vo.RcpIngredient;
+import com.kh.ypjp.community.recipe.model.vo.RcpIngs;
 import com.kh.ypjp.community.recipe.model.vo.RcpMethod;
 import com.kh.ypjp.community.recipe.model.vo.RcpSituation;
 import com.kh.ypjp.community.recipe.model.vo.Recipe;
@@ -197,5 +198,15 @@ public class UserRecipeDaoImpl implements UserRecipeDao{
 	@Override
 	public int updateRecipeDeleteStatus(int rcpNo) {
 		return session.update(NAMESPACE+"updateRecipeDeleteStatus",rcpNo);
+	}
+
+	@Override
+	public RecipeDetailResponse selectOfficialRecipeDetail(int rcpNo) {
+		return session.selectOne(NAMESPACE + "selectOfficialRecipeDetail", rcpNo);
+	}
+
+	@Override
+	public RcpIngs selectRcpIngs(int rcpNo) {
+		return session.selectOne(NAMESPACE +"selectRcpIngs",rcpNo);
 	}
 }

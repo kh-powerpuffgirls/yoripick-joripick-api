@@ -11,6 +11,7 @@ import com.kh.ypjp.community.recipe.dto.UserRecipeDto.RecipeDetailResponse;
 import com.kh.ypjp.community.recipe.model.vo.CookingStep;
 import com.kh.ypjp.community.recipe.model.vo.RcpDetail;
 import com.kh.ypjp.community.recipe.model.vo.RcpIngredient;
+import com.kh.ypjp.community.recipe.model.vo.RcpIngs;
 import com.kh.ypjp.community.recipe.model.vo.RcpMethod;
 import com.kh.ypjp.community.recipe.model.vo.RcpSituation;
 import com.kh.ypjp.community.recipe.model.vo.Recipe;
@@ -83,4 +84,8 @@ public interface UserRecipeDao {
 	Recipe selectRecipeByNo(int rcpNo);
 
 	int updateRecipeDeleteStatus(int rcpNo);
+
+	RecipeDetailResponse selectOfficialRecipeDetail(int rcpNo);
+	
+	RcpIngs selectRcpIngs(int rcpNo);
 }

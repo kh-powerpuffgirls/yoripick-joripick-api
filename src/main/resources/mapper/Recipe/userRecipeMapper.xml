@@ -487,4 +487,43 @@
 	     WHERE RCP_NO = #{rcpNo} 
 	</update>
 	
+	<select id="selectOfficialRecipeDetail" parameterType="_int" resultMap="recipeDetailResultMap">
+	    SELECT
+	        R.RCP_NO         AS rcpNo,
+	        R.RCP_NAME       AS rcpName,
+	        R.CREATED_AT     AS createdAt,
+	        R.VIEWS,
+	        R.TAG,
+	        1 AS isOfficial, 
+	        RM.RCP_METHOD    AS rcpMethod,
+	        RS.RCP_SITUATION AS rcpSituation,
+	        R.RCP_MTH_NO     AS rcpMethodId,
+	        R.RCP_STA_NO     AS rcpSituationId,
+	        IMG.SERVER_NAME  AS mainImage,
+	        N.ENERGY         AS "totalNutrient.energy",
+	        N.CARB           AS "totalNutrient.carb",
+	        N.PROTEIN        AS "totalNutrient.protein",
+	        N.FAT            AS "totalNutrient.fat",
+	        N.SODIUM         AS "totalNutrient.sodium",
+	        
+	        (SELECT COUNT(*) FROM REVIEW WHERE REF_NO = R.RCP_NO AND DELETE_STATUS = 'N') AS reviewCount,
+	        NVL((SELECT AVG(STARS) FROM REVIEW WHERE REF_NO = R.RCP_NO AND DELETE_STATUS = 'N'), 0) AS avgStars,
+	        
+	    FROM RECIPE R
+	    LEFT JOIN IMAGE IMG ON R.IMAGE_NO = IMG.IMAGE_NO
+	    LEFT JOIN RCP_METHOD RM ON R.RCP_MTH_NO = RM.RCP_MTH_NO
+	    LEFT JOIN RCP_SITUATION RS ON R.RCP_STA_NO = RS.RCP_STA_NO
+	    LEFT JOIN NUTRIENT N ON R.NUTRIENT_NO = N.NUTRIENT_NO
+	    
+	    WHERE R.RCP_NO = #{rcpNo}
+	      AND R.USER_NO IS NULL
+	      AND R.APPROVAL = 'Y'
+	</select>
+	
+	<select id="selectRcpIngs" parameterType="_int" resultType="com.kh.ypjp.community.recipe.model.vo.RcpIngs">
+	    SELECT RCP_NO, RCP_ING_LIST
+	    FROM RCP_INGS
+	    WHERE RCP_NO = #{rcpNo}
+	</select>
+	
 </mapper>

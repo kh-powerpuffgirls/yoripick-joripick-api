@@ -31,6 +31,7 @@ import com.kh.ypjp.community.recipe.dto.UserRecipeDto.UserRecipeResponse;
 import com.kh.ypjp.community.recipe.model.vo.CookingStep;
 import com.kh.ypjp.community.recipe.model.vo.RcpDetail;
 import com.kh.ypjp.community.recipe.model.vo.RcpIngredient;
+import com.kh.ypjp.community.recipe.model.vo.RcpIngs;
 import com.kh.ypjp.community.recipe.model.vo.RcpMethod;
 import com.kh.ypjp.community.recipe.model.vo.RcpSituation;
 import com.kh.ypjp.community.recipe.model.vo.Recipe;
@@ -451,7 +452,7 @@ public class UserRecipeServiceImpl implements UserRecipeService {
 	@Override
     @Transactional(rollbackFor = Exception.class)
 	public void updateRecipe(int rcpNo, long userNo, RecipeWriteRequest request) throws Exception {
-		// ✨ 1. [사전 조회] 기존 레시피 정보를 불러와서, 기존 이미지 번호를 확보합니다.
+		// [사전 조회] 기존 레시피 정보를 불러와서, 기존 이미지 번호를 확보합니다.
         Recipe originalRecipe = dao.selectRecipeByNo(rcpNo);
         if (originalRecipe == null) {
             throw new Exception("존재하지 않는 레시피입니다.");
@@ -462,7 +463,7 @@ public class UserRecipeServiceImpl implements UserRecipeService {
         }
         long mainImageNo = originalRecipe.getImageNo(); // 기본값은 기존 이미지 번호
 
-        // ✨ 2. [이미지 처리] 새 대표 이미지가 있는지 확인하고 처리합니다.
+        // [이미지 처리] 새 대표 이미지가 있는지 확인하고 처리합니다.
         MultipartFile mainImageFile = request.getMainImage();
         if (mainImageFile != null && !mainImageFile.isEmpty()) {
             // 새 이미지가 있다면, 저장하고 새로운 imageNo를 받습니다 (createRecipe와 동일).
@@ -479,11 +480,11 @@ public class UserRecipeServiceImpl implements UserRecipeService {
         }
         // 새 이미지가 없다면, 위에서 설정한 기존 이미지 번호(mainImageNo)가 그대로 사용됩니다.
         
-        // ✨ 3. [영양소 계산] 수정된 재료 기준으로 영양소를 새로 계산하고 DB에 INSERT합니다 (createRecipe와 동일).
+        // [영양소 계산] 수정된 재료 기준으로 영양소를 새로 계산하고 DB에 INSERT합니다 (createRecipe와 동일).
         Nutrient totalNutrient = calculateTotalNutrients(request.getIngredients());
         dao.insertNutrient(totalNutrient);
 
-        // ✨ 4. [레시피 객체 준비] 업데이트할 내용을 Recipe 객체에 담습니다.
+        // [레시피 객체 준비] 업데이트할 내용을 Recipe 객체에 담습니다.
         Recipe recipeToUpdate = new Recipe();
         recipeToUpdate.setRcpNo(rcpNo);
         recipeToUpdate.setUserNo(userNo);
@@ -495,14 +496,14 @@ public class UserRecipeServiceImpl implements UserRecipeService {
         recipeToUpdate.setImageNo((int)mainImageNo); // 새로 업데이트된 이미지 번호
         recipeToUpdate.setNutrientNo(totalNutrient.getNutrientNo()); 
 
-        // ✨ 5. [업데이트] RECIPE 테이블의 내용을 업데이트합니다.
+        // [업데이트] RECIPE 테이블의 내용을 업데이트합니다.
         dao.updateRecipe(recipeToUpdate);
 
-        // ✨ 6. [기존 정보 삭제] 기존 재료 및 요리 순서 정보를 "전부 삭제"합니다.
+        // [기존 정보 삭제] 기존 재료 및 요리 순서 정보를 "전부 삭제"합니다.
         dao.deleteRcpIngredients(rcpNo);
         dao.deleteRcpDetails(rcpNo);
 
-        // ✨ 7. [신규 정보 삽입] 수정된 새로운 재료 및 요리 순서 정보를 "다시 삽입"합니다 (createRecipe와 동일).
+        // [신규 정보 삽입] 수정된 새로운 재료 및 요리 순서 정보를 "다시 삽입"합니다 (createRecipe와 동일).
         // 재료 정보 저장
         List<IngredientJsonDto> ingredients = objectMapper.readValue(request.getIngredients(), new TypeReference<>() {});
         for (IngredientJsonDto dto : ingredients) {
@@ -545,10 +546,50 @@ public class UserRecipeServiceImpl implements UserRecipeService {
 
 	@Override
 	public void deleteRecipe(int rcpNo) {
-//		Map<String, Object> params = new HashMap<>();
-//        params.put("rcpNo", rcpNo);
-////        params.put("userNo", userNo);
         dao.updateRecipeDeleteStatus(rcpNo);		
+	}
+
+	@Override
+    @Transactional
+	public RecipeDetailResponse selectOfficialRecipeDetail(int rcpNo, boolean increaseViewCount) {
+		if (increaseViewCount) {
+            dao.increaseViewCount(rcpNo);
+        }
+        
+        RecipeDetailResponse recipe = dao.selectOfficialRecipeDetail(rcpNo);
+        
+        if (recipe == null) return null;
+
+        // --- 나머지 로직은 기존 selectRecipeDetail과 거의 동일 ---
+        // (단, 사용자 관련 정보가 없으므로 myLikeStatus 조회는 생략)
+        RcpIngs officialIngredients = dao.selectRcpIngs(rcpNo);
+        if (officialIngredients != null) {
+            recipe.setRcpIngList(officialIngredients.getRcpIngList());
+        }
+        
+        recipe.setIngredients(new ArrayList<>());
+        recipe.setSteps(dao.selectStepsByRcpNo(rcpNo));
+        
+        // 대표 이미지
+        if (recipe.getMainImage() != null && !recipe.getMainImage().isEmpty()) {
+            recipe.setMainImage(createFullUrl(recipe.getMainImage()));
+        }
+
+        //작성자 프로필 이미지
+        if (recipe.getWriter() != null && recipe.getWriter().getProfileImage() != null && !recipe.getWriter().getProfileImage().isEmpty()) {
+            recipe.getWriter().setProfileImage(createFullUrl(recipe.getWriter().getProfileImage()));
+        }
+        
+        // 요리 순서(Steps) 이미지 
+        if (recipe.getSteps() != null) {
+            for (CookingStep step : recipe.getSteps()) {
+                if (step.getServerName() != null && !step.getServerName().isEmpty()) {
+                    step.setServerName(createFullUrl(step.getServerName()));
+                }
+            }
+        }
+        
+        return recipe;
 	}
 }
 

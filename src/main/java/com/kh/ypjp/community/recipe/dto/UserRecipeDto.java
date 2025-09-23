@@ -121,6 +121,7 @@ public class UserRecipeDto {
         // 목록 정보 (서비스단에서 별도 조회 후 채워넣을 필드)
         private List<RcpIngredient> ingredients;
         private List<CookingStep> steps;
+        private String rcpIngList;
 
         // 작성자 정보를 담을 내부 클래스
         @Data
