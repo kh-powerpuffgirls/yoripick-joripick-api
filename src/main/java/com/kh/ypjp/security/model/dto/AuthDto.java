@@ -49,6 +49,7 @@ public class AuthDto {
         private String replyNoti;
         private String rvwNoti;
         private String expNoti;
+        private String sikbti;
     }
 
     @Data

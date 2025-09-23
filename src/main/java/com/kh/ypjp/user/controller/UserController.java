@@ -17,6 +17,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.kh.ypjp.common.UtilService;
 import com.kh.ypjp.common.exception.AuthException;
+import com.kh.ypjp.common.exception.MypageException;
 import com.kh.ypjp.model.dto.AllergyDto;
 import com.kh.ypjp.model.dto.AllergyDto.AllergyList;
 import com.kh.ypjp.security.model.dto.AuthDto.User;
@@ -64,10 +65,10 @@ public class UserController {
 			res.put("message", "프로필이 변경되었습니다.");
 			res.putAll(out);
 			return ResponseEntity.ok(res);
-		} catch (Exception e) {
-			e.printStackTrace();
-			return ResponseEntity.badRequest().body(Map.of("success", false, "message", "업데이트 실패: " + e.getMessage()));
-		}
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	        throw new MypageException("UPLOAD_FAILED");
+	    }
 	}
 
 	@PutMapping("/update")
