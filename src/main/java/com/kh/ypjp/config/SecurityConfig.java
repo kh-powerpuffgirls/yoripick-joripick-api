@@ -64,6 +64,8 @@ public class SecurityConfig {
                 .requestMatchers("/chat/**").permitAll()
                 .requestMatchers("/ws/**").permitAll()
                 .requestMatchers("/images/**").permitAll()
+                .requestMatchers("/sbti").permitAll()
+                .requestMatchers("/eatbti/**").authenticated()
                 .anyRequest().authenticated()
             )
             // OAuth2 로그인 핸들러
