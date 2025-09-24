@@ -8,7 +8,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
@@ -54,7 +53,7 @@ public class ChallengeService {
     public Long createPostAndReturnNo(ChallengeDto challengeDto, MultipartFile file) throws Exception {
         if (challengeDto.getUserNo() == null)
             throw new IllegalArgumentException("로그인 후 이용할 수 있습니다.");
-
+        
         List<ChallengeInfoDto> activeChallenges = challengeDao.findActiveChallengeInfo();
         if (activeChallenges == null || activeChallenges.isEmpty())
             throw new IllegalStateException("진행 중인 챌린지가 없습니다.");

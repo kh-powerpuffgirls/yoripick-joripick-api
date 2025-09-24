@@ -8,7 +8,6 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.kh.ypjp.common.UtilService;
 import com.kh.ypjp.common.exception.AuthException;
@@ -19,6 +18,7 @@ import com.kh.ypjp.security.model.dto.AuthDto.Authority;
 import com.kh.ypjp.security.model.dto.AuthDto.User;
 import com.kh.ypjp.security.model.dto.AuthDto.UserCredential;
 import com.kh.ypjp.security.model.dto.AuthDto.UserIdentities;
+import com.kh.ypjp.security.model.dto.UserNotiDto;
 import com.kh.ypjp.security.model.provider.JWTProvider;
 
 import lombok.RequiredArgsConstructor;
@@ -43,6 +43,10 @@ public class AuthService {
             Pattern.compile("^[\\u1100-\\u11FF가-힣ㄱ-ㅎa-zA-Z0-9]+$");
     private static final Pattern PASSWORD_PATTERN =
             Pattern.compile("^(?=.*[A-Za-z])(?=.*\\d)(?=.*[~!@#$%^&*]).{8,15}$");
+    
+    public UserNotiDto getNotiByUserNo(String userNo) {
+    	return authDao.getNotiByUserNo(userNo);
+    }
 
     public void validateEmail(String email) {
         if (email == null || !EMAIL_PATTERN.matcher(email).matches()) {
