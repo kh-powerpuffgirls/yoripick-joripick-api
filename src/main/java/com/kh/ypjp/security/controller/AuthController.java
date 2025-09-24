@@ -1,7 +1,6 @@
 package com.kh.ypjp.security.controller;
 
 import java.time.Duration;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -9,7 +8,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,15 +16,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.kh.ypjp.common.exception.AuthException;
 import com.kh.ypjp.security.model.dto.AuthDto.AuthResult;
 import com.kh.ypjp.security.model.dto.AuthDto.LoginRequest;
 import com.kh.ypjp.security.model.dto.AuthDto.User;
-import com.kh.ypjp.security.model.dto.AuthDto.UserIdentities;
 import com.kh.ypjp.security.model.provider.JWTProvider;
 import com.kh.ypjp.security.model.service.AuthService;
 import com.kh.ypjp.security.model.service.EmailService;
 import com.kh.ypjp.security.model.service.KakaoService;
-
+import com.kh.ypjp.user.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -36,74 +34,28 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AuthController {
 
+    private final UserService userService;
+
 	private final KakaoService kakaoService;
 	private final AuthService authService;
 	private final JWTProvider jwt;
 	private final EmailService emailService;
 	public static final String REFRESH_COOKIE = "REFRESH_TOKEN";
+	
 
 	@PostMapping("/login")
 	public ResponseEntity<?> login(@RequestBody LoginRequest req) {
-	    try {
-	        AuthResult result = authService.login(req.getEmail(), req.getPassword());
+	    String email = req.getEmail();
+	    String password = req.getPassword();
 
-	        ResponseCookie refreshCookie = ResponseCookie.from(REFRESH_COOKIE, result.getRefreshToken())
-	                .httpOnly(true)
-	                .secure(false)
-	                .path("/")
-	                .sameSite("Lax")
-	                .maxAge(Duration.ofDays(7))
-	                .build();
-
-	        return ResponseEntity.ok()
-	                .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
-	                .body(result);
-
-	    } catch (BadCredentialsException e) {
-	        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-	                .body(Map.of(
-	                        "errorCode", "LOGIN_FAILED",
-	                        "message", e.getMessage()
-	                ));
+	    if (email == null || email.isBlank()) {
+	        throw new AuthException("INVALID_EMAIL");
 	    }
-	}
-
-	@PostMapping("/enroll")
-	public ResponseEntity<?> enroll(@RequestBody LoginRequest req) {
-	    try {
-	        AuthResult result = authService.enroll(req.getEmail(), req.getUsername(), req.getPassword());
-	        ResponseCookie refreshCookie = ResponseCookie.from(REFRESH_COOKIE, result.getRefreshToken())
-	                .httpOnly(true)
-	                .secure(false)
-	                .path("/")
-	                .sameSite("Lax")
-	                .maxAge(Duration.ofDays(7))
-	                .build();
-
-	        return ResponseEntity.status(HttpStatus.CREATED)
-	                .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
-	                .body(result);
-
-	    } catch (IllegalArgumentException e) {
-	        return ResponseEntity.status(HttpStatus.CONFLICT)
-	                .body(Map.of("errorCode", "DUPLICATE", "message", e.getMessage()));
-
-	    } catch (Exception e) {
-	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-	                .body(Map.of("errorCode", "SERVER_ERROR", "message", "회원가입 처리 중 서버 오류가 발생했습니다."));
+	    if (password == null || password.isBlank()) {
+	        throw new AuthException("INVALID_PASSWORD");
 	    }
-	}
 
-	@PostMapping("/enroll/social")
-	public ResponseEntity<Map<String, String>> enrollSocial(@RequestBody Map<String, String> req,
-	                                                        HttpServletResponse response) {
-
-	    String email = req.get("email");
-	    String username = req.get("username");
-	    String provider = req.get("provider");
-	    String providerUserId = req.get("providerUserId");
-
-	    AuthResult result = authService.enrollSocial(email, username, provider, providerUserId);
+	    AuthResult result = authService.login(email, password);
 
 	    ResponseCookie refreshCookie = ResponseCookie.from(REFRESH_COOKIE, result.getRefreshToken())
 	            .httpOnly(true)
@@ -112,65 +64,128 @@ public class AuthController {
 	            .sameSite("Lax")
 	            .maxAge(Duration.ofDays(7))
 	            .build();
-	    response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
 
-	    return ResponseEntity.status(HttpStatus.CREATED)
-	            .body(Map.of("accessToken", result.getAccessToken()));
+	    return ResponseEntity.ok()
+	            .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
+	            .body(result);
 	}
 	
-	@GetMapping("/check-username")
-	public ResponseEntity<Map<String, Boolean>> checkUsername(@RequestParam String username) {
-	    Optional<User> userOpt = authService.findUserByUsername(username);
-	    boolean available = userOpt.isEmpty();
-	    Map<String, Boolean> response = new HashMap<>();
-	    response.put("available", available);
-	    return ResponseEntity.ok(response);
+	
+	@PostMapping("/users")
+	public ResponseEntity<?> enroll(@RequestBody LoginRequest req) {
+	    String email = req.getEmail();
+	    String username = req.getUsername();
+	    String password = req.getPassword();
+
+	    if (email == null || email.isBlank()) {
+	        throw new AuthException("INVALID_EMAIL");
+	    }
+	    if (username == null || username.isBlank()) {
+	        throw new AuthException("INVALID_USERNAME");
+	    }
+	    if (password == null || password.isBlank()) {
+	        throw new AuthException("INVALID_PASSWORD");
+	    }
+
+	    AuthResult result = authService.enroll(email, username, password);
+
+
+	    ResponseCookie refreshCookie = ResponseCookie.from(REFRESH_COOKIE, result.getRefreshToken())
+	            .httpOnly(true)
+	            .secure(false)
+	            .path("/")
+	            .sameSite("Lax")
+	            .maxAge(Duration.ofDays(7))
+	            .build();
+
+	    return ResponseEntity.status(HttpStatus.CREATED)
+	            .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
+	            .body(result);
 	}
 
-	@PostMapping("/refresh")
+	@PostMapping("/users/social")
+	public ResponseEntity<Map<String, String>> enrollSocial(@RequestBody Map<String, String> req,
+	                                                        HttpServletResponse response) {
+	    String email = req.get("email");
+	    String username = req.get("username");
+	    String provider = req.get("provider");
+	    String providerUserId = req.get("providerUserId");
+
+	    if (email == null || email.isBlank()) {
+	        throw new AuthException("INVALID_EMAIL");
+	    }
+	    if (username == null || username.isBlank()) {
+	        throw new AuthException("INVALID_USERNAME");
+	    }
+	    if (provider == null || provider.isBlank()) {
+	        throw new AuthException("INVALID_INPUT");
+	    }
+	    if (providerUserId == null || providerUserId.isBlank()) {
+	        throw new AuthException("INVALID_INPUT");
+	    }
+
+	    AuthResult result = authService.enrollSocial(email, username, provider, providerUserId);
+	    
+		return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("accessToken", result.getAccessToken()));
+	}
+
+	@GetMapping("/users/check")
+	public ResponseEntity<Map<String, Boolean>> checkUsername(@RequestParam String username) {
+	    if (username == null || username.isBlank()) {
+	        throw new AuthException("INVALID_USERNAME");
+	    }
+	    
+	    authService.validateUsername(username);
+	    
+	    Optional<User> userOpt = authService.findUserByUsername(username);
+	    boolean available = userOpt.isEmpty();
+	    return ResponseEntity.ok(Map.of("available", available));
+	}
+
+	@PostMapping("/tokens/refresh")
 	public ResponseEntity<AuthResult> refresh(
 			@CookieValue(name = REFRESH_COOKIE, required = false) String refreshCookie) {
 		System.out.println(refreshCookie);
 		if (refreshCookie == null || refreshCookie.isBlank()) {
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+			throw new AuthException("UNAUTHORIZED");
 		}
 		AuthResult result = authService.refreshByCookie(refreshCookie);
 		return ResponseEntity.ok(result);
 	}
 
-	@PostMapping("/logout")
-	public ResponseEntity<Void> logout(HttpServletRequest request) {
-		String accessToken = resolveAccessToken(request);
-		if (accessToken != null) {
-			try {
-				Long userNo = jwt.getUserNo(accessToken);
-				String kakaoAccessToken = authService.getKakaoAccessToken(userNo);
-				if (kakaoAccessToken != null) {
-					kakaoService.logout(kakaoAccessToken);
-				}
-			} catch (Exception e) {
-			}
-		}
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(HttpServletRequest request) {
+        String accessToken = resolveAccessToken(request);
+        if (accessToken != null) {
+            try {
+                Long userNo = jwt.getUserNo(accessToken);
+                String kakaoAccessToken = authService.getKakaoAccessToken(userNo);
+                if (kakaoAccessToken != null) {
+                    kakaoService.logout(kakaoAccessToken);
+                }
+            } catch (Exception ignored) {
+            }
+        }
 
 		ResponseCookie refreshCookie = ResponseCookie.from(REFRESH_COOKIE, "").httpOnly(true).secure(false).path("/")
 				.sameSite("Lax").maxAge(0).build();
 		return ResponseEntity.noContent().header(HttpHeaders.SET_COOKIE, refreshCookie.toString()).build();
 	}
 
-	@GetMapping("/me")
-	public ResponseEntity<Optional<User>> getUserInfo(HttpServletRequest req) {
-		String jwtToken = resolveAccessToken(req);
-		if (jwtToken == null) {
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-		}
-		Long userNo = jwt.getUserNo(jwtToken);
-		Optional<User> user = authService.findUserByUserNo(userNo);
-		if (user == null) {
-			return ResponseEntity.notFound().build();
-		}
-		return ResponseEntity.ok(user);
-	}
+    @GetMapping("/users/me")
+    public ResponseEntity<User> getUserInfo(HttpServletRequest req) {
+        String jwtToken = resolveAccessToken(req);
+        if (jwtToken == null) {
+            throw new AuthException("UNAUTHORIZED");
+        }
 
+
+	    Long userNo = jwt.getUserNo(jwtToken);
+	    return authService.findUserByUserNo(userNo)
+	            .map(ResponseEntity::ok)
+	            .orElseThrow(() -> new AuthException("EMAIL_NOT_FOUND"));
+	}
+	
 	private String resolveAccessToken(HttpServletRequest request) {
 		String bearerToken = request.getHeader("Authorization");
 		if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
@@ -179,79 +194,76 @@ public class AuthController {
 		return null;
 	}
 
-	@PostMapping("/send-code/enroll")
+
+	@PostMapping("/email-codes")
 	public ResponseEntity<Map<String, Object>> sendEnrollCode(@RequestBody Map<String, String> req) {
 	    String email = req.get("email");
-	    Map<String, Object> response = new HashMap<>();
 
 	    if (email == null || email.isEmpty()) {
-	        response.put("success", false);
-	        response.put("message", "이메일을 입력하세요.");
-	        return ResponseEntity.badRequest().body(response);
+	        throw new AuthException("INVALID_EMAIL");
 	    }
 
-	    if (authService.findUserByEmail(email).isPresent()) {
-	        response.put("success", false);
-	        response.put("message", "중복된 이메일입니다.");
-	        return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+	    boolean available = authService.findUserByEmail(email).isEmpty();
+	    if (!available) {
+	        throw new AuthException("EMAIL_ALREADY_EXISTS");
 	    }
 
 	    emailService.createAndSendCode(email);
 
-	    response.put("success", true);
-	    response.put("message", "인증번호 전송 완료");
-	    return ResponseEntity.ok(response);
+	    return ResponseEntity.ok(Map.of(
+	            "success", true,
+	            "message", "인증번호 전송 완료",
+	            "available", available
+	    ));
 	}
 
-	@PostMapping("/send-code/reset")
-	public ResponseEntity<Map<String, Object>> sendResetCode(@RequestBody Map<String, String> req) {
-	    String email = req.get("email");
-	    Map<String, Object> response = new HashMap<>();
+    @PostMapping("/email-codes/reset")
+    public ResponseEntity<Map<String, Object>> sendResetCode(@RequestBody Map<String, String> req) {
+        String email = req.get("email");
 
-	    if (email == null || email.isEmpty()) {
-	        response.put("success", false);
-	        response.put("message", "이메일을 입력하세요.");
-	        return ResponseEntity.badRequest().body(response);
-	    }
+        if (email == null || email.isEmpty()) {
+            throw new AuthException("INVALID_EMAIL");
+        }
 
-	    if (authService.findUserByEmail(email).isEmpty()) {
-	        response.put("success", false);
-	        response.put("message", "존재하지 않는 이메일입니다.");
-	        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
-	    }
+        if (authService.findUserByEmail(email).isEmpty()) {
+            throw new AuthException("EMAIL_NOT_FOUND");
+        }
 
-	    emailService.createAndSendCode(email);
+        emailService.createAndSendCode(email);
 
-	    response.put("success", true);
-	    response.put("message", "인증번호 전송 완료");
-	    return ResponseEntity.ok(response);
-	}
+        return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "인증번호 전송 완료"
+        ));
+    }
 
-	@PostMapping("/verify-code")
-	public ResponseEntity<Map<String, Boolean>> verifyEmailCode(@RequestBody Map<String, String> req) {
-		String email = req.get("email");
-		String code = req.get("code");
-		boolean verified = emailService.verifyCode(email, code);
-		Map<String, Boolean> res = new HashMap<>();
-		res.put("verified", verified);
-		return ResponseEntity.ok(res);
-	}
-	
-	@PostMapping("/reset-password")
-	public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> req) {
-	    String email = req.get("email");
-	    String newPassword = req.get("password");
+    @PostMapping("/email-codes/verify")
+    public ResponseEntity<Map<String, Boolean>> verifyEmailCode(@RequestBody Map<String, String> req) {
+        String email = req.get("email");
+        String code = req.get("code");
+        boolean verified = emailService.verifyCode(email, code);
+        return ResponseEntity.ok(Map.of("verified", verified));
+    }
 
-	    if (email == null || newPassword == null) {
-	        return ResponseEntity.badRequest().body("이메일 또는 비밀번호가 누락되었습니다.");
-	    }
 
-	    boolean result = authService.resetPassword(email, newPassword);
-	    if (result) {
-	        return ResponseEntity.ok("비밀번호 변경 완료");
-	    } else {
-	        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("해당 이메일의 사용자를 찾을 수 없습니다.");
-	    }
-	}
-	
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> req) {
+        String email = req.get("email");
+        String newPassword = req.get("password");
+
+        if (email == null || email.isBlank()) {
+            throw new AuthException("INVALID_EMAIL");
+        }
+        if (newPassword == null || newPassword.isBlank()) {
+            throw new AuthException("INVALID_PASSWORD");
+        }
+
+        boolean result = authService.resetPassword(email, newPassword);
+        if (!result) {
+            throw new AuthException("EMAIL_NOT_FOUND");
+        }
+
+        return ResponseEntity.ok("비밀번호 변경 완료");
+    }
+
 }

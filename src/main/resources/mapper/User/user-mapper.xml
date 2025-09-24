@@ -2,18 +2,12 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="user">
 
-	<insert id="insertImage" parameterType="map">
-		<selectKey keyProperty="imageNo" resultType="long" order="BEFORE">
-			SELECT SEQ_IMAGE_NO.NEXTVAL FROM DUAL
-		</selectKey> INSERT
-		INTO IMAGE (IMAGE_NO, ORIGIN_NAME, SERVER_NAME) VALUES (#{imageNo},
-		#{originName}, #{serverName}) </insert>
-		
 	<update id="updateUserImage" parameterType="map">
 		UPDATE USERS
 		SET IMAGE_NO = #{imageNo}
 		WHERE USER_NO = #{userNo}
 	</update>
+
 
 	<select id="getMypageInfo" parameterType="long" resultType="map">
 		SELECT U.USER_NO,
@@ -25,4 +19,62 @@
 		WHERE U.USER_NO = #{userNo}
 	</select>
 
+	<select id="getUserImageNo" parameterType="long" resultType="long">
+		SELECT IMAGE_NO FROM USERS WHERE USER_NO = #{userNo}
+	</select>
+
+	<delete id="deleteImage" parameterType="long">
+		DELETE FROM IMAGE WHERE IMAGE_NO = #{imageNo}
+	</delete>
+
+
+	<update id="updateUser" parameterType="map"> UPDATE users <set>
+			<if test="username != null">
+				username = #{username},
+			</if>
+			<if test="email != null">
+				email = #{email},
+			</if>
+		</set> WHERE user_no =
+		#{userNo}
+	</update>
+	
+	<update id="updateAlarm">
+	    UPDATE USERS
+	    SET 
+	        MSG_NOTI = #{msgNoti},
+	        REPLY_NOTI = #{replyNoti},
+	        RVW_NOTI = #{rvwNoti},
+	        EXP_NOTI = #{expNoti}
+	    WHERE USER_NO = #{userNo}
+	</update>
+	
+	<select id="getAlarmSettings" resultType="map">
+	    SELECT 
+	        MSG_NOTI as msgNoti,
+	        REPLY_NOTI as replyNoti,
+	        RVW_NOTI as rvwNoti,
+	        EXP_NOTI as expNoti
+	    FROM USERS
+	    WHERE USER_NO = #{userNo}
+	</select>
+	
+	<select id="getUserAllergies" parameterType="long" resultType="long">
+	    SELECT ALLERGY_NO
+	    FROM USER_ALLERGY
+	    WHERE USER_NO = #{userNo}
+	</select>
+	
+	<insert id="insertUserAllergy">
+	  INSERT INTO user_allergy(user_no, allergy_no)
+	  VALUES (#{userNo}, #{allergyNo})
+	</insert>
+	
+	<delete id="deleteUserAllergy">
+	  DELETE FROM user_allergy
+	  WHERE user_no = #{userNo} AND allergy_no = #{allergyNo}
+	</delete>
+
+
+	
 </mapper>
