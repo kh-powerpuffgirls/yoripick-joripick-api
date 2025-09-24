@@ -64,9 +64,7 @@
 
 <select id="findUserByUserNo" resultMap="UserResult">
     SELECT
-        U.USER_NO, U.EMAIL, U.USERNAME, U.IMAGE_NO, U.SIK_BTI,
-        U.MSG_NOTI, U.REPLY_NOTI, U.RVW_NOTI, U.EXP_NOTI,
-        U.STATUS, U.INACTIVE_DATE,
+        U.*,
         C.PASSWORD,
         A.AUTHORITY,
         I.PROVIDER 
@@ -79,9 +77,7 @@
 
 <select id="findUserByUsername" parameterType="string" resultMap="UserResult">
     SELECT
-        U.USER_NO, U.EMAIL, U.USERNAME, U.IMAGE_NO, U.SIK_BTI,
-        U.MSG_NOTI, U.REPLY_NOTI, U.RVW_NOTI, U.EXP_NOTI,
-        U.STATUS, U.INACTIVE_DATE,
+        U.*,
         C.PASSWORD,
         A.AUTHORITY,
         I.PROVIDER
