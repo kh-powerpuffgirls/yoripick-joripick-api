@@ -42,13 +42,6 @@ public class IngPediaDao {
 		return session.insert("ingpedia.insertIngPair", ingPedia);
 	}
 	
-	public int deleteIngMethod(long ingNo) {
-		return session.insert("ingpedia.deleteIngMethod", ingNo);
-	}
-	public int deleteIngPair(long ingNo) {
-		return session.insert("ingpedia.deleteIngPair", ingNo);
-	}
-	
 	@Transactional
 	public int updateIngMethod(IngPediaPut ingPedia) {
 		
@@ -64,6 +57,20 @@ public class IngPediaDao {
 	}
 
 	public int deleteIngPairs(IngPediaPut ingPedia) {
-		return session.delete("ingpedia.deleteIngPairs", ingPedia);
+		int result = 1;
+		System.out.println("ok...");
+		if (session.selectList("ingpedia.selectIngPediaPair", ingPedia.getIngDetail().getIngNo()).size() > 0) {
+			result = session.insert("ingpedia.deleteIngPairs", ingPedia);
+			System.out.println("작동하면 안 됨");
+		}
+		return result;
+	}
+	
+	public int deleteIngPair(long ingNo) {
+		return session.insert("ingpedia.deleteIngPair", ingNo);
+	}
+
+	public int deleteIngMethod(long ingNo) {
+		return session.insert("ingpedia.deleteIngMethod", ingNo);
 	}
 }

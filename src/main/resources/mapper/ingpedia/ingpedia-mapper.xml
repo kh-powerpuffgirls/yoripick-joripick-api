@@ -163,7 +163,7 @@
 		      INTO ING_PAIR (ING_NO, PAIR_NO, PAIR_STATE)
 		      VALUES (#{ingDetail.ingNo}, #{pair.pairNo}, #{pair.pairState})
 		    </foreach>
-		  SELECT * FROM dual
+		SELECT * FROM dual
 	</insert>
 	
 	

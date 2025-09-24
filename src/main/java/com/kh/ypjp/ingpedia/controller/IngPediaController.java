@@ -118,7 +118,14 @@ public class IngPediaController {
 		int methodResult = ingPediaService.updateIngMethod(IngPedia);
 		
 		int pairResult1 = ingPediaService.deleteIngPairs(IngPedia);
-		int pairResult2 = ingPediaService.updateIngPair(IngPedia);
+		int pairResult2 = 1;
+		
+		if(IngPedia.getPairList().size() > 0) {
+			pairResult2 = ingPediaService.updateIngPair(IngPedia);
+		}
+		System.out.println(methodResult);
+		System.out.println(pairResult1);
+		System.out.println(pairResult2);
 		
 		if(methodResult > 0 && pairResult1 > 0 && pairResult2 > 0 ) {
 			return ResponseEntity.noContent().build();

@@ -65,6 +65,8 @@ public class SecurityConfig {
                 .requestMatchers("/ws/**").permitAll()
                 .requestMatchers("/images/**").permitAll()
                 .requestMatchers("/mypage/**").permitAll()
+                .requestMatchers("/ingpedia/**").permitAll()
+                .requestMatchers("/ingdata/**").permitAll()
                 .anyRequest().authenticated()
             )
             // OAuth2 로그인 핸들러
