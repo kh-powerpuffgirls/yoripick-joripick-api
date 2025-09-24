@@ -70,6 +70,7 @@ public class SecurityConfig {
                 .requestMatchers("/mypage/**").permitAll()
                 .requestMatchers("/ingpedia/**").permitAll()
                 .requestMatchers("/ingdata/**").permitAll()
+                .requestMatchers("/community/**").permitAll()
                 .anyRequest().authenticated()
             )
             // OAuth2 로그인 핸들러
