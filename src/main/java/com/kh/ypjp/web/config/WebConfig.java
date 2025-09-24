@@ -17,6 +17,16 @@ public class WebConfig implements WebMvcConfigurer {
 		String projectRoot = getProjectRoot();
 		String absolutePath = "file:///" + projectRoot + "/" + webPath;
 
-		registry.addResourceHandler("/images/**").addResourceLocations(absolutePath);
+        registry.addResourceHandler("/images/**")
+                .addResourceLocations(absolutePath);
+        
+        // 레시피 이미지 경로 
+        registry.addResourceHandler("/community/recipe/**")
+                .addResourceLocations(absolutePath);
+        
+        // 프로필 이미지 경로
+        registry.addResourceHandler("/profile/**")
+        		.addResourceLocations(absolutePath);
+       
 	}
 }
