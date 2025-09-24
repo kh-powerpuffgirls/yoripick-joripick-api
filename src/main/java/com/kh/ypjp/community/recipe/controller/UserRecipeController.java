@@ -61,7 +61,7 @@ public class UserRecipeController {
         RecipePage recipePage = recipeService.selectRecipePage(params);
         return ResponseEntity.ok(recipePage);
     }
-    @GetMapping("/ranking")
+    @GetMapping("/community/recipe/ranking")
     public ResponseEntity<List<UserRecipeDto.UserRecipeResponse>> selectRankingList() {
         List<UserRecipeDto.UserRecipeResponse> list = recipeService.selectRankingRecipes();
         return ResponseEntity.ok(list);
