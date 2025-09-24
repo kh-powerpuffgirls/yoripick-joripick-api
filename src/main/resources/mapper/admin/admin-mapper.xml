@@ -414,7 +414,7 @@
 					FROM CLASS_ENROLL
 					GROUP BY room_no
 				) CE ON CK.room_no = CE.room_no
-				ORDER BY 1
+				ORDER BY 5, 1
 			) T
 		)
 		WHERE rnum BETWEEN #{offset} + 1 AND #{offset} + #{limit}
@@ -455,6 +455,162 @@
 		LEFT JOIN USERS U ON C.user_no = U.user_no
 		LEFT JOIN MESSAGE M ON C.room_no = M.ref_no
 		WHERE M.msg_type = 'CCLASS'
+			AND C.room_no = #{roomNo}
 		ORDER BY M.time
+	</select>
+	
+	<select id="getCSinfo" resultMap="ChatInfoResultMap">
+		SELECT
+			C.room_no,
+			U.username AS class_name,
+			M.message_no,
+			C.user_no,
+			UU.username,
+			M.content,
+			M.time,
+			M.hidden,
+			M.image_no
+		FROM CUSTOMER_SERVICE C
+		LEFT JOIN USERS U ON C.user_no = U.user_no
+		LEFT JOIN MESSAGE M ON C.room_no = M.ref_no
+		JOIN USERS UU ON M.user_no = UU.user_no
+		WHERE M.msg_type = 'CSERVICE'
+			AND C.room_no = #{roomNo}
+		ORDER BY M.time
+	</select>
+	
+	<select id="countCustomerServices" resultType="long">
+		SELECT count(*) FROM CUSTOMER_SERVICE
+	</select>
+	
+	<select id="getCustomerServices" resultType="com.kh.ypjp.admin.model.dto.AdminDto$CSinfo">
+		SELECT
+		    room_no,
+		    user_no,
+		    username,
+		    time,
+		    content
+		FROM (
+		    SELECT
+		        C.room_no,
+		        C.user_no,
+		        U.username,
+		        M.time,
+		        M.content,
+		        ROW_NUMBER() OVER (PARTITION BY C.room_no ORDER BY M.time DESC) AS rn
+		    FROM CUSTOMER_SERVICE C
+		    JOIN USERS U ON C.user_no = U.user_no
+		    LEFT JOIN MESSAGE M ON C.message_no = M.message_no
+		)
+		WHERE rn = 1
+	</select>
+	
+	<select id="countAnnouncements" resultType="long">
+		SELECT count(*) FROM ANNOUNCEMENT
+	</select>
+	
+	<select id="getAllAnnouncements" resultType="com.kh.ypjp.admin.model.dto.AdminDto$Announcement">
+		SELECT * FROM (
+		    SELECT ROWNUM AS rnum, u.* FROM (
+				SELECT
+					ancmt_no,
+					content,
+					start_date,
+					end_date
+				FROM ANNOUNCEMENT
+				ORDER BY end_date DESC, start_date DESC
+			) u
+		) WHERE rnum BETWEEN #{offset} + 1 AND #{offset} + #{limit}
+	</select>
+	
+	<delete id="deleteAnnouncements">
+		DELETE FROM ANNOUNCEMENT
+		WHERE ancmt_no = #{ancmtNo}
+	</delete>
+	
+	<update id="editAnnouncements">
+		UPDATE ANNOUNCEMENT
+		SET start_date = #{startDate},
+			end_date = #{endDate},
+			content = #{content}
+		WHERE ancmt_no = #{ancmtNo}
+	</update>
+	
+	<select id="countChallengeInfos" resultType="long">
+		SELECT count(*) FROM CHALLENGE_INFO
+	</select>
+	
+	<select id="getChallengeInfos" resultType="com.kh.ypjp.admin.model.dto.AdminDto$Challenge">
+		SELECT * FROM (
+		    SELECT ROWNUM AS rnum, u.* FROM (
+				SELECT 
+					ch_info_no,
+					title,
+					start_date,
+					end_date,
+					image_no
+				FROM CHALLENGE_INFO
+				ORDER BY end_date DESC, start_date DESC
+			) u
+		) WHERE rnum BETWEEN #{offset} + 1 AND #{offset} + #{limit}
+	</select>
+	
+	<select id="getChallengeImageNo" resultType="long">
+		SELECT image_no FROM CHALLENGE_INFO
+		WHERE ch_info_no = #{chInfoNo}
+	</select>
+	
+	<update id="editChallenges">
+		UPDATE CHALLENGE_INFO
+		SET title = #{title},
+			start_date = #{startDate},
+			end_date = #{endDate},
+			image_no = #{imageNo}
+		WHERE ch_info_no = #{chInfoNo}
+	</update>
+	
+	<select id="getChallengesExcept" resultType="com.kh.ypjp.admin.model.dto.AdminDto$Challenge">
+		SELECT * FROM CHALLENGE_INFO
+		WHERE start_date <![CDATA[<=]]> #{endDate}
+		 	AND end_date >= #{startDate}
+		 	AND ch_info_no != #{chInfoNo}
+	</select>
+	
+	<delete id="deleteChallenges">
+		DELETE FROM CHALLENGE_INFO
+		WHERE ch_info_no = #{chInfoNo}
+	</delete>
+	
+	<select id="countIngredients" resultType="long">
+		SELECT
+			(SELECT count(*) FROM ING_METHOD)
+			+
+			(SELECT count(*) FROM ING_PAIR)
+		FROM DUAL
+	</select>
+	
+	<select id="getIngredients" resultType="com.kh.ypjp.admin.model.dto.AdminDto$Ingredient">
+		SELECT * FROM (
+		    SELECT ROWNUM AS rnum, u.* FROM (
+				SELECT
+					M.ing_no,
+					I.ing_name,
+					C.ing_code_name
+				FROM ING_METHOD M
+				JOIN INGREDIENT I ON M.ing_no = I.ing_no
+				JOIN ING_CODE C ON I.ing_code = C.ing_code
+				
+				UNION ALL
+				
+				SELECT
+					M.ing_no,
+					I.ing_name,
+					C.ing_code_name
+				FROM ING_PAIR M
+				JOIN INGREDIENT I ON M.ing_no = I.ing_no
+				JOIN ING_CODE C ON I.ing_code = C.ing_code
+				ORDER BY 1
+			) u
+		) WHERE rnum BETWEEN #{offset} + 1 AND #{offset} + #{limit}
 	</select>
 </mapper>

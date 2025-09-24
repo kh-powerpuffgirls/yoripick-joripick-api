@@ -7,11 +7,13 @@ import org.apache.ibatis.session.SqlSession;
 import org.springframework.stereotype.Repository;
 
 import com.kh.ypjp.admin.model.dto.AdminDto.Announcement;
+import com.kh.ypjp.admin.model.dto.AdminDto.CSinfo;
 import com.kh.ypjp.admin.model.dto.AdminDto.Challenge;
 import com.kh.ypjp.admin.model.dto.AdminDto.ChallengeForm;
 import com.kh.ypjp.admin.model.dto.AdminDto.ChatInfo;
 import com.kh.ypjp.admin.model.dto.AdminDto.ClassInfo;
 import com.kh.ypjp.admin.model.dto.AdminDto.CommInfo;
+import com.kh.ypjp.admin.model.dto.AdminDto.Ingredient;
 import com.kh.ypjp.admin.model.dto.AdminDto.Recipe;
 import com.kh.ypjp.admin.model.dto.AdminDto.RecipeInfo;
 import com.kh.ypjp.admin.model.dto.AdminDto.Report;
@@ -137,6 +139,66 @@ public class AdminDao {
 
 	public ChatInfo getChatRoom(Long roomNo) {
 		return session.selectOne("admin.getChatRoom", roomNo);
+	}
+
+	public Long countCustomerServices() {
+		return session.selectOne("admin.countCustomerServices");
+	}
+
+	public List<CSinfo> getCustomerServices(Map<String, Object> param) {
+		return session.selectList("admin.getCustomerServices", param);
+	}
+
+	public ChatInfo getCSinfo(Long roomNo) {
+		return session.selectOne("admin.getCSinfo", roomNo);
+	}
+
+	public Long countAnnouncements() {
+		return session.selectOne("admin.countAnnouncements");
+	}
+
+	public List<Announcement> getAllAnnouncements(Map<String, Object> param) {
+		return session.selectList("admin.getAllAnnouncements", param);
+	}
+
+	public int deleteAnnouncements(Long ancmtNo) {
+		return session.delete("admin.deleteAnnouncements", ancmtNo);
+	}
+
+	public int editAnnouncements(Announcement announcement) {
+		return session.update("admin.editAnnouncements", announcement);
+	}
+
+	public Long countChallengeInfos() {
+		return session.selectOne("admin.countChallengeInfos");
+	}
+
+	public List<Challenge> getChallengeInfos(Map<String, Object> param) {
+		return session.selectList("admin.getChallengeInfos", param);
+	}
+
+	public Long getChallengeImageNo(Long chInfoNo) {
+		return session.selectOne("admin.getChallengeImageNo", chInfoNo);
+	}
+
+	public int editChallenges(Challenge challenge) {
+		return session.update("admin.editChallenges", challenge);
+	}
+
+	public List<Challenge> getChallengesExcept(Challenge challenge) {
+		return session.selectList("admin.getChallengesExcept", challenge);
+	}
+
+	public int deleteChallenges(Long chInfoNo) {
+		return session.delete("admin.deleteChallenges", chInfoNo);
+	}
+
+	public Long countIngredients() {
+		return session.selectOne("admin.countIngredients");
+	}
+
+	public List<Ingredient> getIngredients(Map<String, Object> param) {
+		return session.selectList("admin.getIngredients", param);
 	}
 
 }

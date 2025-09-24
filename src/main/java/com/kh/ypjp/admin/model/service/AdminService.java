@@ -7,15 +7,17 @@ import java.util.Map;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.kh.ypjp.admin.model.dao.AdminDao;
 import com.kh.ypjp.admin.model.dto.AdminDto.Announcement;
+import com.kh.ypjp.admin.model.dto.AdminDto.CSinfo;
 import com.kh.ypjp.admin.model.dto.AdminDto.Challenge;
 import com.kh.ypjp.admin.model.dto.AdminDto.ChallengeForm;
 import com.kh.ypjp.admin.model.dto.AdminDto.ChatInfo;
-import com.kh.ypjp.admin.model.dto.AdminDto.ChatInfo.ChatMsg;
 import com.kh.ypjp.admin.model.dto.AdminDto.ClassInfo;
 import com.kh.ypjp.admin.model.dto.AdminDto.CommInfo;
+import com.kh.ypjp.admin.model.dto.AdminDto.Ingredient;
 import com.kh.ypjp.admin.model.dto.AdminDto.Recipe;
 import com.kh.ypjp.admin.model.dto.AdminDto.RecipeInfo;
 import com.kh.ypjp.admin.model.dto.AdminDto.Report;
@@ -112,8 +114,8 @@ public class AdminService {
 			String webPath = "challenges";
 			String changeName = utilService.getChangeName(upfile, webPath);
 			Map<String, Object> param = new HashMap<>();
-			String serverName = webPath + "/" + changeName;
-			param.put("serverName", serverName);
+//			String serverName = webPath + "/" + changeName;
+			param.put("serverName", changeName);
 			param.put("originName", upfile.getOriginalFilename());
 			int result = utilService.insertImage(param);
 			if (result > 0) {
@@ -168,8 +170,86 @@ public class AdminService {
 	}
 
 	public ChatInfo getChatRoom(Long roomNo) {
-		ChatInfo chatRoom = dao.getChatRoom(roomNo);
-		return chatRoom;
+		return dao.getChatRoom(roomNo);
+	}
+
+	public Long countCustomerServices() {
+		return dao.countCustomerServices();
+	}
+
+	public List<CSinfo> getCustomerServices(Map<String, Object> param) {
+		return dao.getCustomerServices(param);
+	}
+
+	public ChatInfo getCSinfo(Long roomNo) {
+		return dao.getCSinfo(roomNo);
+	}
+
+	public Long countAnnouncements() {
+		return dao.countAnnouncements();
+	}
+
+	public List<Announcement> getAllAnnouncements(Map<String, Object> param) {
+		return dao.getAllAnnouncements(param);
+	}
+
+	public int deleteAnnouncements(Long ancmtNo) {
+		return dao.deleteAnnouncements(ancmtNo);
+	}
+
+	public int editAnnouncements(Announcement announcement) {
+		return dao.editAnnouncements(announcement);
+	}
+
+	public Long countChallengeInfos() {
+		return dao.countChallengeInfos();
+	}
+
+	public List<Challenge> getChallengeInfos(Map<String, Object> param) {
+		List<Challenge> list = dao.getChallengeInfos(param);
+		for (Challenge c : list) {
+			String serverName = utilService.getServerName(c.getImageNo());
+			String imageUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
+					.path("/images/challenges/" + serverName).toUriString();
+			c.setImageUrl(imageUrl);
+		}
+		return list;
+	}
+	
+	@Transactional
+	public int editChallenges(Challenge challenge, MultipartFile upfile) {
+		if (upfile == null || upfile.isEmpty()) {
+			challenge.setImageNo(dao.getChallengeImageNo(challenge.getChInfoNo()));
+		} else {
+			String webPath = "challenges";
+			String changeName = utilService.getChangeName(upfile, webPath);
+			Map<String, Object> param = new HashMap<>();
+//			String serverName = webPath + "/" + changeName;
+			param.put("serverName", changeName);
+			param.put("originName", upfile.getOriginalFilename());
+			if (utilService.insertImage(param) > 0) {
+				challenge.setImageNo(utilService.getImageNo(param));
+			} else {
+				return 0;
+			}
+		}
+		return dao.editChallenges(challenge);
+	}
+
+	public List<Challenge> getChallengesExcept(Challenge challenge) {
+		return dao.getChallengesExcept(challenge);
+	}
+
+	public int deleteChallenges(Long chInfoNo) {
+		return dao.deleteChallenges(chInfoNo);
+	}
+
+	public Long countIngredients() {
+		return dao.countIngredients();
+	}
+
+	public List<Ingredient> getIngredients(Map<String, Object> param) {
+		return dao.getIngredients(param);
 	}
 
 }

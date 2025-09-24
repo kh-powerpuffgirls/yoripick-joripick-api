@@ -3,13 +3,31 @@ package com.kh.ypjp.admin.model.dto;
 import java.util.Date;
 import java.util.List;
 
-import com.kh.ypjp.chat.model.dto.ChatDto.MessageDto;
-
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 public class AdminDto {
+	
+	@Data
+	@NoArgsConstructor
+	@AllArgsConstructor
+	public static class Ingredient {
+		private Long ingNo;
+		private String ingName;
+		private String ingCodeName;
+	}
+	
+	@Data
+	@NoArgsConstructor
+	@AllArgsConstructor
+	public static class CSinfo {
+		private Long roomNo;
+		private Long userNo;
+		private String username;
+		private Date time;
+		private String content;
+	}
 	
 	@Data
 	@NoArgsConstructor
@@ -90,6 +108,8 @@ public class AdminDto {
 		private String startDate;
 		private String endDate;
 		private Long imageNo;
+		
+		private String imageUrl;
 	}
 
 	@Data

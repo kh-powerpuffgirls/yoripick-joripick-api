@@ -10,10 +10,12 @@ import java.util.Map;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -22,11 +24,13 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.kh.ypjp.admin.model.dto.AdminDto.Announcement;
+import com.kh.ypjp.admin.model.dto.AdminDto.CSinfo;
 import com.kh.ypjp.admin.model.dto.AdminDto.Challenge;
 import com.kh.ypjp.admin.model.dto.AdminDto.ChallengeForm;
 import com.kh.ypjp.admin.model.dto.AdminDto.ChatInfo;
 import com.kh.ypjp.admin.model.dto.AdminDto.ClassInfo;
 import com.kh.ypjp.admin.model.dto.AdminDto.CommInfo;
+import com.kh.ypjp.admin.model.dto.AdminDto.Ingredient;
 import com.kh.ypjp.admin.model.dto.AdminDto.Recipe;
 import com.kh.ypjp.admin.model.dto.AdminDto.RecipeInfo;
 import com.kh.ypjp.admin.model.dto.AdminDto.Report;
@@ -162,7 +166,7 @@ public class AdminController {
 	        @RequestPart("endDate") String endDate,
 			@RequestPart(value = "upfile", required = false) MultipartFile upfile
 			) {
-		Challenge challenge = new Challenge(null, title, startDate, endDate, null);
+		Challenge challenge = new Challenge(null, title, startDate, endDate, null, null);
 		List<Challenge> challengeList = service.getChallenges(challenge);
 		if (!challengeList.isEmpty()) {
 			return ResponseEntity.badRequest().build();
@@ -180,15 +184,6 @@ public class AdminController {
 		}
 		service.insertAnnouncements(announcement);
 		return ResponseEntity.ok().build();
-	}
-	
-	@GetMapping("/reports")
-	public ResponseEntity<Long> getTotalReports() {
-		Long ch = service.countAllChallenges();
-		Long co = service.countCommReports();
-		Long r = service.countRecipes();
-		Long u = service.countUserReports();
-		return ResponseEntity.ok(ch+co+r+u);
 	}
 	
 	@GetMapping("/users")
@@ -255,6 +250,107 @@ public class AdminController {
 	public ResponseEntity<ChatInfo> getClassInfo(@PathVariable Long roomNo) {
 		ChatInfo chatroom = service.getChatRoom(roomNo);
 		return ResponseEntity.ok(chatroom);
+	}
+	
+	@GetMapping("/cservices")
+	public ResponseEntity<Map<String, Object>> getCustomerServices(
+			@RequestParam int page, @RequestParam int size) {
+		Map<String, Object> param = new HashMap<>();
+	    param.put("offset", (page - 1) * size);
+	    param.put("limit", size);
+		List<CSinfo> list = service.getCustomerServices(param);
+		Long listCount = service.countCustomerServices();
+		PageInfo pageInfo = utilService.getPageInfo(listCount, page, 10, size);
+	    Map<String, Object> response = new HashMap<>();
+	    response.put("list", list);
+	    response.put("pageInfo", pageInfo);
+		return ResponseEntity.ok(response);
+	}
+	
+	@GetMapping("/cservices/{roomNo}")
+	public ResponseEntity<ChatInfo> getCSinfo(@PathVariable Long roomNo) {
+		ChatInfo chatroom = service.getCSinfo(roomNo);
+		return ResponseEntity.ok(chatroom);
+	}
+	
+	@GetMapping("/announcements")
+	public ResponseEntity<Map<String, Object>> getAnnouncements(
+			@RequestParam int page, @RequestParam int size) {
+		Map<String, Object> param = new HashMap<>();
+	    param.put("offset", (page - 1) * size);
+	    param.put("limit", size);
+		List<Announcement> list = service.getAllAnnouncements(param);
+		Long listCount = service.countAnnouncements();
+		PageInfo pageInfo = utilService.getPageInfo(listCount, page, 10, size);
+	    Map<String, Object> response = new HashMap<>();
+	    response.put("list", list);
+	    response.put("pageInfo", pageInfo);
+		return ResponseEntity.ok(response);
+	}
+	
+	@DeleteMapping("/announcements/{ancmtNo}")
+	public ResponseEntity<Void> deleteAnnouncements(@RequestParam Long ancmtNo) {
+		service.deleteAnnouncements(ancmtNo);
+		return ResponseEntity.ok().build();
+	}
+	
+	@PatchMapping("/announcements")
+	public ResponseEntity<Void> editAnnouncements(@RequestBody Announcement announcement) {
+		service.editAnnouncements(announcement);
+		return ResponseEntity.ok().build();
+	}
+	
+	@GetMapping("/challenges/info")
+	public ResponseEntity<Map<String, Object>> getChallengeInfos(
+			@RequestParam int page, @RequestParam int size) {
+		Map<String, Object> param = new HashMap<>();
+	    param.put("offset", (page - 1) * size);
+	    param.put("limit", size);
+		List<Challenge> list = service.getChallengeInfos(param);
+		Long listCount = service.countChallengeInfos();
+		PageInfo pageInfo = utilService.getPageInfo(listCount, page, 10, size);
+	    Map<String, Object> response = new HashMap<>();
+	    response.put("list", list);
+	    response.put("pageInfo", pageInfo);
+		return ResponseEntity.ok(response);
+	}
+	
+	@PutMapping(value = "/challenges", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	public ResponseEntity<Void> editChallenges(
+			@RequestParam("chInfoNo") Long chInfoNo,
+			@RequestParam("title") String title,
+			@RequestParam("startDate") String startDate,
+			@RequestParam("endDate") String endDate,
+			@RequestPart(value = "upfile", required = false) MultipartFile upfile
+			) {
+		Challenge challenge = new Challenge(chInfoNo, title, startDate, endDate, null, null);
+		List<Challenge> challengeList = service.getChallengesExcept(challenge);
+		if (!challengeList.isEmpty()) {
+			return ResponseEntity.badRequest().build();
+		}
+		service.editChallenges(challenge, upfile);
+		return ResponseEntity.ok().build();
+	}
+	
+	@DeleteMapping("/challenges/{chInfoNo}")
+	public ResponseEntity<Void> deleteChallenges(@PathVariable Long chInfoNo) {
+		service.deleteChallenges(chInfoNo);
+		return ResponseEntity.ok().build();
+	}
+	
+	@GetMapping("/ingredients")
+	public ResponseEntity<Map<String, Object>> getIngredients(
+			@RequestParam int page, @RequestParam int size) {
+		Map<String, Object> param = new HashMap<>();
+	    param.put("offset", (page - 1) * size);
+	    param.put("limit", size);
+		List<Ingredient> list = service.getIngredients(param);
+		Long listCount = service.countIngredients();
+		PageInfo pageInfo = utilService.getPageInfo(listCount, page, 10, size);
+	    Map<String, Object> response = new HashMap<>();
+	    response.put("list", list);
+	    response.put("pageInfo", pageInfo);
+		return ResponseEntity.ok(response);
 	}
 	
 }
