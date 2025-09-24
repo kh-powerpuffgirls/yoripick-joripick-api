@@ -9,7 +9,8 @@
 	        carb,
 	        protein,
 	        fat,
-	        sodium
+	        sodium,
+	        'FOOD' AS mealType
 	    FROM FOOD
 	    JOIN FOOD_CODE USING (food_code)
 	    JOIN NUTRIENT USING (nutrient_no)
@@ -49,7 +50,8 @@
 	            n.protein,
 	            n.fat,
 	            n.sodium,
-	            m.quantity
+	            m.quantity,
+	            m.meal_type
 	        FROM MEAL_PLAN m
 	        JOIN FOOD f ON m.ref_no = f.food_no
 	        JOIN NUTRIENT n ON f.nutrient_no = n.nutrient_no
@@ -69,7 +71,8 @@
 	            n.protein,
 	            n.fat,
 	            n.sodium,
-	            NULL AS quantity
+	            NULL AS quantity,
+	            m.meal_type
 	        FROM MEAL_PLAN m
 	        JOIN RECIPE r ON m.ref_no = r.rcp_no
 	        JOIN NUTRIENT n ON r.nutrient_no = n.nutrient_no
