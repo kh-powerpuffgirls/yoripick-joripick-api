@@ -209,4 +209,24 @@ public class UserRecipeDaoImpl implements UserRecipeDao{
 	public RcpIngs selectRcpIngs(int rcpNo) {
 		return session.selectOne(NAMESPACE +"selectRcpIngs",rcpNo);
 	}
+
+	@Override
+	public int checkBookmark(Map<String, Object> params) {
+		return session.selectOne(NAMESPACE + "checkBookmark",params);
+	}
+
+	@Override
+	public void deleteBookmark(Map<String, Object> params) {
+		session.insert(NAMESPACE +"deleteBookmark",params);
+	}
+
+	@Override
+	public void insertBookmark(Map<String, Object> params) {
+		session.delete(NAMESPACE + "insertBookmark",params);
+	}
+
+	@Override
+	public int countBookmarks(int rcpNo) {
+		return session.selectOne(NAMESPACE + "countBookmarks",rcpNo);
+	}
 }

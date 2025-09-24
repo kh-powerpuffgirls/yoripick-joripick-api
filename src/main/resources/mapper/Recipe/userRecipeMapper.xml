@@ -487,7 +487,7 @@
 	     WHERE RCP_NO = #{rcpNo} 
 	</update>
 	
-	<select id="selectOfficialRecipeDetail" parameterType="_int" resultMap="recipeDetailResultMap">
+	<select id="selectOfficialRecipeDetail" parameterType="_int" resultMap="officialRecipeDetailResultMap">
 	    SELECT
 	        R.RCP_NO         AS rcpNo,
 	        R.RCP_NAME       AS rcpName,
@@ -508,6 +508,8 @@
 	        
 	        (SELECT COUNT(*) FROM REVIEW WHERE REF_NO = R.RCP_NO AND DELETE_STATUS = 'N') AS reviewCount,
 	        NVL((SELECT AVG(STARS) FROM REVIEW WHERE REF_NO = R.RCP_NO AND DELETE_STATUS = 'N'), 0) AS avgStars,
+	        (SELECT COUNT(*) FROM BOOKMARK WHERE REF_NO = R.RCP_NO) AS bookmarkCount
+        
 	        
 	    FROM RECIPE R
 	    LEFT JOIN IMAGE IMG ON R.IMAGE_NO = IMG.IMAGE_NO
@@ -520,10 +522,60 @@
 	      AND R.APPROVAL = 'Y'
 	</select>
 	
+	<resultMap id="officialRecipeDetailResultMap" type="com.kh.ypjp.community.recipe.dto.UserRecipeDto$RecipeDetailResponse">
+	    <id property="rcpNo" column="rcpNo"/>
+	    <result property="rcpName" column="rcpName"/>
+	    <result property="rcpInfo" column="rcpInfo"/>
+	    <result property="createdAt" column="createdAt"/>
+	    <result property="updatedAt" column="updatedAt"/>
+	    <result property="views" column="VIEWS"/>
+	    <result property="tag" column="TAG"/>
+	    <result property="isOfficial" column="isOfficial"/>
+	    <result property="rcpMethod" column="rcpMethod"/>
+	    <result property="rcpSituation" column="rcpSituation"/>
+	    <result property="rcpMethodId" column="rcpMethodId"/>
+	    <result property="rcpSituationId" column="rcpSituationId"/>
+	    <result property="mainImage" column="mainImage"/>
+	    <result property="reviewCount" column="reviewCount"/>
+	    <result property="avgStars" column="avgStars"/>
+	   <result property="bookmarkCount" column="bookmarkCount"/> 
+       
+	    
+	    <association property="totalNutrient" javaType="com.kh.ypjp.community.recipe.dto.UserRecipeDto$NutrientDetailDto">
+	        <result property="calories" column="totalNutrient.energy"/>
+	        <result property="carbs"    column="totalNutrient.carb"/>
+	        <result property="protein"  column="totalNutrient.protein"/>
+	        <result property="fat"      column="totalNutrient.fat"/>
+	        <result property="sodium"   column="totalNutrient.sodium"/>
+	    </association>
+	</resultMap>
+	
 	<select id="selectRcpIngs" parameterType="_int" resultType="com.kh.ypjp.community.recipe.model.vo.RcpIngs">
 	    SELECT RCP_NO, RCP_ING_LIST
 	    FROM RCP_INGS
 	    WHERE RCP_NO = #{rcpNo}
+	</select>
+	
+	<select id="checkBookmark" parameterType="map" resultType="_int">
+	    SELECT COUNT(*) 
+	    FROM BOOKMARK
+	    WHERE USER_NO = #{userNo}
+	      AND REF_NO = #{rcpNo}
+	</select>
+	
+	<insert id="insertBookmark" parameterType="map">
+	    INSERT INTO BOOKMARK (USER_NO, RCP_SOURCE, REF_NO)
+	    VALUES (#{userNo}, 'API', #{rcpNo})
+	</insert>
+	
+	<delete id="deleteBookmark" parameterType="map">
+	    DELETE FROM BOOKMARK
+	    WHERE USER_NO = #{userNo}
+	      AND REF_NO = #{rcpNo}
+	</delete>
+	
+	<select id="countBookmarks" parameterType="_int" resultType="_int">
+	    SELECT COUNT(*) FROM BOOKMARK WHERE REF_NO = #{rcpNo}
 	</select>
 	
 </mapper>

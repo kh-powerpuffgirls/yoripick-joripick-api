@@ -67,6 +67,7 @@ public class SecurityConfig {
                 .requestMatchers("/chat/**").permitAll()
                 .requestMatchers("/ws/**").permitAll()
                 .requestMatchers("/images/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/recipe/**").permitAll()
                 .requestMatchers(HttpMethod.GET, 
 				        "/api/community/recipe/**", 
 				        "/api/options/**", 

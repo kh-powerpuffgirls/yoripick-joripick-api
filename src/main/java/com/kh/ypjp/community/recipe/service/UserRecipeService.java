@@ -45,5 +45,7 @@ public interface UserRecipeService {
 
 	void deleteRecipe(int rcpNo);
 
-	RecipeDetailResponse selectOfficialRecipeDetail(int rcpNo, boolean increaseViewCount);
+	RecipeDetailResponse selectOfficialRecipeDetail(int rcpNo,Long userNo, boolean increaseViewCount);
+
+	UserRecipeDto.BookmarkResponse toggleBookmark(int rcpNo, long userNo);
 }

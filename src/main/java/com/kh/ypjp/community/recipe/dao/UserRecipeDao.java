@@ -88,4 +88,12 @@ public interface UserRecipeDao {
 	RecipeDetailResponse selectOfficialRecipeDetail(int rcpNo);
 	
 	RcpIngs selectRcpIngs(int rcpNo);
+
+	int checkBookmark(Map<String, Object> params);
+
+	void deleteBookmark(Map<String, Object> params);
+
+	void insertBookmark(Map<String, Object> params);
+	
+	int countBookmarks(int rcpNo);
 }

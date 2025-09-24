@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.springframework.web.multipart.MultipartFile;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.kh.ypjp.community.recipe.model.vo.CookingStep;
 import com.kh.ypjp.community.recipe.model.vo.RcpIngredient;
 import com.kh.ypjp.community.recipe.model.vo.Review;
@@ -95,6 +96,8 @@ public class UserRecipeDto {
         private Date updatedAt; 
         private int views;
         private String tag;
+        
+        @JsonProperty("isOfficial")
         private boolean isOfficial;
         
         private String myLikeStatus; 
@@ -109,6 +112,11 @@ public class UserRecipeDto {
 
         // 집계 정보
         private int likeCount;
+        private Integer bookmarkCount;
+        
+        @JsonProperty("isBookmarked")
+        private boolean isBookmarked;
+        
         private int reviewCount;
         private double avgStars;
 
@@ -172,6 +180,12 @@ public class UserRecipeDto {
         private String content;
         private String serverName; // serverName -> imageUrl
         private Date reviewDate;
+    }
+    @Data
+    @AllArgsConstructor
+    public static class BookmarkResponse {
+        private boolean isBookmarked;
+        private int bookmarkCount;
     }
 }
 
