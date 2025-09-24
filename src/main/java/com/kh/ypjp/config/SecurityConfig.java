@@ -73,6 +73,9 @@ public class SecurityConfig {
 				        "/api/options/**", 
 				        "/api/ingredients/search"
 				    ).permitAll()
+                .requestMatchers("/inglist/**").authenticated()
+                .requestMatchers("/ingdata/**").permitAll()
+                .requestMatchers("/ingpedia/**").permitAll()
                 .anyRequest().authenticated()
             )
             // OAuth2 로그인 핸들러

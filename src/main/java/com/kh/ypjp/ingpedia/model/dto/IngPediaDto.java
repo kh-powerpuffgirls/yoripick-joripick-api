@@ -14,74 +14,78 @@ public class IngPediaDto {
 	@Data
 	@NoArgsConstructor
 	@AllArgsConstructor
-	public static class IngPediaResponse {
+	public static class IngListResponse {
+		private long ingNo;
+		private String ingName;
+	}
+	
+	@Data
+	@NoArgsConstructor
+	@AllArgsConstructor
+	public static class PagedIngListResponse {
+		private List<IngListResponse> ingList;
+		private PageInfo pageInfo;
+	}
+	
+	@Data
+	@NoArgsConstructor
+	@AllArgsConstructor
+	public static class IngDetailResponse {
 //		INGREDIENT
 		private long userNo;
 		private long ingNo;
 		private String ingName;
 		private long ingCode;
 		private String ingCodeName;
+		private long nutrientNo;
 		
 //		NUTRIENT
-		private long energy;
-		private long carb;
-		private long protein;
-		private long fat;
-		private long sodium;
+		private Double energy;
+		private Double carb;
+		private Double protein;
+		private Double fat;
+		private Double sodium;
 		
 //		METHOD
-		private long methodNo;
 		private String buyingTip;
 		private String usageTip;
 		private String storageMethod;
 		private String preparation;
-		
-//		PAIR
-		private List<PairResponse> pairList;
 	}
 	
 	@Data
 	@NoArgsConstructor
 	@AllArgsConstructor
-	public static class PairResponse {
+	public static class IngPairResponse {
 //		PAIR
 		private long pairNo;
+		private String pairName;
 		private String pairState;
 	}
-//	
-//	@Data
-//	@NoArgsConstructor
-//	@AllArgsConstructor
-//	public static class IngListResponse {
-//	    private List<IngPediaDto.IngResponse> list;
-//	    private PageInfo pageInfo;
-//	}
-//	
-//	@Data
-//	@NoArgsConstructor
-//	@AllArgsConstructor
-//	public static class IngCodeResponse {
-//		private long ingCode;
-//		private String ingCodeName;
-//	}
-
-//		NUTRIENT -- 아직은 쓸지 모르겠음... 여유 생기면 추가
-//		private long energy;
-//		private long carb;
-//		private long protein;
-//		private long fat;
-//		private long sodium;
 	
-//	@Data
-//	@NoArgsConstructor
-//	@AllArgsConstructor
-//	public static class MyIngPut {
-//		private long userNo;
-//		private long ingNo;
-//		private Date createdAt;
-//		private Date expDate;
-//		private String quantity;
-//	}
+	@Data
+	@NoArgsConstructor
+	@AllArgsConstructor
+	public static class IngPediaResponse {
+		private IngDetailResponse ingDetail;
+		private List<IngPairResponse> pairList;
+	}
+	
+	@Data
+	@NoArgsConstructor
+	@AllArgsConstructor
+	public static class IngPediaPost {
+		private IngDetailResponse ingDetail;
+		private List<IngPairResponse> pairList;
+	}
+	
+	@Data
+	@NoArgsConstructor
+	@AllArgsConstructor
+	public static class IngPediaPut {
+		private IngDetailResponse ingDetail;
+		private List<IngPairResponse> pairList;
+	}
 	
 	
 }

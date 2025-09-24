@@ -28,7 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/api/inglist")
+@RequestMapping("/inglist")
 public class MyIngController {
 
 	private final MyIngService myingService;

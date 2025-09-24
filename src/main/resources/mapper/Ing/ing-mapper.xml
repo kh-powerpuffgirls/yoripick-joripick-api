@@ -20,7 +20,7 @@
 		JOIN ING_CODE C ON I.ING_CODE = C.ING_CODE
 		<where>
 			<if test="ingCode != 0">
-				AND I.ING_CODE LIKE '%' || #{ingCode} || '%'
+				AND I.ING_CODE = #{ingCode}
 			</if>
 			<if test="keyword != '' and keyword != null">
 				AND I.ING_NAME LIKE '%' || #{keyword} || '%'

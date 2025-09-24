@@ -27,7 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/api/ingdata")
+@RequestMapping("/ingdata")
 
 public class IngController {
 
@@ -68,7 +68,6 @@ public class IngController {
 	public ResponseEntity<List<IngCodeResponse>> ingCodes(){
 		
 		List<IngDto.IngCodeResponse> list = ingService.selectIngCodes();
-		System.out.println(list);
 		
 		return ResponseEntity.ok(list);
 	}

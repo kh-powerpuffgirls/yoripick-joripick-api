@@ -115,7 +115,7 @@ public class AuthController {
 		String providerUserId = req.get("providerUserId");
 		String accessToken = req.get("accessToken");
 
-		AuthResult result = authService.enrollSocial(email, username, provider, providerUserId, accessToken);
+		AuthResult result = authService.enrollSocial(email, username, provider, providerUserId);
 
 		ResponseCookie refreshCookie = ResponseCookie.from(REFRESH_COOKIE, result.getRefreshToken()).httpOnly(true)
 				.secure(false).path("/").sameSite("Lax").maxAge(Duration.ofDays(7)).build();

@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ingpedia">
+
+	<resultMap id="IngDetailResult"
+		type="com.kh.ypjp.ingpedia.model.dto.IngPediaDto$IngDetailResponse" autoMapping="true">
+		<id property="ingNo" column="ING_NO" />
+		<result property="userNo" column="USER_NO" />
+		<result property="ingName" column="ING_NAME" />
+		<result property="ingCode" column="ING_CODE" />
+		<result property="ingCodeName" column="ING_CODE_NAME" />
+		
+		<result property="nutrientNo" column="NUTRIENT_NO" />
+		<result property="energy" column="ENERGY" />
+		<result property="carb" column="CARB" />
+		<result property="protein" column="PROTEIN" />
+		<result property="fat" column="FAT" />
+		<result property="sodium" column="SODIUM" />
+		
+		<result property="buyingTip" column="BUYING_TIP" />
+		<result property="usageTip" column="USAGE_TIP" />
+		<result property="storageMethod" column="STORAGE_METHOD" />
+		<result property="preparation" column="PREPARATION" />
+	</resultMap>
+	
+	<resultMap id="IngPairResult"
+		type="com.kh.ypjp.ingpedia.model.dto.IngPediaDto$IngPairResponse" autoMapping="true">
+		<id property="ingNo" column="ING_NO" />
+		<result property="pairName" column="PAIR_NAME" />
+		<result property="pairState" column="PAIR_STATE" />
+	</resultMap>
+	
+	<select id="selectIngPediaList" resultMap="IngDetailResult">
+		SELECT
+		    I.ING_NO,
+		    I.ING_NAME, I.ING_CODE
+		FROM INGREDIENT I
+		JOIN ING_METHOD M ON I.ING_NO = M.ING_NO
+	</select>
+	
+	<select id="selectIngPediaDetail" resultMap="IngDetailResult">
+		SELECT
+		    I.USER_NO, I.ING_NO,
+		    I.ING_NAME, I.ING_CODE,
+		    C.ING_CODE_NAME, N.NUTRIENT_NO,
+		    N.ENERGY, N.CARB, N.PROTEIN,
+		    N.FAT, N.SODIUM,
+		    M.BUYING_TIP,
+		    M.USAGE_TIP, M.STORAGE_METHOD,
+		    M.PREPARATION
+		    
+		FROM INGREDIENT I
+		LEFT JOIN ING_CODE C ON I.ING_CODE = C.ING_CODE
+		LEFT JOIN NUTRIENT N ON I.NUTRIENT_NO = N.NUTRIENT_NO
+		LEFT JOIN ING_METHOD M ON I.ING_NO = M.ING_NO
+		WHERE I.ING_NO = #{ingNo}
+	</select>
+	
+	<select id="selectIngPediaPair" resultMap="IngPairResult">
+		SELECT
+		    P.PAIR_NO, I.ING_NAME AS "PAIR_NAME", P.PAIR_STATE
+		FROM ING_PAIR P
+		LEFT JOIN INGREDIENT I ON P.PAIR_NO = I.ING_NO
+		WHERE P.ING_NO = #{ingNo}
+	</select>
+	
+	<sql id="commonSelect">
+		SELECT
+		    I.ING_NO, I.ING_NAME
+		FROM INGREDIENT I
+		JOIN ING_METHOD M ON I.ING_NO = M.ING_NO
+		<where>
+			<if test="ingCode != 0">
+				AND I.ING_CODE = #{ingCode}
+			</if>
+			<if test="keyword != '' and keyword != null">
+				AND I.ING_NAME LIKE '%' || #{keyword} || '%'
+			</if>			
+		</where>
+		ORDER BY I.ING_NAME
+	</sql>
+	
+	<select id="selectTotalIngPedia" resultType="long">
+		SELECT COUNT(*) 
+			FROM (
+		    	<include refid="commonSelect" />
+		    )
+	</select>
+	
+	<select id="selectIngPagediaList" resultType="com.kh.ypjp.ingpedia.model.dto.IngPediaDto$IngListResponse">
+		SELECT * FROM (
+		    SELECT N.*, ROW_NUMBER() OVER (ORDER BY N.ING_NAME) RNUM
+		    FROM (
+		    	<include refid="commonSelect" />
+		    ) N
+       	) TMP
+       	<![CDATA[WHERE TMP.RNUM <= #{endRow} AND TMP.RNUM > #{startRow}]]>
+	</select>
+	
+	<insert id="insertIngMethod">
+		INSERT INTO ING_METHOD (ING_NO, BUYING_TIP, USAGE_TIP,
+			STORAGE_METHOD, PREPARATION, CREATED_AT)
+		VALUES (
+			#{ingDetail.ingNo},
+			#{ingDetail.buyingTip},
+			#{ingDetail.usageTip},
+			#{ingDetail.storageMethod},
+			#{ingDetail.preparation},
+			SYSDATE
+			)
+	</insert>
+	
+	<insert id="insertIngPair">
+		INSERT ALL
+		    <foreach collection="pairList" item="pair">
+		      INTO ING_PAIR (ING_NO, PAIR_NO, PAIR_STATE)
+		      VALUES (#{ingDetail.ingNo}, #{pair.pairNo}, #{pair.pairState})
+		    </foreach>
+		  SELECT * FROM dual
+	</insert>
+	
+	<delete id="deleteIngMethod">
+		DELETE FROM ING_METHOD
+		WHERE ING_NO=#{ingDetail.ingNo}
+	</delete>
+	
+	<update id="updateIng">
+		UPDATE INGREDIENT SET
+			ING_NAME=#{ingDetail.ingName},
+			ING_CODE=#{ingDetail.ingCode},
+			USER_NO=#{ingDetail.userNo}
+		WHERE ING_NO=#{ingDetail.ingNo}
+	</update>
+	
+	<update id="updateNutrient">
+		UPDATE NUTRIENT SET
+			ENERGY=#{ingDetail.energy},
+			CARB=#{ingDetail.carb},
+			PROTEIN=#{ingDetail.protein},
+			FAT=#{ingDetail.fat},
+			SODIUM=#{ingDetail.sodium}
+		WHERE NUTRIENT_NO=#{ingDetail.nutrientNo}
+	</update>
+	
+	<update id="updateIngMethod">
+		UPDATE ING_METHOD SET
+			BUYING_TIP=#{ingDetail.buyingTip},
+			USAGE_TIP=#{ingDetail.usageTip},
+			STORAGE_METHOD=#{ingDetail.storageMethod},
+			PREPARATION=#{ingDetail.preparation},
+			CREATED_AT=SYSDATE
+		WHERE ING_NO=#{ingDetail.ingNo}
+	</update>
+	
+	<delete id="deleteIngPairs">
+		DELETE FROM ING_PAIR
+		WHERE ING_NO=#{ingDetail.ingNo}
+	</delete>
+	
+	<insert id="updateIngPair">
+		INSERT ALL
+		    <foreach collection="pairList" item="pair">
+		      INTO ING_PAIR (ING_NO, PAIR_NO, PAIR_STATE)
+		      VALUES (#{ingDetail.ingNo}, #{pair.pairNo}, #{pair.pairState})
+		    </foreach>
+		  SELECT * FROM dual
+	</insert>
+	
+	
+</mapper>
