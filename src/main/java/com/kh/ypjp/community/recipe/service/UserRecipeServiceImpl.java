@@ -617,5 +617,27 @@ public class UserRecipeServiceImpl implements UserRecipeService {
         int bookmarkCount = dao.countBookmarks(rcpNo);
         return new UserRecipeDto.BookmarkResponse(isBookmarked, bookmarkCount);
 	}
+
+	@Override
+	public RecipePage selectOfficialRecipePage(Map<String, Object> params) {
+		int pageSize = 12;
+        params.put("pageSize", pageSize);
+        
+        long totalElements = dao.selectOfficialRecipeCount(params);
+        int totalPages = (int) Math.ceil((double) totalElements / pageSize);
+        
+        List<UserRecipeResponse> recipes = dao.selectOfficialRecipeList(params);
+        
+        // 이미지 경로를 전체 URL로 변환
+        for (UserRecipeResponse recipe : recipes) {
+            if (recipe.getServerName() != null && !recipe.getServerName().isEmpty()) {
+                // 공식 레시피 이미지 경로 규칙에 맞게 수정
+                String imageUrl = "http://www.foodsafetykorea.go.kr" + recipe.getServerName();
+                recipe.setServerName(imageUrl);
+            }
+        }
+        
+        return new RecipePage(recipes, totalPages, totalElements);
+	}
 }
 

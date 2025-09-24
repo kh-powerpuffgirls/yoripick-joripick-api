@@ -229,4 +229,15 @@ public class UserRecipeDaoImpl implements UserRecipeDao{
 	public int countBookmarks(int rcpNo) {
 		return session.selectOne(NAMESPACE + "countBookmarks",rcpNo);
 	}
+	
+	@Override
+	public List<UserRecipeResponse> selectOfficialRecipeList(Map<String, Object> params) {
+		return session.selectList(NAMESPACE + "selectOfficialRecipeList",params);
+	}
+
+	@Override
+	public long selectOfficialRecipeCount(Map<String, Object> params) {
+		return session.selectOne(NAMESPACE + "selectOfficialRecipeCount",params);
+	}
+
 }

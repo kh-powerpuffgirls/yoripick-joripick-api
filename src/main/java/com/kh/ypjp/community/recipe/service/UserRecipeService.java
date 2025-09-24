@@ -2,6 +2,7 @@ package com.kh.ypjp.community.recipe.service;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.kh.ypjp.community.recipe.dto.UserRecipeDto;
 import com.kh.ypjp.community.recipe.dto.UserRecipeDto.RecipeDetailResponse;
@@ -48,4 +49,6 @@ public interface UserRecipeService {
 	RecipeDetailResponse selectOfficialRecipeDetail(int rcpNo,Long userNo, boolean increaseViewCount);
 
 	UserRecipeDto.BookmarkResponse toggleBookmark(int rcpNo, long userNo);
+
+	RecipePage selectOfficialRecipePage(Map<String, Object> params);
 }
