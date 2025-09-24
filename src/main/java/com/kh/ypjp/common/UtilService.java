@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.ibatis.session.SqlSession;
@@ -36,6 +35,31 @@ public class UtilService {
 		pi.setMaxPage(maxPage);
 		return pi;
     }
+    
+    // 커뮤니티,보드,유저 등에서 삭제요청을 할 때 루트 디렉토리 내 폴더삭제 메서드.
+    
+    public boolean deleteFolderIfExists(String webPath) {
+        String projectRoot = System.getProperty("user.dir");
+        File folder = new File(projectRoot, "resources/" + webPath);
+        return deleteRecursively(folder);
+    }
+
+    // 위의 폴더 내 파일들을 삭제하는 메서드(위의 폴더삭제만 요청하면 폴더 내 파일이 있을시 삭제가 안됨)
+    
+    private boolean deleteRecursively(File file) {
+        if (file.exists()) {
+            if (file.isDirectory()) {
+                File[] files = file.listFiles();
+                if (files != null) {
+                    for (File child : files) {
+                        deleteRecursively(child);
+                    }
+                }
+            }
+            return file.delete();
+        }
+        return false;
+    }
 	
 	public String getChangeName(MultipartFile upfile, String webPath) {
 		// webPath 예시: ".../{userNo}"
@@ -65,6 +89,10 @@ public class UtilService {
 
 	public Long getImageNo(Map<String, Object> param) {
 		return session.selectOne("util.getImageNo", param);
+	}
+	
+	public String getChangeName(Long imageNo) {
+		return session.selectOne("util.getChangeName", imageNo);
 	}
 
 }
