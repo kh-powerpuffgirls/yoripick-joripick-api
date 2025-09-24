@@ -72,6 +72,8 @@ public class SecurityConfig {
 				        "/api/options/**", 
 				        "/api/ingredients/search"
 				    ).permitAll()
+                .requestMatchers("/sbti").permitAll()
+                .requestMatchers("/eatbti/**").authenticated()
                 .requestMatchers("/mypage/**").permitAll()
                 .anyRequest().authenticated()
             )
