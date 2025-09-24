@@ -72,7 +72,9 @@ public class SecurityConfig {
 				        "/api/options/**", 
 				        "/api/ingredients/search"
 				    ).permitAll()
-                .requestMatchers("/mypage/**").permitAll()
+                .requestMatchers("/sbti").permitAll()
+                .requestMatchers("/eatbti/**").authenticated()
+                .requestMatchers("/mypage/**").authenticated()
                 .anyRequest().authenticated()
             )
             // OAuth2 로그인 핸들러
