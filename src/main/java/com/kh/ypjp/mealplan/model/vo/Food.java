@@ -17,13 +17,13 @@ public class Food {
 	private int protein;
 	private int fat;
 	private int sodium;
+	private String mealType;
 	
 	@Data
 	@NoArgsConstructor
 	@AllArgsConstructor
 	public static class FoodExt extends Food {
 		private long mealNo;
-		private String mealType;
 		private String mealId;
 		private int quantity;
 	}

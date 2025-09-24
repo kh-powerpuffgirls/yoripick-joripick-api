@@ -1,7 +1,6 @@
 package com.kh.ypjp.mealplan.model.service;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,6 +41,9 @@ public class MealplanService {
 
 	public Map<String, List<FoodExt>> getMealList(Map<String, Object> param) {
 		List<FoodExt> foodItems = mealplanDao.getMealList(param);
+		if (foodItems == null) {
+			return null;
+		}
 		Map<String, List<FoodExt>> result = new HashMap<>();
 		for (FoodExt foodItem : foodItems) {
 			result.computeIfAbsent(foodItem.getMealId(), k -> 
@@ -52,6 +54,9 @@ public class MealplanService {
 
 	public Map<String, Statistics> getMealStats(Map<String, Object> param) {
 		List<Map<String,Object>> rawList = mealplanDao.getMealStats(param);
+		if (rawList == null) {
+			return null;
+		}
 		Map<String, Statistics> result = new HashMap<>();
 		for (Map<String, Object> row : rawList) {
 			Statistics stats = new Statistics();
@@ -96,6 +101,9 @@ public class MealplanService {
 
 	public List<Recipe> getMyRecipes(Long userNo) {
 		List<Recipe> rcpList = mealplanDao.getMyRecipes(userNo);
+		if (rcpList == null) {
+			return null;
+		}
 		for (Recipe rcp : rcpList) {
 			String imageUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
 	                .path("/images/")

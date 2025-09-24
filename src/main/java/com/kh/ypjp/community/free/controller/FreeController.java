@@ -11,8 +11,12 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.util.UriComponentsBuilder;
+
+import org.springframework.security.core.Authentication;
 
 import com.kh.ypjp.community.free.dto.FreeDto;
 import com.kh.ypjp.community.free.dto.ReplyDto;
@@ -29,23 +33,27 @@ public class FreeController {
         this.freeService = freeService;
     }
 
-    // 로그인 여부 확인
-    private boolean isLoggedIn(int userNo) {
-        return userNo > 0;
-    }
-
-    // 로그인 필요 응답
-    private ResponseEntity<String> unauthorizedResponse() {
-        return new ResponseEntity<>("로그인 후 이용해주세요.", HttpStatus.UNAUTHORIZED);
-    }
-
-    // 전체 게시글 조회
     @GetMapping
-    public ResponseEntity<List<FreeDto>> selectAllBoards() {
-        return new ResponseEntity<>(freeService.selectAllBoards(), HttpStatus.OK);
+    public ResponseEntity<List<FreeDto>> selectAllBoards(HttpServletRequest request) {
+        List<FreeDto> boardList = freeService.selectAllBoards();
+
+        // 요청에서 baseUrl 동적으로 추출
+        String baseUrl = request.getScheme() + "://" +   
+                         request.getServerName() +      
+                         ":" + request.getServerPort();
+
+        for (FreeDto board : boardList) {
+            if (board.getServerName() != null && !board.getServerName().isEmpty()) {
+                String imageUrl = UriComponentsBuilder.fromUriString(baseUrl)
+                        .path("/images/")
+                        .path(board.getServerName())
+                        .toUriString();
+                board.setImageUrl(imageUrl);
+            }
+        }
+        return new ResponseEntity<>(boardList, HttpStatus.OK);
     }
 
-    // 특정 게시글 조회 및 조회수 증가 (은비 코드)
     @GetMapping("/{boardNo}")
     public ResponseEntity<FreeDto> selectBoardByNo(@PathVariable int boardNo,
                                                    HttpServletRequest req,
@@ -53,6 +61,15 @@ public class FreeController {
 
         FreeDto board = freeService.selectBoardByNo(boardNo);
         if (board == null) return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+
+        if (board.getServerName() != null && !board.getServerName().isEmpty()) {
+            String baseUrl = "http://localhost:8081";
+            String imageUrl = UriComponentsBuilder.fromUriString(baseUrl)
+                                                .path("/images/")
+                                                .path(board.getServerName())
+                                                .toUriString();
+            board.setImageUrl(imageUrl);
+        }
 
         String cookieName = "readBoardNo";
         String readBoardNoCookie = null;
@@ -88,124 +105,152 @@ public class FreeController {
         return new ResponseEntity<>(board, HttpStatus.OK);
     }
 
-    // 게시글 등록
     @PostMapping
     public ResponseEntity<String> insertBoard(
             @RequestParam("title") String title,
             @RequestParam(value = "subheading", required = false) String subheading,
             @RequestParam("content") String content,
-            @RequestParam("userNo") int userNo,
-            @RequestParam(value = "file", required = false) MultipartFile file) {
-
-        if (!isLoggedIn(userNo)) return unauthorizedResponse();
+            @RequestParam(value = "file", required = false) MultipartFile file,
+            @AuthenticationPrincipal Long userNo) {
 
         FreeDto freeDto = new FreeDto();
         freeDto.setTitle(title);
         freeDto.setSubheading(subheading);
         freeDto.setContent(content);
-        freeDto.setUserNo(userNo);
+        freeDto.setUserNo(userNo.intValue());
 
         freeService.insertBoard(freeDto, file);
         return new ResponseEntity<>("게시글이 성공적으로 등록되었습니다.", HttpStatus.CREATED);
     }
 
-    // 게시글 수정
     @PutMapping("/{boardNo}")
     public ResponseEntity<String> updateBoard(
             @PathVariable int boardNo,
             @RequestParam("title") String title,
             @RequestParam(value = "subheading", required = false) String subheading,
             @RequestParam("content") String content,
-            @RequestParam("userNo") int userNo,
-            @RequestParam(value = "file", required = false) MultipartFile file) {
+            @RequestParam(value = "file", required = false) MultipartFile file,
+            @AuthenticationPrincipal Long userNo,
+            Authentication authentication) {
 
-        if (!isLoggedIn(userNo)) return unauthorizedResponse();
+        if (userNo == null) {
+            return new ResponseEntity<>("로그인 후 이용해주세요.", HttpStatus.UNAUTHORIZED);
+        }
+
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
 
         FreeDto freeDto = new FreeDto();
         freeDto.setBoardNo(boardNo);
         freeDto.setTitle(title);
         freeDto.setSubheading(subheading);
         freeDto.setContent(content);
-        freeDto.setUserNo(userNo);
+        freeDto.setUserNo(userNo.intValue());
 
-        int result = freeService.updateBoard(freeDto, file);
-        if (result > 0)
+        int result = freeService.updateBoard(freeDto, file, userNo.intValue(), isAdmin);
+        
+        if (result > 0) {
             return new ResponseEntity<>("게시글이 성공적으로 수정되었습니다.", HttpStatus.OK);
-        else
-            return new ResponseEntity<>("게시글 수정에 실패했습니다. 작성자만 수정할 수 있습니다.", HttpStatus.FORBIDDEN);
+        } else {
+            return new ResponseEntity<>("게시글 수정에 실패했거나 권한이 없습니다.", HttpStatus.FORBIDDEN);
+        }
     }
-
-    // 게시글 삭제
+    
     @DeleteMapping("/{boardNo}")
-    public ResponseEntity<String> softDeleteBoard(@PathVariable int boardNo, @RequestParam("userNo") int userNo) {
-        if (!isLoggedIn(userNo)) return unauthorizedResponse();
+    public ResponseEntity<String> softDeleteBoard(
+            @PathVariable int boardNo, 
+            @AuthenticationPrincipal Long userNo,
+            Authentication authentication) { 
 
-        boolean isDeleted = freeService.softDeleteBoard(boardNo, userNo);
-        if (isDeleted) return new ResponseEntity<>("게시글이 성공적으로 삭제되었습니다.", HttpStatus.OK);
-        else return new ResponseEntity<>("게시글 삭제에 실패했거나 권한이 없습니다.", HttpStatus.FORBIDDEN);
+        if (userNo == null) {
+            return new ResponseEntity<>("로그인 후 이용해주세요.", HttpStatus.UNAUTHORIZED);
+        }
+
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+        boolean isDeleted = freeService.softDeleteBoard(boardNo, userNo.intValue(), isAdmin);
+        
+        if (isDeleted) {
+            return new ResponseEntity<>("게시글이 성공적으로 삭제되었습니다.", HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>("게시글 삭제에 실패했거나 권한이 없습니다.", HttpStatus.FORBIDDEN);
+        }
     }
-
-    // 좋아요 토글
+    
+ // 좋아요 / 싫어요 설정
     @PostMapping("/{boardNo}/likes")
-    public ResponseEntity<String> toggleLike(@PathVariable int boardNo, @RequestBody Map<String, Integer> payload) {
-        int userNo = payload.get("userNo");
-        if (!isLoggedIn(userNo)) return unauthorizedResponse();
+    public ResponseEntity<String> setLikeStatus(
+            @PathVariable int boardNo,
+            @RequestParam("status") String likeStatus,
+            @AuthenticationPrincipal Long userNo) {
 
-        boolean liked = freeService.toggleLike(boardNo, userNo);
-        return new ResponseEntity<>(liked ? "좋아요가 추가되었습니다." : "좋아요가 취소되었습니다.", HttpStatus.OK);
+        if (userNo == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 후 이용해주세요.");
+        }
+
+        freeService.setLikeStatus(boardNo, userNo.intValue(), likeStatus);
+        String message = "LIKE".equals(likeStatus) ? "좋아요 적용됨" :
+                         "DISLIKE".equals(likeStatus) ? "싫어요 적용됨" : "좋아요/싫어요 초기화됨";
+        return ResponseEntity.ok(message);
     }
 
-    // 좋아요 상태 조회
+    // 현재 사용자가 좋아요 눌렀는지 상태 조회
     @GetMapping("/{boardNo}/likes/status")
-    public ResponseEntity<Map<String, Boolean>> getLikeStatus(@PathVariable int boardNo, @RequestParam("userNo") int userNo) {
-        if (!isLoggedIn(userNo)) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+    public ResponseEntity<Boolean> getLikeStatus(
+            @PathVariable int boardNo,
+            @AuthenticationPrincipal Long userNo) {
 
-        Map<String, Boolean> response = new HashMap<>();
-        response.put("isLiked", freeService.isLiked(boardNo, userNo));
-        return ResponseEntity.ok(response);
+        if (userNo == null) return ResponseEntity.ok(false);
+
+        boolean isLiked = freeService.getLikeStatus(boardNo, userNo.intValue());
+        return ResponseEntity.ok(isLiked);
     }
 
     // 좋아요 개수 조회
     @GetMapping("/{boardNo}/likes/count")
     public ResponseEntity<Integer> getLikesCount(@PathVariable int boardNo) {
-        return new ResponseEntity<>(freeService.getLikesCount(boardNo), HttpStatus.OK);
+        try {
+            int count = freeService.getLikesCount(boardNo);
+            return ResponseEntity.ok(count);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(0);
+        }
     }
 
-    // 댓글 조회
     @GetMapping("/{boardNo}/replies")
     public ResponseEntity<List<ReplyDto>> getRepliesByBoardNo(@PathVariable int boardNo) {
         return ResponseEntity.ok(freeService.selectAllRepliesByBoardNo(boardNo));
     }
 
-    // 댓글 등록
     @PostMapping("/replies")
-    public ResponseEntity<String> addReply(@RequestBody ReplyDto replyDto) {
-        if (!isLoggedIn(replyDto.getUserNo())) return unauthorizedResponse();
-
+    public ResponseEntity<String> addReply(@RequestBody ReplyDto replyDto,
+                                           @AuthenticationPrincipal Long userNo) {
         if (replyDto.getCategory() == null || replyDto.getCategory().isEmpty()) {
             replyDto.setCategory("BOARD");
         }
+        replyDto.setUserNo(userNo.intValue());
+
         freeService.insertReply(replyDto);
         return new ResponseEntity<>("댓글이 성공적으로 등록되었습니다.", HttpStatus.CREATED);
     }
 
-    // 댓글 수정
     @PutMapping("/replies/{replyNo}")
-    public ResponseEntity<String> updateReply(@PathVariable int replyNo, @RequestBody ReplyDto replyDto) {
-        if (!isLoggedIn(replyDto.getUserNo())) return unauthorizedResponse();
-
+    public ResponseEntity<String> updateReply(@PathVariable int replyNo,
+                                              @RequestBody ReplyDto replyDto,
+                                              @AuthenticationPrincipal Long userNo) {
         replyDto.setReplyNo(replyNo);
+        replyDto.setUserNo(userNo.intValue());
+
         int result = freeService.updateReply(replyDto);
         if (result > 0) return new ResponseEntity<>("댓글이 성공적으로 수정되었습니다.", HttpStatus.OK);
         else return new ResponseEntity<>("댓글 수정에 실패했습니다. 작성자만 수정할 수 있습니다.", HttpStatus.NOT_FOUND);
     }
 
-    // 댓글 삭제
     @DeleteMapping("/replies/{replyNo}")
-    public ResponseEntity<String> deleteReply(@PathVariable Long replyNo, @RequestParam("userNo") int userNo) {
-        if (!isLoggedIn(userNo)) return unauthorizedResponse();
-
-        boolean isDeleted = freeService.deleteReply(replyNo, userNo);
+    public ResponseEntity<String> deleteReply(@PathVariable Long replyNo,
+                                              @AuthenticationPrincipal Long userNo) {
+        boolean isDeleted = freeService.deleteReply(replyNo, userNo.intValue());
         if (isDeleted) return new ResponseEntity<>("댓글이 성공적으로 삭제되었습니다.", HttpStatus.OK);
         else return new ResponseEntity<>("댓글 삭제에 실패했습니다. 권한을 확인해주세요.", HttpStatus.FORBIDDEN);
     }

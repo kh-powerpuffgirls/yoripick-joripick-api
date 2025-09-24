@@ -24,11 +24,8 @@ public class AuthDao {
 		return session.selectOne("auth.getNotiByUserNo", userNo);
 	}
 
-	// Optional<User>를 반환하여 Service 계층에서 null 여부를 명시적으로 처리하도록 유도
 	public Optional<User> findUserByEmail(String email) {
-		// selectOne 대신 selectList를 사용하여 여러 권한을 가진 경우에도 오류가 나지 않도록 함
 		List<User> users = session.selectList("auth.findUserByEmail", email);
-		// 결과 리스트가 비어있지 않으면 첫 번째 사용자를 반환
 		return users.isEmpty() ? Optional.empty() : Optional.of(users.get(0));
 	}
 
@@ -37,7 +34,6 @@ public class AuthDao {
 		return users.isEmpty() ? Optional.empty() : Optional.of(users.get(0));
 	}
 
-	// 이하 코드는 기존과 동일하여 생략...
 	public void insertUserIdentities(UserIdentities userIdentities) {
 		session.insert("auth.insertUserIdentities", userIdentities);
 	}

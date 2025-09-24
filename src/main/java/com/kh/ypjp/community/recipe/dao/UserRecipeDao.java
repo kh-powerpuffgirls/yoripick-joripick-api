@@ -2,18 +2,21 @@ package com.kh.ypjp.community.recipe.dao;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.kh.ypjp.common.model.vo.Image;
 import com.kh.ypjp.common.model.vo.Nutrient;
 import com.kh.ypjp.community.recipe.dto.UserRecipeDto;
-import com.kh.ypjp.community.recipe.dto.UserRecipeDto.IngredientInfo;
+import com.kh.ypjp.community.recipe.dto.UserRecipeDto.RecipeDetailResponse;
 import com.kh.ypjp.community.recipe.dto.UserRecipeDto.UserRecipeResponse;
+import com.kh.ypjp.community.recipe.model.vo.CookingStep;
 import com.kh.ypjp.community.recipe.model.vo.RcpDetail;
 import com.kh.ypjp.community.recipe.model.vo.RcpIngredient;
+import com.kh.ypjp.community.recipe.model.vo.RcpIngs;
 import com.kh.ypjp.community.recipe.model.vo.RcpMethod;
 import com.kh.ypjp.community.recipe.model.vo.RcpSituation;
 import com.kh.ypjp.community.recipe.model.vo.Recipe;
-import com.kh.ypjp.community.recipe.model.vo.RecipeStep;
+import com.kh.ypjp.community.recipe.model.vo.Review;
 
 
 public interface UserRecipeDao {
@@ -43,5 +46,59 @@ public interface UserRecipeDao {
     int insertRcpDetail(RcpDetail detail);
     
     int insertNutrient(Nutrient nutrient);
+    
+    RecipeDetailResponse selectRecipeDetail(Map<String, Object> params);
+    
+    int increaseViewCount(int rcpNo);
+    
+    
+    //좋아요
+    int findLike(Map<String, Object> params);
+    void insertLike(Map<String, Object> params);
+    void deleteLike(Map<String, Object> params);
+    int countLikes(int rcpNo);
 
+	int mergeLikeStatus(Map<String, Object> params);
+
+	List<RcpIngredient> selectIngredientsByRcpNo(int rcpNo);
+
+	List<CookingStep> selectStepsByRcpNo(int rcpNo);
+
+	String findLikeStatus(Map<String, Object> params);
+
+	int insertReview(Review review);
+
+	long selectReviewCount(int rcpNo);
+
+	List<Review> selectReviewList(Map<String, Object> params);
+
+	List<Review> selectPhotoReviewList(int rcpNo);
+
+	int updateReviewDeleteStatus(Map<String, Object> params);
+
+	int deleteRcpIngredients(int rcpNo);
+
+	int deleteRcpDetails(int rcpNo);
+
+	int updateRecipe(Recipe recipe);
+
+	Recipe selectRecipeByNo(int rcpNo);
+
+	int updateRecipeDeleteStatus(int rcpNo);
+
+	RecipeDetailResponse selectOfficialRecipeDetail(int rcpNo);
+	
+	RcpIngs selectRcpIngs(int rcpNo);
+
+	int checkBookmark(Map<String, Object> params);
+
+	void deleteBookmark(Map<String, Object> params);
+
+	void insertBookmark(Map<String, Object> params);
+	
+	int countBookmarks(int rcpNo);
+
+	long selectOfficialRecipeCount(Map<String, Object> params);
+
+	List<UserRecipeResponse> selectOfficialRecipeList(Map<String, Object> params);
 }

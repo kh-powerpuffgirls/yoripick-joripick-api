@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.kh.ypjp.community.report.dao.ReportDao">
+
+    <insert id="insertReport" parameterType="com.kh.ypjp.community.report.dto.ReportDto">
+        INSERT INTO REPORT (
+            REPORT_NO,
+            USER_NO,
+            REPORT_TYPE,
+            REF_NO,
+            CONTENT,
+            RESOLVED,
+            REPORTED_AT
+        ) VALUES (
+            SEQ_REPORT_NO.NEXTVAL,
+            #{userNo},
+            #{reportType},
+            #{refNo},
+            #{content},
+            'N',
+            SYSDATE
+        )
+    </insert>
+
+    <select id="selectAllReportTypes" resultType="com.kh.ypjp.community.report.dto.ReportDto">
+        SELECT REPORT_TYPE, CATEGORY, DETAIL
+        FROM REPORT_TYPE
+    </select>
+
+</mapper>

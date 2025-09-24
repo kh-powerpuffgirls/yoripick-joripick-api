@@ -1,14 +1,28 @@
 package com.kh.ypjp.community.ckclass.dto;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@Getter
-@Setter
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class CkclassDto {
-    private Long id;
-    private String name;
-    private String description;
+    private Integer roomNo; 
+    private Integer userNo; 
+    private String className; 
+    private String classInfo; 
+    private String passcode; 
+    private String deleteStatus; 
+
+    private String originName;
+    private String serverName;
+    private Integer imageNo;
     private String imageUrl;
-    private String joinCode;
+
+    private String username;
+    
+    private Integer memberCount;
+    private Integer unreadCount;
+    private String isNotificationOn;
 }

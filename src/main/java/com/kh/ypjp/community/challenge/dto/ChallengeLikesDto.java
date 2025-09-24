@@ -8,6 +8,7 @@ public class ChallengeLikesDto{
     private int likeNo;
     private Long challengeNo;
     private Date likedAt;
-    private Long refNo;
     private Long userNo;
+    private String likeStatus;
+
 }

@@ -2,71 +2,90 @@ package com.kh.ypjp.community.challenge.controller;
 
 import com.kh.ypjp.community.challenge.dto.*;
 import com.kh.ypjp.community.challenge.service.ChallengeService;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.util.UriComponentsBuilder;
 
+import java.security.Principal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import jakarta.servlet.http.HttpServletRequest;
 
-// CORS 설정
 @CrossOrigin(origins = "http://localhost:5173")
-// REST API 컨트롤러
 @RestController
-// 기본 경로 설정
 @RequestMapping("/community/challenge")
+@RequiredArgsConstructor
+@Slf4j
 public class ChallengeController {
 
     private final ChallengeService challengeService;
 
-    public ChallengeController(ChallengeService challengeService) {
-        this.challengeService = challengeService;
-    }
-
-    // 로그인 여부 확인
-    private boolean isLoggedIn(Long userNo) {
-        return userNo != null && userNo > 0;
-    }
-
-    // 로그인 필요 응답
-    private ResponseEntity<String> unauthorizedResponse() {
-        return new ResponseEntity<>("로그인 후 이용해주세요.", HttpStatus.UNAUTHORIZED);
-    }
-
     // 전체 게시글 조회
     @GetMapping
-    public ResponseEntity<List<ChallengeDto>> getAllPosts() {
-        return ResponseEntity.ok(challengeService.getAllPosts());
+    public ResponseEntity<List<ChallengeDto>> getAllPosts(HttpServletRequest request) {
+        List<ChallengeDto> challengeList = challengeService.getAllPosts();
+
+        String baseUrl = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort();
+
+        for (ChallengeDto challenge : challengeList) {
+            if (challenge.getServerName() != null && !challenge.getServerName().isEmpty()) {
+                String imageUrl = UriComponentsBuilder.fromUriString(baseUrl)
+                        .path("/images/")
+                        .path(challenge.getServerName())
+                        .toUriString();
+                challenge.setImageUrl(imageUrl);
+            }
+        }
+        return ResponseEntity.ok(challengeList);
     }
 
-    // 게시글 단건 조회 및 조회수 증가
+    // 게시글 단건 조회
     @GetMapping("/{id}")
     public ResponseEntity<ChallengeDto> getPost(
             @PathVariable Long id,
-            @RequestParam(value = "userNo", required = false) Long userNo,
-            HttpServletRequest req,
-            HttpServletResponse res) {
+            @AuthenticationPrincipal Long userNo,
+            HttpServletRequest request) {
 
-        return challengeService.getPostAndIncrementViews(id, userNo, req, res)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        Optional<ChallengeDto> optionalPost = challengeService.getPostAndIncrementViews(id, userNo);
+        
+        if (optionalPost.isPresent()) {
+            ChallengeDto post = optionalPost.get();
+            if (post.getServerName() != null && !post.getServerName().isEmpty()) {
+                String baseUrl = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort();
+                String imageUrl = UriComponentsBuilder.fromUriString(baseUrl)
+                        .path("/images/")
+                        .path(post.getServerName())
+                        .toUriString();
+                post.setImageUrl(imageUrl);
+            }
+            return ResponseEntity.ok(post);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
+    
+    @GetMapping("/navigation/{challengeNo}")
+    public ResponseEntity<Map<String, Long>> getNavigation(@PathVariable Long challengeNo) {
+        Map<String, Long> navigation = challengeService.getNavigation(challengeNo);
+        return ResponseEntity.ok(navigation);
     }
 
     // 게시글 등록
     @PostMapping
     public ResponseEntity<?> createPost(
-            @RequestParam("userNo") Long userNo,
             @RequestParam("chInfoNo") Long chInfoNo,
             @RequestParam(value = "videoUrl", required = false) String videoUrl,
             @RequestParam(value = "file", required = false) MultipartFile file,
-            @RequestParam(value = "title", required = false) String title) {
-
-        if (!isLoggedIn(userNo)) return unauthorizedResponse();
-
+            @RequestParam(value = "title", required = false) String title,
+            @AuthenticationPrincipal Long userNo) {
         ChallengeDto challengeDto = new ChallengeDto();
         challengeDto.setUserNo(userNo);
         challengeDto.setChInfoNo(chInfoNo);
@@ -80,9 +99,10 @@ public class ChallengeController {
             response.put("challengeNo", newChallengeNo);
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("게시글 등록 실패: {}", e.getMessage());
+            log.error("Stack trace:", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "게시글 등록 실패"));
+                                 .body(Map.of("error", "게시글 등록 실패"));
         }
     }
 
@@ -90,13 +110,19 @@ public class ChallengeController {
     @PutMapping("/{id}")
     public ResponseEntity<String> updatePost(
             @PathVariable("id") Long id,
-            @RequestParam("userNo") Long userNo,
             @RequestParam("chInfoNo") Long chInfoNo,
             @RequestParam(value = "videoUrl", required = false) String videoUrl,
             @RequestParam(value = "file", required = false) MultipartFile file,
-            @RequestParam(value = "title", required = false) String title) {
+            @RequestParam(value = "title", required = false) String title,
+            @AuthenticationPrincipal Long userNo,
+            Authentication authentication) {
 
-        if (!isLoggedIn(userNo)) return unauthorizedResponse();
+        if (userNo == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 후 이용해주세요.");
+        }
+
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
 
         ChallengeDto challengeDto = new ChallengeDto();
         challengeDto.setChallengeNo(id);
@@ -106,12 +132,16 @@ public class ChallengeController {
         challengeDto.setTitle(title);
 
         try {
-            boolean updated = challengeService.updatePost(id, challengeDto, file, userNo).isPresent();
-            if (updated) return ResponseEntity.ok("게시글이 성공적으로 수정되었습니다.");
-            else return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body("게시글 수정에 실패했습니다. 작성자만 수정할 수 있습니다.");
+            Optional<ChallengeDto> updatedPost = challengeService.updatePost(id, challengeDto, file, userNo, isAdmin);
+            if (updatedPost.isPresent()) {
+                return ResponseEntity.ok("게시글이 성공적으로 수정되었습니다.");
+            } else {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body("게시글 수정에 실패했습니다. 작성자 또는 관리자만 수정할 수 있습니다.");
+            }
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("게시글 수정 중 오류 발생: {}", e.getMessage());
+            log.error("Stack trace:", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("게시글 수정 중 오류가 발생했습니다.");
         }
@@ -119,13 +149,22 @@ public class ChallengeController {
 
     // 게시글 삭제
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> deletePost(@PathVariable Long id, @RequestParam("userNo") Long userNo) {
-        if (!isLoggedIn(userNo)) return unauthorizedResponse();
+    public ResponseEntity<String> deletePost(
+            @PathVariable Long id,
+            @AuthenticationPrincipal Long userNo,
+            Authentication authentication) {
 
-        boolean deleted = challengeService.deletePost(id, userNo);
+        if (userNo == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 후 이용해주세요.");
+        }
+
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+        boolean deleted = challengeService.deletePost(id, userNo, isAdmin);
         if (deleted) return ResponseEntity.ok("게시글이 성공적으로 삭제되었습니다.");
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body("게시글 삭제에 실패했거나 권한이 없습니다.");
+                .body("게시글 삭제에 실패했거나 권한이 없습니다. 작성자 또는 관리자만 삭제할 수 있습니다.");
     }
 
     // 댓글 전체 조회
@@ -136,9 +175,8 @@ public class ChallengeController {
 
     // 댓글 등록
     @PostMapping("/replies")
-    public ResponseEntity<String> addReply(@RequestBody ChallengeReplyDto replyDto, @RequestParam("userNo") Long userNo) {
-        if (!isLoggedIn(userNo)) return unauthorizedResponse();
-
+    public ResponseEntity<String> addReply(@RequestBody ChallengeReplyDto replyDto,
+                                           @AuthenticationPrincipal Long userNo) {
         if (replyDto.getCategory() == null || replyDto.getCategory().isEmpty())
             replyDto.setCategory("CHALLENGE");
         replyDto.setUserNo(userNo);
@@ -148,8 +186,11 @@ public class ChallengeController {
 
     // 댓글 수정
     @PutMapping("/replies/{replyNo}")
-    public ResponseEntity<String> updateReply(@PathVariable Long replyNo, @RequestBody ChallengeReplyDto replyDto, @RequestParam("userNo") Long userNo) {
-        if (!isLoggedIn(userNo)) return unauthorizedResponse();
+    public ResponseEntity<String> updateReply(@PathVariable Long replyNo, @RequestBody ChallengeReplyDto replyDto, Principal principal) {
+        if (principal == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 후 이용해주세요.");
+        }
+        Long userNo = Long.parseLong(principal.getName());
 
         replyDto.setReplyNo(replyNo);
         int result = challengeService.updateReply(replyDto, userNo);
@@ -159,8 +200,11 @@ public class ChallengeController {
 
     // 댓글 삭제
     @DeleteMapping("/replies/{replyNo}")
-    public ResponseEntity<String> deleteReply(@PathVariable Long replyNo, @RequestParam("userNo") Long userNo) {
-        if (!isLoggedIn(userNo)) return unauthorizedResponse();
+    public ResponseEntity<String> deleteReply(@PathVariable Long replyNo, Principal principal) {
+        if (principal == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 후 이용해주세요.");
+        }
+        Long userNo = Long.parseLong(principal.getName());
 
         boolean deleted = challengeService.deleteReply(replyNo, userNo);
         if (deleted) return ResponseEntity.ok("댓글이 성공적으로 삭제되었습니다.");
@@ -177,8 +221,11 @@ public class ChallengeController {
 
     // 챌린지 신청 등록
     @PostMapping("/suggestion")
-    public ResponseEntity<String> createSuggestion(@RequestBody ChallengeSuggestionDto suggestionDto, @RequestParam("userNo") Long userNo) {
-        if (!isLoggedIn(userNo)) return unauthorizedResponse();
+    public ResponseEntity<String> createSuggestion(@RequestBody ChallengeSuggestionDto suggestionDto, Principal principal) {
+        if (principal == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 후 이용해주세요.");
+        }
+        Long userNo = Long.parseLong(principal.getName());
 
         suggestionDto.setUserNo(userNo);
         int result = challengeService.createSuggestion(suggestionDto);
@@ -186,21 +233,30 @@ public class ChallengeController {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("챌린지 신청서 등록에 실패했습니다.");
     }
 
-    // 좋아요 토글
     @PostMapping("/like/{challengeNo}")
-    public ResponseEntity<String> toggleLike(@PathVariable Long challengeNo, @RequestParam("userNo") Long userNo) {
-        if (!isLoggedIn(userNo)) return unauthorizedResponse();
+    public ResponseEntity<String> toggleLike(
+            @PathVariable Long challengeNo, 
+            @RequestParam("status") String likeStatus, // "LIKE" or "DISLIKE"
+            Principal principal) {
 
-        boolean liked = challengeService.toggleLike(challengeNo, userNo);
-        return ResponseEntity.ok(liked ? "좋아요 추가됨" : "좋아요 취소됨");
+        if (principal == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 후 이용해주세요.");
+        }
+        Long userNo = Long.parseLong(principal.getName());
+
+        challengeService.setLikeStatus(challengeNo, userNo, likeStatus);
+        return ResponseEntity.ok(likeStatus.equals("LIKE") ? "좋아요 적용됨" : "싫어요 적용됨");
     }
 
-    // 좋아요 상태 조회
     @GetMapping("/like/status/{challengeNo}")
-    public ResponseEntity<Boolean> getLikeStatus(@PathVariable Long challengeNo, @RequestParam("userNo") Long userNo) {
-        if (!isLoggedIn(userNo)) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(false);
-        boolean liked = challengeService.isLiked(challengeNo, userNo);
-        return ResponseEntity.ok(liked);
+    public ResponseEntity<Boolean> getLikeStatus(@PathVariable Long challengeNo, Principal principal) {
+        if (principal == null) {
+            return ResponseEntity.ok(false);
+        }
+        Long userNo = Long.parseLong(principal.getName());
+        
+        boolean isLiked = challengeService.getLikeStatus(challengeNo, userNo);
+        return ResponseEntity.ok(isLiked);
     }
 
     // 좋아요 개수 조회
@@ -210,7 +266,8 @@ public class ChallengeController {
             int count = challengeService.getLikesCount(challengeNo);
             return ResponseEntity.ok(count);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("좋아요 개수 조회 실패: {}", e.getMessage());
+            log.error("Stack trace:", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(0);
         }
     }

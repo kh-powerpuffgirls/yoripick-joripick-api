@@ -69,11 +69,18 @@ public class SecurityConfig {
                 .requestMatchers("/community/**").permitAll()
                 .requestMatchers("/images/**").permitAll()
                 .requestMatchers("/mealplan/**").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/recipe/**").permitAll()
                 .requestMatchers(HttpMethod.GET, 
 				        "/api/community/recipe/**", 
 				        "/api/options/**", 
 				        "/api/ingredients/search"
 				    ).permitAll()
+                .requestMatchers("/sbti").permitAll()
+                .requestMatchers("/eatbti/**").authenticated()
+                .requestMatchers("/mypage/**").permitAll()
+                .requestMatchers("/ingpedia/**").permitAll()
+                .requestMatchers("/ingdata/**").permitAll()
+                .requestMatchers("/community/**").permitAll()
                 .anyRequest().authenticated()
             )
             // OAuth2 로그인 핸들러

@@ -208,7 +208,7 @@ public class AdminService {
 	public List<Challenge> getChallengeInfos(Map<String, Object> param) {
 		List<Challenge> list = dao.getChallengeInfos(param);
 		for (Challenge c : list) {
-			String serverName = utilService.getServerName(c.getImageNo());
+			String serverName = utilService.getChangeName(c.getImageNo());
 			String imageUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
 					.path("/images/challenges/" + serverName).toUriString();
 			c.setImageUrl(imageUrl);

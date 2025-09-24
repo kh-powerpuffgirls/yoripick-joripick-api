@@ -16,13 +16,11 @@ public class ChallengeDto {
     private LocalDateTime startDate;
     private LocalDateTime endDate;
     private int likes;
-
-    private String originName;
-    private String serverName; 
-
     private String sik_bti;
-    private Integer imageNo;
-    
-    private String postImageUrl;
 
+    // FreeDto와 동일하게 필드명 변경
+    private String originName;
+    private String serverName;
+    private String imageUrl;
+    private Integer imageNo;
 }

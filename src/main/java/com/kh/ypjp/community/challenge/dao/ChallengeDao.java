@@ -9,7 +9,11 @@ import java.util.List;
 public interface ChallengeDao {
 
     List<ChallengeDto> findAll();
-    ChallengeDto findById(@Param("challengeNo") Long challengeNo);
+    
+    ChallengeDto findByIdWithImage(@Param("challengeNo") Long challengeNo);
+    
+    Long findUserNoById(@Param("challengeNo") Long challengeNo);
+
     int saveChallenge(ChallengeDto challengeDto);
     int update(ChallengeDto challengeDto);
     int updateDeleteStatus(@Param("challengeNo") Long challengeNo,
@@ -18,7 +22,8 @@ public interface ChallengeDao {
     
     List<ChallengeInfoDto> findActiveChallengeInfo();
     List<ChallengeReplyDto> selectAllRepliesByChallengeId(@Param("challengeNo") Long challengeNo);
-    
+    String findLikeStatus(@Param("userNo") Long userNo, @Param("challengeNo") Long challengeNo);
+
     int insertReply(ChallengeReplyDto replyDto);
     int updateReply(ChallengeReplyDto replyDto);
     ChallengeReplyDto selectReplyById(@Param("replyNo") Long replyNo);
@@ -27,7 +32,12 @@ public interface ChallengeDao {
     int insertSuggestion(ChallengeSuggestionDto suggestionDto);
 
     int checkIfLiked(@Param("userNo") Long userNo, @Param("challengeNo") Long challengeNo);
-    void insertLike(@Param("userNo") Long userNo, @Param("challengeNo") Long challengeNo);
+    void insertOrUpdateLike(@Param("userNo") Long userNo,
+            @Param("challengeNo") Long challengeNo,
+            @Param("likeStatus") String likeStatus);
     void deleteLike(@Param("userNo") Long userNo, @Param("challengeNo") Long challengeNo);
     int getLikesCount(@Param("challengeNo") Long challengeNo);
+    
+    Long findNextChallenge(@Param("challengeNo") Long challengeNo);
+    Long findPreviousChallenge(@Param("challengeNo") Long challengeNo);
 }

@@ -2,22 +2,24 @@ package com.kh.ypjp.community.recipe.dao;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.mybatis.spring.SqlSessionTemplate;
-
 import org.springframework.stereotype.Repository;
 
 import com.kh.ypjp.common.model.vo.Image;
 import com.kh.ypjp.common.model.vo.Nutrient;
 import com.kh.ypjp.community.recipe.dto.UserRecipeDto;
-import com.kh.ypjp.community.recipe.dto.UserRecipeDto.IngredientInfo;
+import com.kh.ypjp.community.recipe.dto.UserRecipeDto.RecipeDetailResponse;
 import com.kh.ypjp.community.recipe.dto.UserRecipeDto.UserRecipeResponse;
+import com.kh.ypjp.community.recipe.model.vo.CookingStep;
 import com.kh.ypjp.community.recipe.model.vo.RcpDetail;
 import com.kh.ypjp.community.recipe.model.vo.RcpIngredient;
+import com.kh.ypjp.community.recipe.model.vo.RcpIngs;
 import com.kh.ypjp.community.recipe.model.vo.RcpMethod;
 import com.kh.ypjp.community.recipe.model.vo.RcpSituation;
 import com.kh.ypjp.community.recipe.model.vo.Recipe;
-import com.kh.ypjp.community.recipe.model.vo.RecipeStep;
+import com.kh.ypjp.community.recipe.model.vo.Review;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -93,5 +95,149 @@ public class UserRecipeDaoImpl implements UserRecipeDao{
     public Nutrient findNutrientsByIngNo(int ingNo) { 
         return session.selectOne("userRecipeMapper.findNutrientsByIngNo", ingNo);
     }
+    
+    // 상세 조회 메소드 구현
+    @Override
+    public RecipeDetailResponse selectRecipeDetail(Map<String, Object> params) {
+        return session.selectOne(NAMESPACE + "selectRecipeDetail", params);
+    }
+
+    // 조회수 증가 메소드 구현
+    @Override
+    public int increaseViewCount(int rcpNo) {
+        return session.update(NAMESPACE + "increaseViewCount", rcpNo);
+    }
+
+    //좋아요 기능
+    @Override
+    public int findLike(Map<String, Object> params) {
+        return session.selectOne(NAMESPACE + "findLike", params);
+    }
+
+    @Override
+    public void insertLike(Map<String, Object> params) {
+        session.insert(NAMESPACE + "insertLike", params);
+    }
+
+    @Override
+    public void deleteLike(Map<String, Object> params) {
+        session.delete(NAMESPACE + "deleteLike", params);
+    }
+
+    @Override
+    public int countLikes(int rcpNo) {
+        return session.selectOne(NAMESPACE + "countLikes", rcpNo);
+    }
+
+	@Override
+	public int mergeLikeStatus(Map<String, Object> params) {
+		return session.update("userRecipeMapper.mergeLikeStatus", params);
+	}
+
+	@Override
+	public List<RcpIngredient> selectIngredientsByRcpNo(int rcpNo) {
+		return session.selectList(NAMESPACE + "selectIngredientsByRcpNo", rcpNo);
+	}
+
+	@Override
+	public List<CookingStep> selectStepsByRcpNo(int rcpNo) {
+        return session.selectList(NAMESPACE + "selectStepsByRcpNo", rcpNo);
+	}
+
+	@Override
+	public String findLikeStatus(Map<String, Object> params) {
+		return session.selectOne(NAMESPACE + "findLikeStatus", params);
+	}
+
+	@Override
+	public int insertReview(Review review) {
+		System.out.println(review);
+		 return session.insert(NAMESPACE + "insertReview", review);
+	}
+
+	@Override
+	public long selectReviewCount(int rcpNo) {
+		 return session.selectOne(NAMESPACE + "selectReviewCount", rcpNo);
+	}
+
+	@Override
+	public List<Review> selectReviewList(Map<String, Object> params) {
+		return session.selectList(NAMESPACE + "selectReviewList", params);
+	}
+
+	@Override
+	public List<Review> selectPhotoReviewList(int rcpNo) {
+		return session.selectList(NAMESPACE + "selectPhotoReviewList", rcpNo);
+	}
+
+	@Override
+	public int updateReviewDeleteStatus(Map<String, Object> params) {
+		return session.update( NAMESPACE + "updateReviewDeleteStatus",params);
+	}
+
+	@Override
+	public int deleteRcpIngredients(int rcpNo) {
+		return session.delete(NAMESPACE + "deleteRcpIngredients",rcpNo);
+	}
+
+	@Override
+	public int deleteRcpDetails(int rcpNo) {
+		return session.delete(NAMESPACE + "deleteRcpDetails",rcpNo);
+	}
+
+	@Override
+	public int updateRecipe(Recipe recipe) {
+		return session.update(NAMESPACE + "updateRecipe",recipe);
+	}
+
+	@Override
+	public Recipe selectRecipeByNo(int rcpNo) {
+		return session.selectOne(NAMESPACE + "selectRecipeByNo",rcpNo);
+	}
+
+	@Override
+	public int updateRecipeDeleteStatus(int rcpNo) {
+		return session.update(NAMESPACE+"updateRecipeDeleteStatus",rcpNo);
+	}
+
+	@Override
+	public RecipeDetailResponse selectOfficialRecipeDetail(int rcpNo) {
+		return session.selectOne(NAMESPACE + "selectOfficialRecipeDetail", rcpNo);
+	}
+
+	@Override
+	public RcpIngs selectRcpIngs(int rcpNo) {
+		return session.selectOne(NAMESPACE +"selectRcpIngs",rcpNo);
+	}
+
+	@Override
+	public int checkBookmark(Map<String, Object> params) {
+		return session.selectOne(NAMESPACE + "checkBookmark",params);
+	}
+
+	@Override
+	public void deleteBookmark(Map<String, Object> params) {
+		session.insert(NAMESPACE +"deleteBookmark",params);
+	}
+
+	@Override
+	public void insertBookmark(Map<String, Object> params) {
+		session.delete(NAMESPACE + "insertBookmark",params);
+	}
+
+	@Override
+	public int countBookmarks(int rcpNo) {
+		return session.selectOne(NAMESPACE + "countBookmarks",rcpNo);
+	}
+	
+	@Override
+	public List<UserRecipeResponse> selectOfficialRecipeList(Map<String, Object> params) {
+		return session.selectList(NAMESPACE + "selectOfficialRecipeList",params);
+	}
+
+	@Override
+	public long selectOfficialRecipeCount(Map<String, Object> params) {
+		return session.selectOne(NAMESPACE + "selectOfficialRecipeCount",params);
+	}
 
 }
