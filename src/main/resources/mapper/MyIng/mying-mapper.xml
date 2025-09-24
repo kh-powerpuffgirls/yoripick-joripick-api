@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="mying">
+
+	<resultMap id="MyIngResult"
+		type="com.kh.ypjp.mying.model.dto.MyIngDto$MyIngResponse" autoMapping="true">
+		<id property="userNo" column="USER_NO" />
+		<result property="ingNo" column="ING_NO" />
+		<result property="createdAt" column="CREATED_AT" />
+		<result property="expDate" column="EXP_DATE" />
+		<result property="quantity" column="QUANTITY" />
+		<result property="ingName" column="ING_NAME" />
+		<result property="ingCode" column="ING_CODE" />
+		<result property="ingCodeName" column="ING_CODE_NAME" />
+	</resultMap>
+
+
+	<select id="selectMyIngs" resultMap="MyIngResult">
+		SELECT
+		    G.USER_NO, G.ING_NO, G.CREATED_AT, G.EXP_DATE, G.QUANTITY,
+		    I.ING_NAME, I.ING_CODE,
+		    C.ING_CODE_NAME
+		FROM GROCERY G
+		JOIN INGREDIENT I ON G.ING_NO = I.ING_NO
+		JOIN ING_CODE C ON I.ING_CODE = C.ING_CODE
+		WHERE G.USER_NO = #{userNo}
+		<if test="keyword != '' and keyword != null">
+			AND I.ING_NAME LIKE '%' || #{keyword} || '%'
+		</if>
+		<choose>
+			<when test="sortNo == 1">
+				ORDER BY G.EXP_DATE
+			</when>
+			<when test="sortNo == 2">
+				ORDER BY G.CREATED_AT
+			</when>
+			<when test="sortNo == 3">
+				ORDER BY I.ING_NAME
+			</when>
+		</choose>
+		
+	</select>
+
+	<select id="selectMyIngDetail" resultMap="MyIngResult">
+		SELECT
+		    G.USER_NO, G.ING_NO, G.CREATED_AT, G.EXP_DATE, G.QUANTITY,
+		    I.ING_NAME, I.ING_CODE,
+		    C.ING_CODE_NAME
+		FROM GROCERY G
+		JOIN INGREDIENT I ON G.ING_NO = I.ING_NO
+		JOIN ING_CODE C ON I.ING_CODE = C.ING_CODE
+		WHERE G.USER_NO = #{userNo} AND G.ING_NO = #{ingNo}
+		ORDER BY I.ING_CODE, G.EXP_DATE
+	</select>
+	
+	<insert id="insertMying">
+		INSERT INTO GROCERY
+		VALUES (
+			#{userNo},
+			#{ingNo},
+			#{createdAt},
+			#{expDate},
+			#{quantity}
+		)
+	</insert>
+	
+	<update id="updateMying">
+		UPDATE GROCERY SET
+			CREATED_AT=#{createdAt},
+			EXP_DATE=#{expDate},
+			QUANTITY=#{quantity}
+		WHERE USER_NO=#{userNo} AND ING_NO=#{ingNo}
+	</update>
+	
+	<delete id="deleteMying">
+		DELETE FROM GROCERY
+		WHERE USER_NO=#{userNo} AND ING_NO=#{ingNo}
+	</delete>
+	
+</mapper>
