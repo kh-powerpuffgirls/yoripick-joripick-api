@@ -39,26 +39,26 @@
     <!-- ===================== 게시글 조회 ===================== -->
 
     <!-- 전체 게시글 조회 -->
-    <select id="selectAllBoards" resultMap="freeResultMap">
-        SELECT
-            b.board_no AS boardNo,
-            b.user_no AS userNo,
-            b.title,
-            b.created_at AS createdDate,
-            b.views,
-            b.subheading,
-            U.username,
-            U.sik_bti,
-            (SELECT COUNT(*) FROM LIKES l WHERE l.ref_no = b.board_no AND l.ref_type = 'BOARD') AS likes,
-            (SELECT COUNT(*) FROM REPLY START WITH ref_no = b.board_no AND category = 'BOARD' CONNECT BY PRIOR reply_no = ref_no) AS replyCount,
-            i.server_name AS serverName
-        FROM BOARD b
-        JOIN USERS U ON b.user_no = U.user_no
-        LEFT JOIN IMAGE i ON b.image_no = i.image_no
-        WHERE b.delete_status = 'N'
-        ORDER BY b.board_no DESC
-    </select>
-
+	<select id="selectAllBoards" resultMap="freeResultMap">
+	    SELECT
+	        b.board_no AS boardNo,
+	        b.user_no AS userNo,
+	        b.title,
+	        b.subheading,
+	        b.created_at AS createdDate,
+	        b.views,
+	        U.username,
+	        U.sik_bti,
+	        (SELECT COUNT(*) FROM LIKES l WHERE l.ref_no = b.board_no AND l.ref_type = 'BOARD') AS likes,
+	        (SELECT COUNT(*) FROM REPLY START WITH ref_no = b.board_no AND category = 'BOARD' CONNECT BY PRIOR reply_no = ref_no) AS replyCount,
+	        i.server_name AS serverName
+	    FROM BOARD b
+	    JOIN USERS U ON b.user_no = U.user_no
+	    LEFT JOIN IMAGE i ON b.image_no = i.image_no
+	    WHERE b.delete_status = 'N'
+	    ORDER BY b.board_no DESC
+	</select>
+	
     <!-- 특정 사용자의 sik_bti 조회 -->
     <select id="selectSikBtiByUserNo" parameterType="int" resultType="String">
         SELECT sik_bti
@@ -133,41 +133,59 @@
 
     <!-- ===================== 조회수/좋아요 ===================== -->
 
-    <!-- 이미지 삭제 -->
-    <delete id="deleteImageByImageNo" parameterType="int">
+	<delete id="deleteImageByImageNo" parameterType="int">
         DELETE FROM IMAGE WHERE image_no = #{imageNo}
     </delete>
 
-    <!-- 조회수 증가 -->
     <update id="incrementViews">
-        UPDATE BOARD
-        SET views = views + 1
-        WHERE board_no = #{boardNo}
+        UPDATE BOARD SET views = views + 1 WHERE board_no = #{boardNo}
     </update>
 
-    <!-- 좋아요 추가 -->
-    <insert id="insertLike">
-        INSERT INTO LIKES (user_no, ref_type, ref_no)
-        VALUES (#{userNo}, 'BOARD', #{boardNo})
-    </insert>
+    <!-- 좋아요 / 싫어요 반영 -->
+	<select id="checkIfLiked" resultType="int">
+	    SELECT COUNT(*)
+	    FROM LIKES
+	    WHERE USER_NO = #{userNo} 
+	      AND REF_TYPE = 'BOARD' 
+	      AND REF_NO = #{boardNo}
+	</select>
+	
+	    <update id="insertOrUpdateLike">
+	    MERGE INTO LIKES l
+	    USING (SELECT #{userNo} AS user_no, #{boardNo} AS ref_no, 'BOARD' AS ref_type FROM dual) t
+	    ON (l.user_no = t.user_no AND l.ref_no = t.ref_no AND l.ref_type = t.ref_type)
+	    WHEN MATCHED THEN
+	        UPDATE SET l.LIKE_STATUS = #{likeStatus}, l.LIKED_AT = SYSDATE
+	    WHEN NOT MATCHED THEN
+	        INSERT (USER_NO, REF_TYPE, REF_NO, LIKE_STATUS, LIKED_AT)
+	        VALUES (#{userNo}, 'BOARD', #{boardNo}, #{likeStatus}, SYSDATE)
+	</update>
+	
+	<!-- 좋아요/싫어요 취소 -->
+	<update id="deleteLike">
+	    UPDATE LIKES
+	    SET LIKE_STATUS = 'COMMON', LIKED_AT = SYSDATE
+	    WHERE USER_NO = #{userNo} 
+	      AND REF_TYPE = 'BOARD' 
+	      AND REF_NO = #{boardNo}
+	</update>
 
-    <!-- 좋아요 삭제 -->
-    <delete id="deleteLike">
-        DELETE FROM LIKES
-        WHERE ref_type = 'BOARD' AND ref_no = #{boardNo} AND user_no = #{userNo}
-    </delete>
+	<!-- 게시글 좋아요 개수 조회 -->
+	<select id="getLikesCount" resultType="int">
+	    SELECT COUNT(*)
+	    FROM LIKES
+	    WHERE REF_TYPE = 'BOARD' AND REF_NO = #{boardNo} AND LIKE_STATUS = 'LIKE'
+	</select>
+	
+	<select id="findLikeStatus" resultType="string">
+    SELECT LIKE_STATUS
+    FROM LIKES
+    WHERE USER_NO = #{userNo} 
+      AND REF_TYPE = 'BOARD' 
+      AND REF_NO = #{boardNo}
+</select>
 
-    <!-- 게시글 좋아요 수 조회 -->
-    <select id="countLikesByBoardNo" resultType="int">
-        SELECT COUNT(*) FROM LIKES WHERE ref_no = #{boardNo} AND ref_type = 'BOARD'
-    </select>
-
-    <!-- 사용자가 좋아요 눌렀는지 확인 -->
-    <select id="checkUserLiked" resultType="int">
-        SELECT COUNT(*) FROM LIKES WHERE ref_no = #{boardNo} AND ref_type = 'BOARD' AND user_no = #{userNo}
-    </select>
-
-
+	
     <!-- ===================== 댓글(Reply) 관련 ===================== -->
 
     <!-- 특정 댓글 조회 -->

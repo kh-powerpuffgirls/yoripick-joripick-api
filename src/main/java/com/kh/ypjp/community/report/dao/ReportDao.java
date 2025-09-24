@@ -10,6 +10,5 @@ public interface ReportDao {
     // 신고 등록
     int insertReport(ReportDto reportDto);
 
-    // 신고 유형 전체 조회
     List<ReportDto> selectAllReportTypes();
 }

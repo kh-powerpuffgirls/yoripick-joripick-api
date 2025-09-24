@@ -1,6 +1,7 @@
 package com.kh.ypjp.community.market.dao;
 
-import com.kh.ypjp.community.market.dto.MarketDto;
+import com.kh.ypjp.community.market.dto.MarketBuyDto;
+import com.kh.ypjp.community.market.dto.MarketSellDto;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Repository;
@@ -11,31 +12,35 @@ import java.util.List;
 @Repository
 public interface MarketDao {
 
-    // 기존 메서드들
-    List<MarketDto> getPopularPosts();
-    List<MarketDto> getRecentPosts();
-    List<MarketDto> getMyPosts(Long userNo);
-    MarketDto getPostDetail(Long productId);
+    // 게시글 조회 관련 메서드
+    List<MarketSellDto> getAllPosts();
+    List<MarketSellDto> getPopularPosts();
+    List<MarketSellDto> getRecentPosts();
+    MarketSellDto getPostDetail(Long productId);
     void incrementViews(Long productId);
-    int registerPost(MarketDto marketDto);
-    void registerPurchaseForm(MarketDto marketDto);
-    void decreaseQuantity(@Param("productId") Long productId, @Param("count") int count);
-    int getProductQuantity(Long productId);
 
-    // 게시글 수정 (추가)
-    void updatePost(MarketDto marketDto);
-
-    // 게시글 소프트 삭제 (추가)
+    int registerPost(MarketSellDto marketSellDto);
+    void updatePost(MarketSellDto marketSellDto);
     int updateDeleteStatus(@Param("productId") Long productId, @Param("deleteStatus") String deleteStatus);
 
-    // 이미지 번호를 기준으로 서버에 저장된 파일명을 찾는 메서드 (추가)
-    String findImageServerName(Integer imageNo);
-
-    // 게시글 ID를 기준으로 작성자의 userNo를 찾는 메서드 (추가)
     Long findUserNoById(Long productId);
-    
+    String findImageServerName(Integer imageNo);
     String selectSikBtiByUserNo(int userNo);
 
- // 내 판매 목록 조회
-    List<MarketDto> getMyPosts(int userNo);
+    List<MarketSellDto> findMyPostsWithForms(Long userNo);
+
+    void registerPurchaseForm(MarketBuyDto marketBuyDto);
+
+    void decreaseQuantity(@Param("productId") Long productId, @Param("count") int count);
+
+    int getProductQuantity(Long productId);
+    
+    // 판매자용 폼 상세 조회
+    MarketBuyDto findPurchaseForm(Long formId);
+    
+    // 폼 ID를 통해 판매자 ID를 찾기
+    Long findSellerByFormId(Long formId);
+
+    // 🔥 구매 폼 삭제 상태 업데이트
+    int updateBuyFormDeleteStatus(@Param("formId") Long formId, @Param("status") String status);
 }

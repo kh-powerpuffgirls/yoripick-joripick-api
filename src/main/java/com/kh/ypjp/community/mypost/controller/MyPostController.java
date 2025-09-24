@@ -18,7 +18,6 @@ public class MyPostController {
 
     private final MyPostService myPostService;
 
-    // 내 게시물 전체 조회
     @GetMapping
     public ResponseEntity<List<MyPostDto>> getMyPosts(Principal principal) {
         if (principal == null) {
@@ -29,7 +28,6 @@ public class MyPostController {
         return ResponseEntity.ok(myPosts);
     }
 
-    // 게시글 상세 조회
     @GetMapping("/{category}/{id}")
     public ResponseEntity<MyPostDto> getPostDetail(
             @PathVariable String category,

@@ -33,7 +33,6 @@ public class FreeController {
         this.freeService = freeService;
     }
 
-    // 전체 게시글 조회
     @GetMapping
     public ResponseEntity<List<FreeDto>> selectAllBoards(HttpServletRequest request) {
         List<FreeDto> boardList = freeService.selectAllBoards();
@@ -55,7 +54,6 @@ public class FreeController {
         return new ResponseEntity<>(boardList, HttpStatus.OK);
     }
 
-    // 게시글 조회 및 조회수 증가
     @GetMapping("/{boardNo}")
     public ResponseEntity<FreeDto> selectBoardByNo(@PathVariable int boardNo,
                                                    HttpServletRequest req,
@@ -107,7 +105,6 @@ public class FreeController {
         return new ResponseEntity<>(board, HttpStatus.OK);
     }
 
-    // 게시글 등록
     @PostMapping
     public ResponseEntity<String> insertBoard(
             @RequestParam("title") String title,
@@ -126,7 +123,6 @@ public class FreeController {
         return new ResponseEntity<>("게시글이 성공적으로 등록되었습니다.", HttpStatus.CREATED);
     }
 
-    // 게시글 수정
     @PutMapping("/{boardNo}")
     public ResponseEntity<String> updateBoard(
             @PathVariable int boardNo,
@@ -160,7 +156,6 @@ public class FreeController {
         }
     }
     
-    // 게시글 삭제
     @DeleteMapping("/{boardNo}")
     public ResponseEntity<String> softDeleteBoard(
             @PathVariable int boardNo, 
@@ -183,36 +178,51 @@ public class FreeController {
         }
     }
     
-    // 좋아요 토글
+ // 좋아요 / 싫어요 설정
     @PostMapping("/{boardNo}/likes")
-    public ResponseEntity<String> toggleLike(@PathVariable int boardNo, 
-                                             @AuthenticationPrincipal Long userNo) {
-        boolean liked = freeService.toggleLike(boardNo, userNo.intValue());
-        return new ResponseEntity<>(liked ? "좋아요가 추가되었습니다." : "좋아요가 취소되었습니다.", HttpStatus.OK);
+    public ResponseEntity<String> setLikeStatus(
+            @PathVariable int boardNo,
+            @RequestParam("status") String likeStatus,
+            @AuthenticationPrincipal Long userNo) {
+
+        if (userNo == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 후 이용해주세요.");
+        }
+
+        freeService.setLikeStatus(boardNo, userNo.intValue(), likeStatus);
+        String message = "LIKE".equals(likeStatus) ? "좋아요 적용됨" :
+                         "DISLIKE".equals(likeStatus) ? "싫어요 적용됨" : "좋아요/싫어요 초기화됨";
+        return ResponseEntity.ok(message);
     }
 
-    // 좋아요 상태 조회
+    // 현재 사용자가 좋아요 눌렀는지 상태 조회
     @GetMapping("/{boardNo}/likes/status")
-    public ResponseEntity<Map<String, Boolean>> getLikeStatus(@PathVariable int boardNo,
-                                                              @AuthenticationPrincipal Long userNo) {
-        Map<String, Boolean> response = new HashMap<>();
-        response.put("isLiked", freeService.isLiked(boardNo, userNo.intValue()));
-        return ResponseEntity.ok(response);
+    public ResponseEntity<Boolean> getLikeStatus(
+            @PathVariable int boardNo,
+            @AuthenticationPrincipal Long userNo) {
+
+        if (userNo == null) return ResponseEntity.ok(false);
+
+        boolean isLiked = freeService.getLikeStatus(boardNo, userNo.intValue());
+        return ResponseEntity.ok(isLiked);
     }
 
     // 좋아요 개수 조회
     @GetMapping("/{boardNo}/likes/count")
     public ResponseEntity<Integer> getLikesCount(@PathVariable int boardNo) {
-        return new ResponseEntity<>(freeService.getLikesCount(boardNo), HttpStatus.OK);
+        try {
+            int count = freeService.getLikesCount(boardNo);
+            return ResponseEntity.ok(count);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(0);
+        }
     }
 
-    // 댓글 조회
     @GetMapping("/{boardNo}/replies")
     public ResponseEntity<List<ReplyDto>> getRepliesByBoardNo(@PathVariable int boardNo) {
         return ResponseEntity.ok(freeService.selectAllRepliesByBoardNo(boardNo));
     }
 
-    // 댓글 등록
     @PostMapping("/replies")
     public ResponseEntity<String> addReply(@RequestBody ReplyDto replyDto,
                                            @AuthenticationPrincipal Long userNo) {
@@ -225,7 +235,6 @@ public class FreeController {
         return new ResponseEntity<>("댓글이 성공적으로 등록되었습니다.", HttpStatus.CREATED);
     }
 
-    // 댓글 수정
     @PutMapping("/replies/{replyNo}")
     public ResponseEntity<String> updateReply(@PathVariable int replyNo,
                                               @RequestBody ReplyDto replyDto,
@@ -238,7 +247,6 @@ public class FreeController {
         else return new ResponseEntity<>("댓글 수정에 실패했습니다. 작성자만 수정할 수 있습니다.", HttpStatus.NOT_FOUND);
     }
 
-    // 댓글 삭제
     @DeleteMapping("/replies/{replyNo}")
     public ResponseEntity<String> deleteReply(@PathVariable Long replyNo,
                                               @AuthenticationPrincipal Long userNo) {

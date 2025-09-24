@@ -5,8 +5,9 @@ import java.util.Date;
 
 @Data
 public class LikesDto {
-    private int likeNo;
-    private int boardNo;
-    private int userNo;
-    private Date likedAt;
+    private int likeNo;         
+    private int boardNo;     
+    private int userNo;  
+    private Date likedAt;   
+    private String likeStatus;
 }

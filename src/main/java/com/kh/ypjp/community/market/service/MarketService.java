@@ -2,7 +2,8 @@ package com.kh.ypjp.community.market.service;
 
 import com.kh.ypjp.common.UtilService;
 import com.kh.ypjp.community.market.dao.MarketDao;
-import com.kh.ypjp.community.market.dto.MarketDto;
+import com.kh.ypjp.community.market.dto.MarketBuyDto;
+import com.kh.ypjp.community.market.dto.MarketSellDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -22,63 +23,49 @@ public class MarketService {
     private final MarketDao marketDao;
     private final UtilService utilService;
 
-    // 모든 마켓 게시글 조회 (삭제되지 않은 게시글만 조회)
-    public List<MarketDto> getAllPosts() {
-        return marketDao.getRecentPosts();
+    public List<MarketSellDto> getAllPosts() {
+        return marketDao.getAllPosts();
     }
     
-    public List<MarketDto> getPopularPosts() {
+    public List<MarketSellDto> getPopularPosts() {
         return marketDao.getPopularPosts();
     }
     
-    // 최신 게시글 조회 메서드 추가
-    public List<MarketDto> getRecentPosts() {
+    public List<MarketSellDto> getRecentPosts() {
         return marketDao.getRecentPosts();
     }
     
- // 내 판매 목록 조회
-    public List<MarketDto> getMyPosts(int userNo) {
-        return marketDao.getMyPosts(userNo);
+    public List<MarketSellDto> getMyPostsWithForms(Long userNo) {
+
+        return marketDao.findMyPostsWithForms(userNo);
     }
     
-    /**
-     * 게시글 상세 조회
-     * 조회수 증가 로직은 컨트롤러에서 처리합니다.
-     * @param productId 조회할 게시글 ID
-     * @return 조회된 게시글 DTO
-     */
-    public Optional<MarketDto> getPost(Long productId) {
-        MarketDto post = marketDao.getPostDetail(productId);
+    public Optional<MarketSellDto> getPost(Long productId) {
+        MarketSellDto post = marketDao.getPostDetail(productId);
         
         if (post != null) {
-            // 게시글 작성자의 식BTI를 조회하여 DTO에 설정합니다.
             String sikBti = marketDao.selectSikBtiByUserNo(post.getUserNo().intValue());
             post.setSikBti(sikBti);
         }
         
         return Optional.ofNullable(post);
     }
-    
-    /**
-     * 게시글 조회수 증가
-     * @param productId 조회수를 증가시킬 게시글 ID
-     */
+
     @Transactional
     public void incrementViews(Long productId) {
         marketDao.incrementViews(productId);
     }
     
-    // 게시글 등록
     @Transactional
-    public Long registerPost(MarketDto marketDto, MultipartFile image) throws Exception {
-        if (marketDto.getUserNo() == null) {
+    public Long registerPost(MarketSellDto marketSellDto, MultipartFile image) throws Exception {
+        if (marketSellDto.getUserNo() == null) {
             throw new IllegalArgumentException("로그인 후 이용할 수 있습니다.");
         }
         
         Long imageNo = null;
 
         if (image != null && !image.isEmpty()) {
-            String webPath = "market/" + marketDto.getUserNo();
+            String webPath = "market/" + marketSellDto.getUserNo();
             String savedFileName = utilService.getChangeName(image, webPath);
             String serverName = webPath + "/" + savedFileName;
 
@@ -93,18 +80,18 @@ public class MarketService {
             
             log.info("DB에 저장된 imageNo: {}", imageNo);
             
-            marketDto.setImageNo(imageNo.intValue());
-            marketDto.setServerName(serverName);
-            marketDto.setOriginName(image.getOriginalFilename());
+            marketSellDto.setImageNo(imageNo.intValue());
+            marketSellDto.setServerName(serverName);
+            marketSellDto.setOriginName(image.getOriginalFilename());
         }
         
-        marketDao.registerPost(marketDto);
+        marketDao.registerPost(marketSellDto);
 
-        return marketDto.getProductId();
+        return marketSellDto.getProductId();
     }
     
     @Transactional
-    public Optional<MarketDto> updatePost(Long productId, MarketDto marketDto, MultipartFile image, Long userNo, boolean isAdmin) throws Exception {
+    public Optional<MarketSellDto> updatePost(Long productId, MarketSellDto marketSellDto, MultipartFile image, Long userNo, boolean isAdmin) throws Exception {
         Long authorNo = marketDao.findUserNoById(productId);
 
         if (authorNo == null || (!authorNo.equals(userNo) && !isAdmin)) {
@@ -112,7 +99,7 @@ public class MarketService {
             return Optional.empty();
         }
 
-        marketDto.setProductId(productId);
+        marketSellDto.setProductId(productId);
 
         if (image != null && !image.isEmpty()) {
             // 새 이미지로 업데이트
@@ -127,16 +114,15 @@ public class MarketService {
             utilService.insertImage(param);
             Long imageNo = utilService.getImageNo(param);
 
-            marketDto.setServerName(serverName);
-            marketDto.setOriginName(image.getOriginalFilename());
-            marketDto.setImageNo(imageNo.intValue());
+            marketSellDto.setServerName(serverName);
+            marketSellDto.setOriginName(image.getOriginalFilename());
+            marketSellDto.setImageNo(imageNo.intValue());
         }
         
-        marketDao.updatePost(marketDto);
+        marketDao.updatePost(marketSellDto);
         return Optional.of(marketDao.getPostDetail(productId));
     }
 
-    // 게시글 삭제 (소프트 삭제)
     @Transactional
     public boolean deletePost(Long productId, Long userNo, boolean isAdmin) {
         Long authorNo = marketDao.findUserNoById(productId);
@@ -150,13 +136,44 @@ public class MarketService {
     }
 
     @Transactional
-    public void registerPurchaseForm(MarketDto marketDto) {
-        marketDao.registerPurchaseForm(marketDto);
-        marketDao.decreaseQuantity(marketDto.getProductId(), marketDto.getCount());
+    public void registerPurchaseForm(MarketBuyDto marketBuyDto) {
+        marketDao.registerPurchaseForm(marketBuyDto);
+        marketDao.decreaseQuantity(marketBuyDto.getProductId(), marketBuyDto.getCount());
     }
 
     public boolean checkQuantity(Long productId, int count) {
         int currentQuantity = marketDao.getProductQuantity(productId);
         return currentQuantity >= count;
+    }
+    
+    // 판매자용 구매 신청 폼 상세 조회 메서드
+    public Optional<MarketBuyDto> getSellBuyFormById(Long formId, Long userNo) {
+        // 폼과 연결된 상품의 판매자가 현재 로그인한 사용자인지 확인
+        Long sellerId = marketDao.findSellerByFormId(formId);
+
+        if (sellerId != null && sellerId.equals(userNo)) {
+            // 판매자가 맞으면 폼 정보 조회
+            MarketBuyDto buyForm = marketDao.findPurchaseForm(formId);
+            return Optional.ofNullable(buyForm);
+        }
+        // 판매자가 아니거나 폼을 찾을 수 없으면 Optional.empty() 반환
+        return Optional.empty();
+    }
+
+    // 🔥 구매 폼 삭제 메서드
+    @Transactional
+    public boolean deleteBuyForm(Long formId, Long userNo) {
+        // 폼과 연결된 상품의 판매자가 현재 로그인한 사용자인지 확인
+        Long sellerId = marketDao.findSellerByFormId(formId);
+
+        if (sellerId != null && sellerId.equals(userNo)) {
+            // 판매자가 맞으면 삭제 상태로 업데이트
+            int rowsAffected = marketDao.updateBuyFormDeleteStatus(formId, "Y");
+            return rowsAffected > 0;
+        }
+        
+        // 판매자가 아니면 권한 없음 로그를 남기고 실패 반환
+        log.warn("구매 폼 삭제 권한 없음: formId={}, userNo={}", formId, userNo);
+        return false;
     }
 }

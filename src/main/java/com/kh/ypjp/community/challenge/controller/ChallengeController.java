@@ -19,7 +19,6 @@ import java.util.Map;
 import java.util.Optional;
 import jakarta.servlet.http.HttpServletRequest;
 
-
 @CrossOrigin(origins = "http://localhost:5173")
 @RestController
 @RequestMapping("/community/challenge")
@@ -212,26 +211,6 @@ public class ChallengeController {
         if (deleted) return ResponseEntity.ok("댓글이 성공적으로 삭제되었습니다.");
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body("댓글 삭제에 실패했습니다. 권한을 확인해주세요.");
     }
-    
-    // 신고 등록
-    @PostMapping("/report")
-    public ResponseEntity<String> createReport(@RequestBody ChallengeReportDto reportDto,
-                                               @AuthenticationPrincipal Long userNo) {
-        if (userNo == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 후 이용해주세요.");
-        }
-        reportDto.setUserNo(userNo);
-        int result = challengeService.createReport(reportDto);
-        if (result > 0) return ResponseEntity.status(HttpStatus.CREATED).body("신고가 성공적으로 등록되었습니다.");
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("신고 등록에 실패했습니다.");
-    }
-
-    // 신고 목록 조회
-    @GetMapping("/report")
-    public ResponseEntity<List<ChallengeReportDto>> getAllReports() {
-        List<ChallengeReportDto> reports = challengeService.getAllReports();
-        return ResponseEntity.ok(reports);
-    }
 
     // 진행 중인 챌린지 정보 조회
     @GetMapping("/active")
@@ -255,27 +234,30 @@ public class ChallengeController {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("챌린지 신청서 등록에 실패했습니다.");
     }
 
-    // 좋아요 토글
     @PostMapping("/like/{challengeNo}")
-    public ResponseEntity<String> toggleLike(@PathVariable Long challengeNo, Principal principal) {
+    public ResponseEntity<String> toggleLike(
+            @PathVariable Long challengeNo, 
+            @RequestParam("status") String likeStatus, // "LIKE" or "DISLIKE"
+            Principal principal) {
+
         if (principal == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 후 이용해주세요.");
         }
         Long userNo = Long.parseLong(principal.getName());
 
-        boolean liked = challengeService.toggleLike(challengeNo, userNo);
-        return ResponseEntity.ok(liked ? "좋아요 추가됨" : "좋아요 취소됨");
+        challengeService.setLikeStatus(challengeNo, userNo, likeStatus);
+        return ResponseEntity.ok(likeStatus.equals("LIKE") ? "좋아요 적용됨" : "싫어요 적용됨");
     }
 
-    // 좋아요 상태 조회
     @GetMapping("/like/status/{challengeNo}")
     public ResponseEntity<Boolean> getLikeStatus(@PathVariable Long challengeNo, Principal principal) {
         if (principal == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(false);
+            return ResponseEntity.ok(false);
         }
         Long userNo = Long.parseLong(principal.getName());
-        boolean liked = challengeService.isLiked(challengeNo, userNo);
-        return ResponseEntity.ok(liked);
+        
+        boolean isLiked = challengeService.getLikeStatus(challengeNo, userNo);
+        return ResponseEntity.ok(isLiked);
     }
 
     // 좋아요 개수 조회

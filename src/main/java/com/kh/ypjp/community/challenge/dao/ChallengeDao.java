@@ -12,7 +12,7 @@ public interface ChallengeDao {
     
     ChallengeDto findByIdWithImage(@Param("challengeNo") Long challengeNo);
     
-    public Long findUserNoById(@Param("challengeNo") Long challengeNo);
+    Long findUserNoById(@Param("challengeNo") Long challengeNo);
 
     int saveChallenge(ChallengeDto challengeDto);
     int update(ChallengeDto challengeDto);
@@ -22,15 +22,8 @@ public interface ChallengeDao {
     
     List<ChallengeInfoDto> findActiveChallengeInfo();
     List<ChallengeReplyDto> selectAllRepliesByChallengeId(@Param("challengeNo") Long challengeNo);
-    
-    
- // 신고 등록
-    int insertReport(ChallengeReportDto reportDto);
+    String findLikeStatus(@Param("userNo") Long userNo, @Param("challengeNo") Long challengeNo);
 
-    // 신고 전체 조회
-    List<ChallengeReportDto> selectAllReports();
-
-    
     int insertReply(ChallengeReplyDto replyDto);
     int updateReply(ChallengeReplyDto replyDto);
     ChallengeReplyDto selectReplyById(@Param("replyNo") Long replyNo);
@@ -39,13 +32,12 @@ public interface ChallengeDao {
     int insertSuggestion(ChallengeSuggestionDto suggestionDto);
 
     int checkIfLiked(@Param("userNo") Long userNo, @Param("challengeNo") Long challengeNo);
-    void insertLike(@Param("userNo") Long userNo, @Param("challengeNo") Long challengeNo);
+    void insertOrUpdateLike(@Param("userNo") Long userNo,
+            @Param("challengeNo") Long challengeNo,
+            @Param("likeStatus") String likeStatus);
     void deleteLike(@Param("userNo") Long userNo, @Param("challengeNo") Long challengeNo);
     int getLikesCount(@Param("challengeNo") Long challengeNo);
     
-    // 다음 게시글 번호 찾기 (현재 번호보다 크면서 가장 작은 번호)
     Long findNextChallenge(@Param("challengeNo") Long challengeNo);
-
-    // 이전 게시글 번호 찾기 (현재 번호보다 작으면서 가장 큰 번호)
     Long findPreviousChallenge(@Param("challengeNo") Long challengeNo);
 }

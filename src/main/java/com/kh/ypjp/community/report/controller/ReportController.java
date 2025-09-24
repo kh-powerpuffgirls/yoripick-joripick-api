@@ -17,7 +17,6 @@ public class ReportController {
 
     private final ReportService reportService;
 
-    // 신고 제출
     @PostMapping
     public ResponseEntity<String> submitReport(
             @RequestBody ReportDto reportDto,
@@ -37,7 +36,6 @@ public class ReportController {
         }
     }
 
-    // 신고 유형 목록 조회
     @GetMapping("/types")
     public ResponseEntity<List<ReportDto>> getReportTypes() {
         try {

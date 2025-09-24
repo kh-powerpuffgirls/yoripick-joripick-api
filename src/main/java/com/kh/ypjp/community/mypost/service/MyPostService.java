@@ -16,14 +16,11 @@ public class MyPostService {
         this.myPostDao = myPostDao;
     }
 
-    // 내 게시물 조회
     public List<MyPostDto> findPostsByUser(Integer userId) {
         return myPostDao.findPostsByUser(userId);
     }
 
-    // 게시글 상세 조회
     public Optional<MyPostDto> findPostDetail(String category, Integer id) {
-        // 조회수 증가 (일단 상세조회니까 본인 글도 조회 증가 되어야함...)
         myPostDao.incrementViews(id, category);
         return myPostDao.findPostDetail(id, category);
     }

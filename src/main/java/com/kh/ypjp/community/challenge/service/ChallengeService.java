@@ -32,61 +32,41 @@ public class ChallengeService {
     @Transactional
     public Optional<ChallengeDto> getPostAndIncrementViews(Long id, Long userNo) {
         ChallengeDto post = challengeDao.findByIdWithImage(id);
+        if (post == null) return Optional.empty();
 
-        if (post == null) {
-            return Optional.empty();
-        }
-
-        // 작성자 본인이 아니면 조회수 증가
         if (userNo == null || !userNo.equals(post.getUserNo())) {
             challengeDao.incrementViews(id);
             post.setViews(post.getViews() + 1);
         }
-
         return Optional.of(post);
     }
-    
+
+    // 이전/다음 게시글 번호 조회
     public Map<String, Long> getNavigation(Long challengeNo) {
         Map<String, Long> navigation = new HashMap<>();
         navigation.put("next", challengeDao.findNextChallenge(challengeNo));
         navigation.put("prev", challengeDao.findPreviousChallenge(challengeNo));
         return navigation;
     }
-    
-    // 신고 등록
-    @Transactional
-    public int createReport(ChallengeReportDto reportDto) {
-        return challengeDao.insertReport(reportDto);
-    }
 
-    // 신고 목록 조회
-    public List<ChallengeReportDto> getAllReports() {
-        return challengeDao.selectAllReports();
-    }
-
-    // 게시글 등록 및 이미지 저장
+    // 게시글 등록
     @Transactional
     public Long createPostAndReturnNo(ChallengeDto challengeDto, MultipartFile file) throws Exception {
-        if (challengeDto.getUserNo() == null) {
+        if (challengeDto.getUserNo() == null)
             throw new IllegalArgumentException("로그인 후 이용할 수 있습니다.");
-        }
 
         List<ChallengeInfoDto> activeChallenges = challengeDao.findActiveChallengeInfo();
-        if (activeChallenges == null || activeChallenges.isEmpty()) {
+        if (activeChallenges == null || activeChallenges.isEmpty())
             throw new IllegalStateException("진행 중인 챌린지가 없습니다.");
-        }
 
         ChallengeInfoDto activeChallenge = activeChallenges.get(0);
         LocalDate today = LocalDate.now();
-        if (today.isBefore(activeChallenge.getStartDate()) || today.isAfter(activeChallenge.getEndDate())) {
+        if (today.isBefore(activeChallenge.getStartDate()) || today.isAfter(activeChallenge.getEndDate()))
             throw new IllegalStateException("챌린지 기간 내에만 등록 가능합니다.");
-        }
 
-        if (file == null || file.isEmpty()) {
+        if (file == null || file.isEmpty())
             throw new IllegalArgumentException("챌린지 이미지는 필수입니다.");
-        }
 
-        // 이미지 파일 저장 및 serverName 생성
         String webPath = "challenge/" + challengeDto.getUserNo();
         String savedFileName = utilService.getChangeName(file, webPath);
         String serverName = webPath + "/" + savedFileName;
@@ -94,7 +74,6 @@ public class ChallengeService {
         challengeDto.setServerName(serverName);
         challengeDto.setOriginName(file.getOriginalFilename());
 
-        // 이미지 정보 DB에 저장
         Map<String, Object> param = new HashMap<>();
         param.put("serverName", serverName);
         param.put("originName", file.getOriginalFilename());
@@ -108,20 +87,15 @@ public class ChallengeService {
         return challengeDto.getChallengeNo();
     }
 
-    // 게시글 수정 및 이미지 업데이트
+    // 게시글 수정
     @Transactional
     public Optional<ChallengeDto> updatePost(Long id, ChallengeDto challengeDto, MultipartFile file, Long userNo, boolean isAdmin) {
         Long authorNo = challengeDao.findUserNoById(id);
-
-        if (authorNo == null || (!authorNo.equals(userNo) && !isAdmin)) {
-            log.warn("게시글 수정 권한 없음: challengeNo={}, userNo={}", id, userNo);
-            return Optional.empty();
-        }
+        if (authorNo == null || (!authorNo.equals(userNo) && !isAdmin)) return Optional.empty();
 
         challengeDto.setChallengeNo(id);
 
         if (file != null && !file.isEmpty()) {
-            // 새 이미지로 업데이트
             String webPath = "challenge/" + challengeDto.getUserNo();
             String savedFileName = utilService.getChangeName(file, webPath);
             String serverName = webPath + "/" + savedFileName;
@@ -146,29 +120,22 @@ public class ChallengeService {
     @Transactional
     public boolean deletePost(Long id, Long userNo, boolean isAdmin) {
         Long authorNo = challengeDao.findUserNoById(id);
-
-        if (authorNo == null || (!authorNo.equals(userNo) && !isAdmin)) {
-            log.warn("게시글 삭제 권한 없음: challengeNo={}, userNo={}", id, userNo);
-            return false;
-        }
+        if (authorNo == null || (!authorNo.equals(userNo) && !isAdmin)) return false;
         return challengeDao.updateDeleteStatus(id, "Y") > 0;
     }
 
-    // 좋아요
     @Transactional
-    public boolean toggleLike(Long challengeNo, Long userNo) {
-        boolean liked = challengeDao.checkIfLiked(userNo, challengeNo) > 0;
-        if (liked) {
-            challengeDao.deleteLike(userNo, challengeNo);
-        } else {
-            challengeDao.insertLike(userNo, challengeNo);
+    public void setLikeStatus(Long challengeNo, Long userNo, String likeStatus) {
+        if (!likeStatus.equals("LIKE") && !likeStatus.equals("DISLIKE") && !likeStatus.equals("COMMON")) {
+            likeStatus = "COMMON";
         }
-        return !liked;
+        challengeDao.insertOrUpdateLike(userNo, challengeNo, likeStatus);
     }
 
-    // 좋아요 상태 확인
-    public boolean isLiked(Long challengeNo, Long userNo) {
-        return challengeDao.checkIfLiked(userNo, challengeNo) > 0;
+
+    public boolean getLikeStatus(Long challengeNo, Long userNo) {
+        String status = challengeDao.findLikeStatus(userNo, challengeNo);
+        return "LIKE".equals(status); 
     }
 
     // 좋아요 개수 조회
@@ -177,12 +144,12 @@ public class ChallengeService {
         return count != null ? count : 0;
     }
 
-    // 현재 진행 중인 챌린지 정보 조회
+    // 진행 중 챌린지 조회
     public Optional<List<ChallengeInfoDto>> getActiveChallengeInfo() {
         return Optional.ofNullable(challengeDao.findActiveChallengeInfo());
     }
 
-    // 특정 게시글의 댓글 전체 조회
+    // 댓글 전체 조회
     public List<ChallengeReplyDto> selectAllRepliesByChallengeId(Long challengeId) {
         return challengeDao.selectAllRepliesByChallengeId(challengeId);
     }
@@ -197,9 +164,7 @@ public class ChallengeService {
     @Transactional
     public int updateReply(ChallengeReplyDto replyDto, Long userNo) {
         ChallengeReplyDto existing = challengeDao.selectReplyById(replyDto.getReplyNo());
-        if (existing == null || !existing.getUserNo().equals(userNo)) {
-            return 0;
-        }
+        if (existing == null || !existing.getUserNo().equals(userNo)) return 0;
         return challengeDao.updateReply(replyDto);
     }
 
@@ -207,9 +172,7 @@ public class ChallengeService {
     @Transactional
     public boolean deleteReply(Long replyNo, Long userNo) {
         ChallengeReplyDto reply = challengeDao.selectReplyById(replyNo);
-        if (reply == null || !reply.getUserNo().equals(userNo)) {
-            return false;
-        }
+        if (reply == null || !reply.getUserNo().equals(userNo)) return false;
         return challengeDao.deleteReply(replyNo, userNo) > 0;
     }
 

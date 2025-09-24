@@ -6,22 +6,20 @@
 <mapper namespace="com.kh.ypjp.community.challenge.dao.ChallengeDao">
 
     <!-- ===================== DTO 매핑 ===================== -->
-
-    <!-- ChallengeDto 매핑 -->
     <resultMap id="ChallengeDtoResultMap" type="com.kh.ypjp.community.challenge.dto.ChallengeDto">
-        <id property="challengeNo" column="CHALLENGE_NO" />
-        <result property="userNo" column="USER_NO" />
-        <result property="chInfoNo" column="CH_INFO_NO" />
-        <result property="videoUrl" column="VIDEO_URL" />
-        <result property="views" column="VIEWS" />
-        <result property="createdAt" column="CREATED_AT" />
-        <result property="username" column="USERNAME" />
-        <result property="title" column="TITLE" />
-        <result property="startDate" column="START_DATE" />
-        <result property="endDate" column="END_DATE" />
-        <result property="likes" column="LIKES" />
-        <result property="postImageUrl" column="POST_IMAGE_URL" />
-        <result property="imageNo" column="IMAGE_NO" jdbcType="INTEGER" />
+        <id property="challengeNo" column="CHALLENGE_NO"/>
+        <result property="userNo" column="USER_NO"/>
+        <result property="chInfoNo" column="CH_INFO_NO"/>
+        <result property="videoUrl" column="VIDEO_URL"/>
+        <result property="views" column="VIEWS"/>
+        <result property="createdAt" column="CREATED_AT"/>
+        <result property="username" column="USERNAME"/>
+        <result property="sik_bti" column="SIK_BTI"/>
+        <result property="title" column="TITLE"/>
+        <result property="startDate" column="START_DATE"/>
+        <result property="endDate" column="END_DATE"/>
+        <result property="serverName" column="SERVER_NAME"/>
+        <result property="likes" column="LIKES"/>
     </resultMap>
 
     <!-- ChallengeInfoDto 매핑 -->
@@ -33,18 +31,6 @@
         <result property="imageNo" column="IMAGE_NO" jdbcType="INTEGER" />
     </resultMap>
     
-        <select id="findNextChallenge" resultType="java.lang.Long">
-        SELECT MIN(CHALLENGE_NO)
-        FROM CHALLENGE
-        WHERE CHALLENGE_NO > #{challengeNo} AND DELETE_STATUS = 'N'
-    </select>
-
-    <select id="findPreviousChallenge" resultType="java.lang.Long">
-        SELECT MAX(CHALLENGE_NO)
-        FROM CHALLENGE
-        WHERE CHALLENGE_NO &lt; #{challengeNo} AND DELETE_STATUS = 'N'
-    </select>
-
     <!-- ChallengeSuggestionDto 매핑 -->
     <resultMap id="ChallengeSuggestionDtoResultMap" type="com.kh.ypjp.community.challenge.dto.ChallengeSuggestionDto">
         <id property="formNo" column="FORM_NO" />
@@ -64,34 +50,28 @@
         <result property="username" column="USERNAME"/>
         <result property="profileImageServerName" column="PROFILE_IMAGE_SERVER_NAME"/>
         <result property="category" column="CATEGORY"/>
+        <result property="sik_bti" column="SIK_BTI"/>
     </resultMap>
-
-	<!-- ChallengeReportDto 매핑 -->
-	<resultMap id="ChallengeReportDtoResultMap" type="com.kh.ypjp.community.challenge.dto.ChallengeReportDto">
-	    <id property="reportNo" column="REPORT_NO"/>
-	    <result property="userNo" column="USER_NO"/>
-	    <result property="reportType" column="REPORT_TYPE"/>
-	    <result property="refNo" column="REF_NO"/>
-	    <result property="content" column="CONTENT"/>
-	    <result property="resolved" column="RESOLVED"/>
-	    <result property="reportedAt" column="REPORTED_AT"/>
-	    <result property="category" column="CATEGORY"/>
-	    <result property="detail" column="DETAIL"/>
-	</resultMap>
-
 
     <!-- ===================== 챌린지 조회 ===================== -->
 
-	
-
-    <!-- 전체 챌린지 조회 -->
     <select id="findAll" resultMap="ChallengeDtoResultMap">
         SELECT
-            c.CHALLENGE_NO, c.USER_NO, c.CH_INFO_NO, c.VIDEO_URL, c.VIEWS, c.CREATED_AT,
+            c.CHALLENGE_NO,
+            c.USER_NO,
+            c.CH_INFO_NO,
+            c.VIDEO_URL,
+            c.VIEWS,
+            c.CREATED_AT,
             u.USERNAME,
-            ci.TITLE, ci.START_DATE, ci.END_DATE,
+            u.SIK_BTI AS SIK_BTI,
+            ci.TITLE,
+            ci.START_DATE,
+            ci.END_DATE,
             i.SERVER_NAME AS SERVER_NAME,
-            (SELECT COUNT(*) FROM LIKES l WHERE l.REF_TYPE = 'CHALLENGE' AND l.REF_NO = c.CHALLENGE_NO) AS LIKES
+            (SELECT COUNT(*) 
+             FROM LIKES l 
+             WHERE l.REF_TYPE = 'CHALLENGE' AND l.REF_NO = c.CHALLENGE_NO) AS LIKES
         FROM CHALLENGE c
         JOIN USERS u ON c.USER_NO = u.USER_NO
         JOIN CHALLENGE_INFO ci ON c.CH_INFO_NO = ci.CH_INFO_NO
@@ -99,19 +79,38 @@
         WHERE c.DELETE_STATUS = 'N'
         ORDER BY c.CREATED_AT DESC
     </select>
+    
+            <select id="findNextChallenge" resultType="java.lang.Long">
+        SELECT MIN(CHALLENGE_NO)
+        FROM CHALLENGE
+        WHERE CHALLENGE_NO > #{challengeNo} AND DELETE_STATUS = 'N'
+    </select>
 
-    <!-- 진행 중인 챌린지 정보 조회 -->
+    <select id="findPreviousChallenge" resultType="java.lang.Long">
+        SELECT MAX(CHALLENGE_NO)
+        FROM CHALLENGE
+        WHERE CHALLENGE_NO &lt; #{challengeNo} AND DELETE_STATUS = 'N'
+    </select>
+
     <select id="findActiveChallengeInfo" resultMap="ChallengeInfoDtoResultMap">
         SELECT CH_INFO_NO, TITLE, START_DATE, END_DATE
         FROM CHALLENGE_INFO
         WHERE TRUNC(SYSDATE) BETWEEN START_DATE AND END_DATE
     </select>
 
-    <!-- 진행 중인 챌린지 전체 조회 -->
+
+<!-- 특정 챌린지 작성자 조회 -->
+<select id="findUserNoById" parameterType="long" resultType="long">
+    SELECT USER_NO
+    FROM CHALLENGE
+    WHERE CHALLENGE_NO = #{challengeNo}
+</select>
+
     <select id="findActiveChallenges" resultMap="ChallengeDtoResultMap">
         SELECT
             c.CHALLENGE_NO, c.USER_NO, c.CH_INFO_NO, c.VIDEO_URL, c.VIEWS, c.CREATED_AT,
             u.USERNAME,
+            u.SIK_BTI AS SIK_BTI,
             ci.TITLE, ci.START_DATE, ci.END_DATE,
             i.SERVER_NAME AS SERVER_NAME,
             (SELECT COUNT(*) FROM LIKES l WHERE l.REF_TYPE = 'CHALLENGE' AND l.REF_NO = c.CHALLENGE_NO) AS LIKES
@@ -123,11 +122,11 @@
         ORDER BY c.CREATED_AT DESC
     </select>
 
-    <!-- 특정 챌린지 상세 조회 -->
     <select id="findById" parameterType="long" resultMap="ChallengeDtoResultMap">
         SELECT
             c.CHALLENGE_NO, c.USER_NO, c.CH_INFO_NO, c.VIDEO_URL, c.VIEWS, c.CREATED_AT, c.IMAGE_NO,
             u.USERNAME,
+            u.SIK_BTI AS SIK_BTI,
             ci.TITLE, ci.START_DATE, ci.END_DATE,
             i.SERVER_NAME AS SERVER_NAME,
             (SELECT COUNT(*) FROM LIKES l WHERE l.REF_TYPE = 'CHALLENGE' AND l.REF_NO = c.CHALLENGE_NO) AS LIKES
@@ -137,14 +136,8 @@
         LEFT JOIN IMAGE i ON c.IMAGE_NO = i.IMAGE_NO
         WHERE c.CHALLENGE_NO = #{challengeNo} AND c.DELETE_STATUS = 'N'
     </select>
-    
-    <select id="findUserNoById" resultType="java.lang.Long">
-	    SELECT USER_NO FROM CHALLENGE WHERE CHALLENGE_NO = #{challengeNo}
-	</select>
-
 
     <!-- ===================== 좋아요(Like) 관련 ===================== -->
-
     <select id="getLikesCount" resultType="java.lang.Integer">
         SELECT COUNT(*) 
         FROM LIKES 
@@ -158,22 +151,42 @@
           AND REF_TYPE = 'CHALLENGE'
           AND REF_NO = #{challengeNo}
     </select>
-
-    <insert id="insertLike">
-        INSERT INTO LIKES (USER_NO, REF_TYPE, REF_NO)
-        VALUES (#{userNo}, 'CHALLENGE', #{challengeNo})
-    </insert>
-
-    <delete id="deleteLike">
-        DELETE FROM LIKES
-        WHERE USER_NO = #{userNo} AND REF_TYPE = 'CHALLENGE' AND REF_NO = #{challengeNo}
-    </delete>
-
-
+	    
+	<!-- 좋아요 / 싫어요 등록 또는 변경 -->
+	<update id="insertOrUpdateLike">
+	    MERGE INTO LIKES l
+	    USING (SELECT #{userNo} AS user_no, 
+	                  #{challengeNo} AS ref_no, 
+	                  'CHALLENGE' AS ref_type 
+	           FROM dual) t
+	    ON (l.user_no = t.user_no AND l.ref_no = t.ref_no AND l.ref_type = t.ref_type)
+	    WHEN MATCHED THEN
+	        UPDATE SET l.like_status = #{likeStatus}, 
+	                   l.liked_at = SYSDATE
+	    WHEN NOT MATCHED THEN
+	        INSERT (user_no, ref_type, ref_no, like_status, liked_at)
+	        VALUES (#{userNo}, 'CHALLENGE', #{challengeNo}, #{likeStatus}, SYSDATE)
+	</update>
 	
+	<!-- 특정 사용자의 챌린지 좋아요 상태 조회 -->
+	<select id="findLikeStatus" resultType="String">
+	    SELECT LIKE_STATUS
+	    FROM LIKES
+	    WHERE USER_NO = #{userNo}
+	      AND REF_TYPE = 'CHALLENGE'
+	      AND REF_NO = #{challengeNo}
+	</select>
+	
+	<!-- 좋아요/싫어요 취소 -->
+	<update id="deleteLike">
+	    UPDATE LIKES
+	    SET LIKE_STATUS = 'COMMON', liked_at = SYSDATE
+	    WHERE USER_NO = #{userNo} 
+	      AND REF_TYPE = 'CHALLENGE' 
+	      AND REF_NO = #{challengeNo}
+	</update>
 
     <!-- ===================== 이미지 관련 ===================== -->
-
     <insert id="insertImage" parameterType="map">
         <selectKey keyProperty="imageNo" resultType="int" order="BEFORE">
             SELECT SEQ_IMAGE_NO.NEXTVAL FROM DUAL
@@ -201,21 +214,21 @@
     </select>
     
     <select id="findByIdWithImage" parameterType="long" resultMap="ChallengeDtoResultMap">
-    SELECT
-        c.CHALLENGE_NO, c.USER_NO, c.CH_INFO_NO, c.VIDEO_URL, c.VIEWS, c.CREATED_AT, c.IMAGE_NO,
-        u.USERNAME,
-        ci.TITLE, ci.START_DATE, ci.END_DATE,
-        i.SERVER_NAME AS SERVER_NAME,
-        (SELECT COUNT(*) FROM LIKES l WHERE l.REF_TYPE = 'CHALLENGE' AND l.REF_NO = c.CHALLENGE_NO) AS LIKES
-    FROM CHALLENGE c
-    JOIN USERS u ON c.USER_NO = u.USER_NO
-    JOIN CHALLENGE_INFO ci ON c.CH_INFO_NO = ci.CH_INFO_NO
-    LEFT JOIN IMAGE i ON c.IMAGE_NO = i.IMAGE_NO
-    WHERE c.CHALLENGE_NO = #{challengeNo} AND c.DELETE_STATUS = 'N'
-	</select>
+        SELECT
+            c.CHALLENGE_NO, c.USER_NO, c.CH_INFO_NO, c.VIDEO_URL, c.VIEWS, c.CREATED_AT, c.IMAGE_NO,
+            u.USERNAME,
+            u.SIK_BTI AS SIK_BTI,
+            ci.TITLE, ci.START_DATE, ci.END_DATE,
+            i.SERVER_NAME AS SERVER_NAME,
+            (SELECT COUNT(*) FROM LIKES l WHERE l.REF_TYPE = 'CHALLENGE' AND l.REF_NO = c.CHALLENGE_NO) AS LIKES
+        FROM CHALLENGE c
+        JOIN USERS u ON c.USER_NO = u.USER_NO
+        JOIN CHALLENGE_INFO ci ON c.CH_INFO_NO = ci.CH_INFO_NO
+        LEFT JOIN IMAGE i ON c.IMAGE_NO = i.IMAGE_NO
+        WHERE c.CHALLENGE_NO = #{challengeNo} AND c.DELETE_STATUS = 'N'
+    </select>
 
     <!-- ===================== 챌린지 등록/수정 ===================== -->
-
     <insert id="saveChallenge">
         <selectKey keyProperty="challengeNo" resultType="long" order="BEFORE">
             SELECT SEQ_CHALLENGE_NO.NEXTVAL FROM DUAL
@@ -239,16 +252,14 @@
         UPDATE CHALLENGE SET VIEWS = VIEWS + 1 WHERE CHALLENGE_NO = #{challengeNo}
     </update>
 
-
     <!-- ===================== 댓글(Reply) 관련 ===================== -->
-
     <select id="selectAllRepliesByChallengeId" parameterType="long" resultMap="ChallengeReplyResultMap">
         SELECT R.REPLY_NO, R.REF_NO, R.USER_NO, R.CONTENT, R.CREATED_AT, R.CATEGORY,
-               U.USERNAME, I.SERVER_NAME AS PROFILE_IMAGE_SERVER_NAME
+               U.USERNAME, U.SIK_BTI AS SIK_BTI, I.SERVER_NAME AS PROFILE_IMAGE_SERVER_NAME
         FROM REPLY R
         JOIN USERS U ON R.USER_NO = U.USER_NO
         LEFT JOIN IMAGE I ON U.IMAGE_NO = I.IMAGE_NO
-        START WITH R.REF_NO = #{challengeNo}
+        START WITH R.REF_NO = #{challengeNo} AND R.CATEGORY = 'CHALLENGE'
         CONNECT BY PRIOR R.REPLY_NO = R.REF_NO
         ORDER SIBLINGS BY R.CREATED_AT ASC
     </select>
@@ -281,9 +292,7 @@
         WHERE REPLY_NO = #{replyNo}
     </select>
 
-
     <!-- ===================== 챌린지 제안(Suggestion) ===================== -->
-
     <insert id="insertSuggestion" parameterType="com.kh.ypjp.community.challenge.dto.ChallengeSuggestionDto">
         <selectKey keyProperty="formNo" resultType="int" order="BEFORE">
             SELECT SEQ_CH_FORM_NO.NEXTVAL FROM DUAL
@@ -291,25 +300,5 @@
         INSERT INTO CHALLENGE_FORM (FORM_NO, USER_NO, CH_TITLE, DESCRIPTION, REFERENCE)
         VALUES (#{formNo}, #{userNo}, #{chTitle}, #{description}, #{reference})
     </insert>
-
-	<!-- ===================== 신고(Report) 관련 ===================== -->
-
-	<!-- 신고 등록 -->
-	<insert id="insertReport" parameterType="com.kh.ypjp.community.challenge.dto.ChallengeReportDto">
-	    <selectKey keyProperty="reportNo" resultType="long" order="BEFORE">
-	        SELECT SEQ_REPORT_NO.NEXTVAL FROM DUAL
-	    </selectKey>
-	    INSERT INTO REPORT (REPORT_NO, USER_NO, REPORT_TYPE, REF_NO, CONTENT, RESOLVED, REPORTED_AT)
-	    VALUES (#{reportNo}, #{userNo}, #{reportType}, #{refNo}, #{content}, #{resolved}, SYSDATE)
-	</insert>
-	
-	<!-- 신고 전체 조회 -->
-	<select id="selectAllReports" resultMap="ChallengeReportDtoResultMap">
-	    SELECT r.REPORT_NO, r.USER_NO, r.REPORT_TYPE, r.REF_NO, r.CONTENT, r.RESOLVED, r.REPORTED_AT,
-	           t.CATEGORY, t.DETAIL
-	    FROM REPORT r
-	    JOIN REPORT_TYPE t ON r.REPORT_TYPE = t.REPORT_TYPE
-	    ORDER BY r.REPORTED_AT DESC
-	</select>
 
 </mapper>
