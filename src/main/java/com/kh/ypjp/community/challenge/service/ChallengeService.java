@@ -149,11 +149,23 @@ public class ChallengeService {
         return Optional.ofNullable(challengeDao.findActiveChallengeInfo());
     }
 
-    // 댓글 전체 조회
     public List<ChallengeReplyDto> selectAllRepliesByChallengeId(Long challengeId) {
-        return challengeDao.selectAllRepliesByChallengeId(challengeId);
-    }
+        List<ChallengeReplyDto> replies = challengeDao.selectAllRepliesByChallengeId(challengeId);
 
+        for (ChallengeReplyDto reply : replies) {
+            if (reply.getProfileImageServerName() != null && !reply.getProfileImageServerName().isEmpty()) {
+                // 이 부분이 수정된 로직입니다.
+                // profile/{userno}/{파일명.png} 형식으로 경로를 완성합니다.
+                String fullPath = "profile/" + reply.getUserNo() + "/" + reply.getProfileImageServerName();
+                
+                // WebConfig에서 /images/로 매핑했으므로, images/를 붙여 최종 URL을 만듭니다.
+                String imageUrl = "/images/" + fullPath;
+                reply.setProfileImageServerName(imageUrl);
+            }
+        }
+        return replies;
+    }
+    
     // 댓글 등록
     @Transactional
     public int insertReply(ChallengeReplyDto replyDto) {
