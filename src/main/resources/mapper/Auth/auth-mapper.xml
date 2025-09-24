@@ -9,20 +9,23 @@
 		<result property="username" column="USERNAME" />
 		<result property="imageNo" column="IMAGE_NO" />
 		<result property="password" column="PASSWORD" />
+		<result property="provider" column="PROVIDER" />
 		<collection property="roles" ofType="java.lang.String">
 			<result column="AUTHORITY" />
 		</collection>
 	</resultMap>
 
-	<!-- 1. 로그인시 사용하는 함수 -->
-	<select id="findUserByEmail" resultMap="UserResult">
-		SELECT U.USER_NO, U.EMAIL, U.USERNAME, U.IMAGE_NO, C.PASSWORD,
-		A.AUTHORITY
+<select id="findUserByEmail" resultMap="UserResult">
+		SELECT
+		U.USER_NO, U.EMAIL, U.USERNAME, U.IMAGE_NO, C.PASSWORD,
+		A.AUTHORITY,
+		I.PROVIDER
 		FROM USERS U
 		LEFT JOIN CREDENTIAL C ON U.USER_NO = C.USER_NO
 		JOIN AUTHORITY A ON U.USER_NO = A.USER_NO
+		LEFT JOIN USER_IDENTITIES I ON U.USER_NO = I.USER_ID
 		WHERE UPPER(U.EMAIL) = UPPER(#{email})
-	</select>
+</select>
 
 	<insert id="insertUser">
 		<selectKey keyProperty="userNo" resultType="long" order="BEFORE">
@@ -49,32 +52,31 @@
 		WHERE USER_NO = #{userNo}
 	</update>
 
-	<select id="findUserByUserNo" resultMap="UserResult">
-		SELECT
-		U.USER_NO, U.EMAIL, U.USERNAME, U.IMAGE_NO, U.SIK_BTI,
-		U.MSG_NOTI, U.REPLY_NOTI, U.RVW_NOTI, U.EXP_NOTI,
-		U.STATUS, U.INACTIVE_DATE,
-		C.PASSWORD,
-		A.AUTHORITY
-		FROM USERS U
-		LEFT JOIN CREDENTIAL C ON U.USER_NO = C.USER_NO
-		JOIN AUTHORITY A ON U.USER_NO = A.USER_NO
-		WHERE U.USER_NO = #{userNo}
-	</select>
+<select id="findUserByUserNo" resultMap="UserResult">
+    SELECT
+        U.*,
+        C.PASSWORD,
+        A.AUTHORITY,
+        I.PROVIDER 
+    FROM USERS U
+    LEFT JOIN CREDENTIAL C ON U.USER_NO = C.USER_NO
+    JOIN AUTHORITY A ON U.USER_NO = A.USER_NO
+    LEFT JOIN USER_IDENTITIES I ON U.USER_NO = I.USER_ID 
+    WHERE U.USER_NO = #{userNo}
+</select>
 
-	<select id="findUserByUsername" parameterType="string"
-		resultMap="UserResult">
-		SELECT
-		U.USER_NO, U.EMAIL, U.USERNAME, U.IMAGE_NO, U.SIK_BTI,
-		U.MSG_NOTI, U.REPLY_NOTI, U.RVW_NOTI, U.EXP_NOTI,
-		U.STATUS, U.INACTIVE_DATE,
-		C.PASSWORD,
-		A.AUTHORITY
-		FROM USERS U
-		LEFT JOIN CREDENTIAL C ON U.USER_NO = C.USER_NO
-		JOIN AUTHORITY A ON U.USER_NO = A.USER_NO
-		WHERE UPPER(U.USERNAME) = UPPER(#{username})
-	</select>
+<select id="findUserByUsername" parameterType="string" resultMap="UserResult">
+    SELECT
+        U.*,
+        C.PASSWORD,
+        A.AUTHORITY,
+        I.PROVIDER
+    FROM USERS U
+    LEFT JOIN CREDENTIAL C ON U.USER_NO = C.USER_NO
+    JOIN AUTHORITY A ON U.USER_NO = A.USER_NO
+    LEFT JOIN USER_IDENTITIES I ON U.USER_NO = I.USER_ID
+    WHERE UPPER(U.USERNAME) = UPPER(#{username})
+</select>
 
 	<insert id="insertUserIdentities">
 		INSERT INTO USER_IDENTITIES (
