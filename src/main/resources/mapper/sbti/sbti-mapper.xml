@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="sbti">
+	<select id="getScoreMap" resultType="com.kh.ypjp.sbti.model.dto.SbtiDto$SikBti">
+		SELECT
+			question_no,
+			option_no,
+			types,
+			score
+		FROM SIK_BTI
+	</select>	
+	
+	<update id="eatbtiResult">
+		UPDATE USERS
+		SET sik_bti = #{sikBti}
+		WHERE user_no = #{userNo}
+	</update>
+</mapper>

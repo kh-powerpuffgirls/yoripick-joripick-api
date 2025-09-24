@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="util">
+
+	<insert id="insertImage">
+		INSERT INTO IMAGE VALUES
+		(SEQ_IMAGE_NO.NEXTVAL, #{originName}, #{serverName})
+	</insert>
+
+	<select id="getImageNo" resultType="long">
+		SELECT image_no FROM IMAGE
+		WHERE origin_name = #{originName}
+		AND server_name = #{serverName}
+	</select>
+
+	<select id="getChangeName" resultType="string">
+		SELECT server_name FROM IMAGE
+		WHERE image_no = #{imageNo}
+	</select>
+
+	<select id="getAllergyList" resultType="com.kh.ypjp.model.dto.AllergyDto$AllergyList">
+		SELECT ALLERGY_NO, NAME, CATEGORY
+		FROM allergy
+		ORDER BY ALLERGY_NO
+	</select>
+</mapper>
