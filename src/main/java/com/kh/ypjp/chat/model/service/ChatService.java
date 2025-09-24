@@ -60,7 +60,7 @@ public class ChatService {
 		rooms.addAll(adminRooms);
 		if (chatDao.findFaqChat(userNo) > 0) {
 			List<FaqMsgDto> faqMessages = chatDao.getFaqByUser(userNo);
-			rooms.add(new ChatRoomDto(0L, "FAQ BOT, 요픽", "cservice", new ArrayList<>(faqMessages), null));
+			rooms.add(new ChatRoomDto(0L, "FAQ BOT, 요픽", "cservice", new ArrayList<>(faqMessages), "Y"));
 		}
 		Long csNo = chatDao.findAdminChat(userNo);
 		if (csNo != null) {
@@ -68,7 +68,7 @@ public class ChatService {
 			param.put("refNo", csNo);
 			param.put("msgType", "CSERVICE");
 			List<ChatMsgDto> adminMessages = chatDao.getMessagesByRoom(param);
-			rooms.add(new ChatRoomDto(csNo, "관리자 문의하기", "admin", new ArrayList<>(adminMessages), null));
+			rooms.add(new ChatRoomDto(csNo, "관리자 문의하기", "admin", new ArrayList<>(adminMessages), "Y"));
 		}
 		rooms.sort((r1, r2) -> {
 			Date r1Latest = r1.getMessages().isEmpty() ? new Date(0)

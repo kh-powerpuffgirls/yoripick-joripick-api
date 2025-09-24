@@ -2,7 +2,6 @@ package com.kh.ypjp.community.ckclass.controller;
 
 import com.kh.ypjp.community.ckclass.dto.CkclassDto;
 import com.kh.ypjp.community.ckclass.service.CkclassService;
-
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

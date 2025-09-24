@@ -23,4 +23,9 @@
 		FROM allergy
 		ORDER BY ALLERGY_NO
 	</select>
+	
+	<select id="getServerName" resultType="string">
+		SELECT server_name FROM IMAGE
+		WHERE image_no = #{imageNo}
+	</select>
 </mapper>

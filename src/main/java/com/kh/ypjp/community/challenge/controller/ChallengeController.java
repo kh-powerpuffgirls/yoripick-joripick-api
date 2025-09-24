@@ -86,7 +86,6 @@ public class ChallengeController {
             @RequestParam(value = "file", required = false) MultipartFile file,
             @RequestParam(value = "title", required = false) String title,
             @AuthenticationPrincipal Long userNo) {
-
         ChallengeDto challengeDto = new ChallengeDto();
         challengeDto.setUserNo(userNo);
         challengeDto.setChInfoNo(chInfoNo);
