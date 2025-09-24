@@ -7,15 +7,15 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
 
-    private String getProjectRoot() {
-        return System.getProperty("user.dir");
-    }
+	private String getProjectRoot() {
+		return System.getProperty("user.dir");
+	}
 
-    @Override
-    public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        String webPath = "resources/";
-        String projectRoot = getProjectRoot();
-        String absolutePath = "file:///" + projectRoot + "/" + webPath;
+	@Override
+	public void addResourceHandlers(ResourceHandlerRegistry registry) {
+		String webPath = "resources/";
+		String projectRoot = getProjectRoot();
+		String absolutePath = "file:///" + projectRoot + "/" + webPath;
 
         registry.addResourceHandler("/images/**")
                 .addResourceLocations(absolutePath);
@@ -27,6 +27,6 @@ public class WebConfig implements WebMvcConfigurer {
         // 프로필 이미지 경로
         registry.addResourceHandler("/profile/**")
         		.addResourceLocations(absolutePath);
-        
-    }
+       
+	}
 }
