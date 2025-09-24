@@ -104,10 +104,7 @@ public class ChatService {
 
 	@Transactional
 	public int insertMessage(MessageDto message) {
-		if (chatDao.insertMessage(message) > 0) {
-			return chatDao.updateCS(message);
-		}
-		return 0;
+		return chatDao.insertMessage(message);
 	}
 
 }

@@ -70,8 +70,4 @@ public class ChatDao {
 		return session.selectList("chat.getAllCserviceRooms");
 	}
 
-	public int updateCS(MessageDto message) {
-		return session.update("chat.updateCS", message);
-	}
-
 }

@@ -142,10 +142,4 @@
 			#{content}
 			<if test="imageNo != null">, #{imageNo}</if>)
 	</insert>
-	
-	<update id="updateCS">
-		UPDATE CUSTOMER_SERVICE
-		SET message_no = #{messageNo}
-		WHERE room_no = #{roomNo}
-	</update>
 </mapper>
