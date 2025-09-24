@@ -76,6 +76,9 @@ public class SecurityConfig {
                 .requestMatchers("/sbti").permitAll()
                 .requestMatchers("/eatbti/**").authenticated()
                 .requestMatchers("/mypage/**").permitAll()
+                .requestMatchers("/ingpedia/**").permitAll()
+                .requestMatchers("/ingdata/**").permitAll()
+                .requestMatchers("/community/**").permitAll()
                 .anyRequest().authenticated()
             )
             // OAuth2 로그인 핸들러
