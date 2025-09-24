@@ -61,9 +61,12 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/auth/**").permitAll()
                 .requestMatchers("/oauth2/**", "/login/**", "/error").permitAll()
+                .requestMatchers("/mealplan/**").authenticated()
                 .requestMatchers("/chat/**").permitAll()
                 .requestMatchers("/ws/**").permitAll()
                 .requestMatchers("/images/**").permitAll()
+                .requestMatchers("/sbti").permitAll()
+                .requestMatchers("/eatbti/**").authenticated()
                 .requestMatchers("/mypage/**").permitAll()
                 .requestMatchers("/ingpedia/**").permitAll()
                 .requestMatchers("/ingdata/**").permitAll()

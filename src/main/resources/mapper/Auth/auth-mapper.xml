@@ -2,7 +2,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="auth">
 
-	<select id="getNotiByUserNo" resultType="userNotiDto">
+	<!--<select id="getNotiByUserNo" resultType="userNotiDto">
 		SELECT 
 			msg_noti AS newMessage,
 			reply_noti AS newReply,
@@ -10,7 +10,7 @@
 			exp_noti AS expiration
 		FROM USERS
 		WHERE user_no = #{userNo}
-	</select>
+	</select>-->
 
 	<resultMap id="UserResult"
 		type="com.kh.ypjp.security.model.dto.AuthDto$User" autoMapping="true">
