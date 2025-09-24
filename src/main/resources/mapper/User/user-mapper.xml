@@ -74,6 +74,12 @@
 	  DELETE FROM user_allergy
 	  WHERE user_no = #{userNo} AND allergy_no = #{allergyNo}
 	</delete>
+	
+	<update id="inactiveUser">
+		UPDATE USERS
+		SET STATUS = 'INACTIVE',INACTIVE_DATE = SYSDATE
+		WHERE USER_NO = #{userNo}
+	</update>
 
 
 	

@@ -10,6 +10,7 @@
 		<result property="imageNo" column="IMAGE_NO" />
 		<result property="password" column="PASSWORD" />
 		<result property="provider" column="PROVIDER" />
+		<result property="status" column="STATUS" />
 		<collection property="roles" ofType="java.lang.String">
 			<result column="AUTHORITY" />
 		</collection>
@@ -17,7 +18,7 @@
 
 <select id="findUserByEmail" resultMap="UserResult">
 		SELECT
-		U.USER_NO, U.EMAIL, U.USERNAME, U.IMAGE_NO, C.PASSWORD,
+		U.USER_NO, U.EMAIL, U.USERNAME, U.IMAGE_NO, C.PASSWORD, U.STATUS,
 		A.AUTHORITY,
 		I.PROVIDER
 		FROM USERS U

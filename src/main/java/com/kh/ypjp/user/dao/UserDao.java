@@ -64,6 +64,8 @@ public class UserDao {
         return session.delete("user.deleteUserAllergy",
                 Map.of("userNo", userNo, "allergyNo", allergyNo));
     }
-
-
+    
+    public int inactiveUser(Long userNo) {
+    	return session.update("user.inactiveUser", userNo);
+    }
 }

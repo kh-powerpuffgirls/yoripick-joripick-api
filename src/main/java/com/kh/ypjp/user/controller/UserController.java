@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -27,7 +28,7 @@ import com.kh.ypjp.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/mypage")
+@RequestMapping("/users/{userNo}")
 @RequiredArgsConstructor
 public class UserController {
 
@@ -36,7 +37,7 @@ public class UserController {
 	private final UserService userService;
 	private final UtilService utilService;
 
-	@PostMapping("/users/profiles")
+	@PostMapping("/profiles")
 	public ResponseEntity<String> getProfileImageUrl(@RequestBody User user) {
 		Long imageNo = user.getImageNo();
 		System.out.println(imageNo);
@@ -46,7 +47,7 @@ public class UserController {
 		return ResponseEntity.ok(imageUrl);
 	}
 
-	@PostMapping("/profile")
+	@PostMapping("/another-profile")
 	public ResponseEntity<Map<String, Object>> updateProfile(@RequestParam MultipartFile file,
 			@RequestParam Long userNo) {
 
@@ -111,7 +112,7 @@ public class UserController {
 		}
 	}
 	
-	@PutMapping("/users/alarm")
+	@PutMapping("/alarm")
 	public ResponseEntity<?> updateAlarmSettings(@RequestBody User alarmRequest) {
 	    try {
 	        Map<String, Object> updated = userService.updateAlarmSettings(alarmRequest.getUserNo(), alarmRequest);
@@ -121,7 +122,7 @@ public class UserController {
 	    }
 	}
 	
-    @GetMapping("/users/allergy-list")
+    @GetMapping("/allergy-list")
     public ResponseEntity<List<AllergyList>> getAllergyList() {
         try {
             List<AllergyList> allergyTree = userService.getAllergyTree();
@@ -132,13 +133,13 @@ public class UserController {
         }
     }
     
-    @GetMapping("/users/allergy")
+    @GetMapping("/allergy")
     public ResponseEntity<List<Long>> getUserAllergyNos(@RequestParam Long userNo) {
         List<Long> allergyNos = userService.getUserAllergies(userNo);
         return ResponseEntity.ok(allergyNos);
     }
     
-    @PostMapping("/update/users/allergy")
+    @PostMapping("/update/allergy")
     public ResponseEntity updateUserAllergy(@RequestBody Map<String, Object> body) {
         Long userNo = ((Number) body.get("userNo")).longValue();
         List<Integer> allergyNos = (List<Integer>) body.get("allergyNos");
@@ -148,5 +149,15 @@ public class UserController {
                 .toList());
 
         return ResponseEntity.ok().build();
+    }
+    
+    @PostMapping("/inactive")
+    public ResponseEntity<Void> inactiveUser(@RequestBody User user) {
+        boolean result = userService.inactiveUser(user.getUserNo());
+        if(result) {
+            return ResponseEntity.ok().build();
+        } else {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 }

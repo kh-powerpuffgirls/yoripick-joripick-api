@@ -8,7 +8,6 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.kh.ypjp.common.UtilService;
 import com.kh.ypjp.common.exception.AuthException;
@@ -22,9 +21,11 @@ import com.kh.ypjp.security.model.dto.AuthDto.UserIdentities;
 import com.kh.ypjp.security.model.provider.JWTProvider;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AuthService {
 
     private final SecurityConfig securityConfig;
@@ -88,14 +89,14 @@ public class AuthService {
         if (!encoder.matches(password, user.getPassword())) {
             throw new AuthException("WRONG_PASSWORD");
         }
-
-        if ("LOCKED".equalsIgnoreCase(user.getStatus())) {
-            throw new AuthException("ACCOUNT_LOCKED");
-        }
+        
+        log.info("user : {}",user);
+    	if("INACTIVE".equalsIgnoreCase(user.getStatus())) {
+    		throw new AuthException("INACTIVE_USER");
+    	}
 
         return issueTokens(user);
     }
-
 
     
     @Transactional

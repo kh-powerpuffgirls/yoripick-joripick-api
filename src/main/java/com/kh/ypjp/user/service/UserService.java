@@ -178,4 +178,10 @@ public class UserService {
         }
     }
 
+	public boolean inactiveUser(Long userNo) {
+		int result = userDao.inactiveUser(userNo);
+		
+		return result > 0;
+	}
+
 }
