@@ -8,6 +8,7 @@ import com.kh.ypjp.common.model.vo.Image;
 import com.kh.ypjp.common.model.vo.Nutrient;
 import com.kh.ypjp.community.recipe.dto.UserRecipeDto;
 import com.kh.ypjp.community.recipe.dto.UserRecipeDto.RecipeDetailResponse;
+import com.kh.ypjp.community.recipe.dto.UserRecipeDto.UserRecipeResponse;
 import com.kh.ypjp.community.recipe.model.vo.CookingStep;
 import com.kh.ypjp.community.recipe.model.vo.RcpDetail;
 import com.kh.ypjp.community.recipe.model.vo.RcpIngredient;
@@ -88,4 +89,16 @@ public interface UserRecipeDao {
 	RecipeDetailResponse selectOfficialRecipeDetail(int rcpNo);
 	
 	RcpIngs selectRcpIngs(int rcpNo);
+
+	int checkBookmark(Map<String, Object> params);
+
+	void deleteBookmark(Map<String, Object> params);
+
+	void insertBookmark(Map<String, Object> params);
+	
+	int countBookmarks(int rcpNo);
+
+	long selectOfficialRecipeCount(Map<String, Object> params);
+
+	List<UserRecipeResponse> selectOfficialRecipeList(Map<String, Object> params);
 }

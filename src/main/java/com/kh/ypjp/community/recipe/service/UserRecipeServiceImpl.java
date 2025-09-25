@@ -37,7 +37,6 @@ import com.kh.ypjp.community.recipe.model.vo.RcpSituation;
 import com.kh.ypjp.community.recipe.model.vo.Recipe;
 import com.kh.ypjp.community.recipe.model.vo.Review;
 
-import jakarta.servlet.ServletContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -47,7 +46,6 @@ import lombok.extern.slf4j.Slf4j;
 public class UserRecipeServiceImpl implements UserRecipeService {
 
 	private final UserRecipeDao dao;
-    private final ServletContext servletContext;
     private final ObjectMapper objectMapper;
     private final UtilService utilService;
 
@@ -273,6 +271,7 @@ public class UserRecipeServiceImpl implements UserRecipeService {
     
     // 이미지 경로를 완성된 URL로 만들어주는 private 헬퍼 메소드
     private String createFullUrl(String serverName) {
+    	
         return ServletUriComponentsBuilder.fromCurrentContextPath()
                 .path("/images/")
                 .path(serverName)
@@ -551,7 +550,7 @@ public class UserRecipeServiceImpl implements UserRecipeService {
 
 	@Override
     @Transactional
-	public RecipeDetailResponse selectOfficialRecipeDetail(int rcpNo, boolean increaseViewCount) {
+	public RecipeDetailResponse selectOfficialRecipeDetail(int rcpNo, Long userNo, boolean increaseViewCount) {
 		if (increaseViewCount) {
             dao.increaseViewCount(rcpNo);
         }
@@ -559,9 +558,14 @@ public class UserRecipeServiceImpl implements UserRecipeService {
         RecipeDetailResponse recipe = dao.selectOfficialRecipeDetail(rcpNo);
         
         if (recipe == null) return null;
-
-        // --- 나머지 로직은 기존 selectRecipeDetail과 거의 동일 ---
-        // (단, 사용자 관련 정보가 없으므로 myLikeStatus 조회는 생략)
+        
+        if (userNo  != null) {
+            Map<String, Object> params = new HashMap<>();
+            params.put("rcpNo", rcpNo);
+            params.put("userNo", userNo );
+            recipe.setBookmarked(dao.checkBookmark(params) > 0);
+        }
+       
         RcpIngs officialIngredients = dao.selectRcpIngs(rcpNo);
         if (officialIngredients != null) {
             recipe.setRcpIngList(officialIngredients.getRcpIngList());
@@ -572,7 +576,8 @@ public class UserRecipeServiceImpl implements UserRecipeService {
         
         // 대표 이미지
         if (recipe.getMainImage() != null && !recipe.getMainImage().isEmpty()) {
-            recipe.setMainImage(createFullUrl(recipe.getMainImage()));
+            String officialImageUrl = "http://www.foodsafetykorea.go.kr" + recipe.getMainImage();
+            recipe.setMainImage(officialImageUrl);
         }
 
         //작성자 프로필 이미지
@@ -584,12 +589,55 @@ public class UserRecipeServiceImpl implements UserRecipeService {
         if (recipe.getSteps() != null) {
             for (CookingStep step : recipe.getSteps()) {
                 if (step.getServerName() != null && !step.getServerName().isEmpty()) {
-                    step.setServerName(createFullUrl(step.getServerName()));
+                	String officialStepImageUrl = "http://www.foodsafetykorea.go.kr" + step.getServerName();
+                    step.setServerName(officialStepImageUrl);
                 }
             }
         }
-        
         return recipe;
+	}
+
+	@Override
+	public UserRecipeDto.BookmarkResponse toggleBookmark(int rcpNo, long userNo) {
+		Map<String, Object> params = new HashMap<>();
+        params.put("rcpNo", rcpNo);
+        params.put("userNo", userNo);
+        
+        boolean isBookmarked;
+        
+        if (dao.checkBookmark(params) > 0) {
+        	dao.deleteBookmark(params);
+            isBookmarked = false;
+        } else {
+        	 dao.insertBookmark(params);
+             isBookmarked = true;
+        }
+        
+        
+        int bookmarkCount = dao.countBookmarks(rcpNo);
+        return new UserRecipeDto.BookmarkResponse(isBookmarked, bookmarkCount);
+	}
+
+	@Override
+	public RecipePage selectOfficialRecipePage(Map<String, Object> params) {
+		int pageSize = 12;
+        params.put("pageSize", pageSize);
+        
+        long totalElements = dao.selectOfficialRecipeCount(params);
+        int totalPages = (int) Math.ceil((double) totalElements / pageSize);
+        
+        List<UserRecipeResponse> recipes = dao.selectOfficialRecipeList(params);
+        
+        // 이미지 경로를 전체 URL로 변환
+        for (UserRecipeResponse recipe : recipes) {
+            if (recipe.getServerName() != null && !recipe.getServerName().isEmpty()) {
+                // 공식 레시피 이미지 경로 규칙에 맞게 수정
+                String imageUrl = "http://www.foodsafetykorea.go.kr" + recipe.getServerName();
+                recipe.setServerName(imageUrl);
+            }
+        }
+        
+        return new RecipePage(recipes, totalPages, totalElements);
 	}
 }
 

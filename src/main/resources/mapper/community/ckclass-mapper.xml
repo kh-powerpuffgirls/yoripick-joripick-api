@@ -1,0 +1,307 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kh.ypjp.community.ckclass.dao.CkclassDao">
+
+<resultMap id="CkclassDtoResultMap" type="com.kh.ypjp.community.ckclass.dto.CkclassDto">
+    <id property="roomNo" column="ROOM_NO"/>
+    <result property="className" column="CLASS_NAME"/>
+    <result property="classInfo" column="CLASS_INFO"/>
+    <result property="userNo" column="USER_NO"/>
+    <result property="originName" column="ORIGIN_NAME"/>
+    <result property="serverName" column="SERVER_NAME"/>
+    <result property="imageNo" column="IMAGE_NO"/>
+    <result property="username" column="USERNAME"/>
+    <result property="memberCount" column="MEMBER_COUNT"/>
+    <result property="unreadCount" column="UNREAD_COUNT"/>
+    <result property="deleteStatus" column="DELETE_STATUS"/>
+    <result property="passcode" column="PASSCODE"/>
+    <result property="isNotificationOn" column="NOTIFICATION"/>
+</resultMap>
+
+<select id="selectMyClasses" resultMap="CkclassDtoResultMap" parameterType="int">
+    SELECT
+        t1.ROOM_NO,
+        t1.CLASS_NAME,
+        t1.CLASS_INFO,
+        t1.USER_NO,
+        u.USERNAME AS USERNAME,
+        i.ORIGIN_NAME,
+        i.SERVER_NAME,
+        i.IMAGE_NO,
+        (SELECT COUNT(*) FROM CLASS_ENROLL ce WHERE ce.ROOM_NO = t1.ROOM_NO) AS MEMBER_COUNT,
+        (
+            SELECT COUNT(*)
+            FROM MESSAGE m
+            WHERE m.REF_NO = t1.ROOM_NO
+              AND m.MESSAGE_NO > NVL((
+                    SELECT ce2.MESSAGE_NO
+                    FROM CLASS_ENROLL ce2
+                    WHERE ce2.USER_NO = #{userNo}
+                      AND ce2.ROOM_NO = t1.ROOM_NO
+              ), 0)
+              AND m.USER_NO != #{userNo}
+        ) AS UNREAD_COUNT,
+        ce_self.NOTIFICATION AS NOTIFICATION FROM COOKING_CLASS t1
+    LEFT JOIN USERS u ON t1.USER_NO = u.USER_NO
+    LEFT JOIN IMAGE i ON t1.IMAGE_NO = i.IMAGE_NO
+    LEFT JOIN CLASS_ENROLL ce_self ON t1.ROOM_NO = ce_self.ROOM_NO AND ce_self.USER_NO = #{userNo} WHERE t1.USER_NO = #{userNo}
+      AND t1.DELETE_STATUS = 'N'
+</select>
+
+<select id="selectJoinedClasses" resultMap="CkclassDtoResultMap" parameterType="int">
+    SELECT
+        t1.ROOM_NO,
+        t1.CLASS_NAME,
+        t1.CLASS_INFO,
+        t1.USER_NO,
+        u.USERNAME AS USERNAME,
+        i.ORIGIN_NAME,
+        i.SERVER_NAME,
+        i.IMAGE_NO,
+        (SELECT COUNT(*) FROM CLASS_ENROLL ce WHERE ce.ROOM_NO = t1.ROOM_NO) AS MEMBER_COUNT,
+        (
+            SELECT COUNT(m2.MESSAGE_NO)
+            FROM MESSAGE m2
+            WHERE m2.REF_NO = t1.ROOM_NO
+              AND m2.MESSAGE_NO > NVL((
+                    SELECT ce3.MESSAGE_NO
+                    FROM CLASS_ENROLL ce3
+                    WHERE ce3.USER_NO = #{userNo}
+                      AND ce3.ROOM_NO = t1.ROOM_NO
+              ), 0)
+              AND m2.USER_NO != #{userNo}
+        ) AS UNREAD_COUNT,
+        t2.NOTIFICATION AS NOTIFICATION FROM COOKING_CLASS t1
+    JOIN CLASS_ENROLL t2 ON t1.ROOM_NO = t2.ROOM_NO
+    LEFT JOIN USERS u ON t1.USER_NO = u.USER_NO
+    LEFT JOIN IMAGE i ON t1.IMAGE_NO = i.IMAGE_NO
+    WHERE t2.USER_NO = #{userNo}
+      AND t1.DELETE_STATUS = 'N'
+</select>
+
+<select id="selectById" resultMap="CkclassDtoResultMap" parameterType="int">
+    SELECT
+        t1.ROOM_NO,
+        t1.CLASS_NAME,
+        t1.CLASS_INFO,
+        t1.USER_NO,
+        t1.PASSCODE,
+        i.ORIGIN_NAME,
+        i.SERVER_NAME,
+        i.IMAGE_NO
+    FROM COOKING_CLASS t1
+    LEFT JOIN IMAGE i ON t1.IMAGE_NO = i.IMAGE_NO
+    WHERE t1.ROOM_NO = #{roomNo}
+</select>
+
+<insert id="insertClass" parameterType="com.kh.ypjp.community.ckclass.dto.CkclassDto">
+    <selectKey keyProperty="roomNo" resultType="int" order="BEFORE">
+        SELECT SEQ_ROOM_NO.NEXTVAL FROM DUAL
+    </selectKey>
+    INSERT INTO COOKING_CLASS (
+        ROOM_NO, CLASS_NAME, CLASS_INFO, PASSCODE, USER_NO, IMAGE_NO
+    ) VALUES (
+        #{roomNo}, #{className}, #{classInfo}, #{passcode}, #{userNo}, #{imageNo}
+    )
+</insert>
+
+<insert id="enrollCreator" parameterType="map">
+    INSERT INTO CLASS_ENROLL (ROOM_NO, USER_NO, MESSAGE_NO, NOTIFICATION)
+    VALUES (#{roomNo}, #{userNo}, NULL, 'Y')
+</insert>
+
+<update id="updateClass" parameterType="com.kh.ypjp.community.ckclass.dto.CkclassDto">
+    UPDATE COOKING_CLASS
+    <set>
+        <if test="className != null">CLASS_NAME = #{className},</if>
+        <if test="classInfo != null">CLASS_INFO = #{classInfo},</if>
+        <if test="passcode != null">PASSCODE = #{passcode},</if>
+    </set>
+    WHERE ROOM_NO = #{roomNo}
+</update>
+
+<update id="deleteClass" parameterType="int">
+    UPDATE COOKING_CLASS
+    SET DELETE_STATUS = 'Y'
+    WHERE ROOM_NO = #{roomNo}
+</update>
+
+<delete id="deleteMembersByRoomNo" parameterType="int">
+    DELETE FROM CLASS_ENROLL WHERE ROOM_NO = #{roomNo}
+</delete>
+
+<!-- 읽음 처리(MESSAGE_NO 업데이트 기능)
+	<update id="markMessagesAsRead" parameterType="map">
+    UPDATE CLASS_ENROLL
+    SET MESSAGE_NO = (
+        SELECT NVL(MAX(MESSAGE_NO), 0)
+        FROM MESSAGE
+        WHERE REF_NO = #{roomNo}
+    )
+    WHERE USER_NO = #{userNo}
+      AND ROOM_NO = #{roomNo}
+</update>
+ -->
+
+<update id="toggleNotification" parameterType="map">
+    UPDATE CLASS_ENROLL
+    SET NOTIFICATION = CASE
+        WHEN NOTIFICATION = 'Y' THEN 'N'
+        ELSE 'Y'
+    END
+    WHERE USER_NO = #{userNo} AND ROOM_NO = #{roomNo}
+</update>
+
+<insert id="insertImage" parameterType="map">
+    <selectKey keyProperty="imageNo" resultType="int" order="BEFORE">
+        SELECT SEQ_IMAGE_NO.NEXTVAL FROM DUAL
+    </selectKey>
+    INSERT INTO IMAGE (IMAGE_NO, ORIGIN_NAME, SERVER_NAME)
+    VALUES (#{imageNo}, #{originName}, #{serverName})
+</insert>
+
+<update id="updateClassImageNo" parameterType="map">
+    UPDATE COOKING_CLASS
+    SET IMAGE_NO = #{imageNo}
+    WHERE ROOM_NO = #{roomNo}
+</update>
+
+<select id="selectImageNoByRoomNo" parameterType="int" resultType="int">
+    SELECT IMAGE_NO
+    FROM COOKING_CLASS
+    WHERE ROOM_NO = #{roomNo}
+</select>
+
+<select id="selectAllClasses" parameterType="map" resultMap="CkclassDtoResultMap">
+    SELECT
+        t1.ROOM_NO,
+        t1.CLASS_NAME,
+        t1.CLASS_INFO,
+        t1.USER_NO,
+        u.USERNAME AS USERNAME,
+        i.ORIGIN_NAME,
+        i.SERVER_NAME,
+        i.IMAGE_NO,
+        (SELECT COUNT(*) FROM CLASS_ENROLL ce WHERE ce.ROOM_NO = t1.ROOM_NO) AS MEMBER_COUNT,
+        t1.PASSCODE
+    FROM COOKING_CLASS t1
+    LEFT JOIN USERS u ON t1.USER_NO = u.USER_NO
+    LEFT JOIN IMAGE i ON t1.IMAGE_NO = i.IMAGE_NO
+    WHERE t1.DELETE_STATUS = 'N'
+    <if test="excludeCode != null and excludeCode">
+        AND t1.PASSCODE IS NULL
+    </if>
+</select>
+
+<select id="selectClassesForSearch" resultMap="CkclassDtoResultMap" parameterType="map">
+    SELECT
+        t1.ROOM_NO,
+        t1.CLASS_NAME,
+        t1.CLASS_INFO,
+        t1.USER_NO,
+        u.USERNAME AS USERNAME,
+        i.ORIGIN_NAME,
+        i.SERVER_NAME,
+        (SELECT COUNT(*) FROM CLASS_ENROLL ce WHERE ce.ROOM_NO = t1.ROOM_NO) AS MEMBER_COUNT,
+        t1.PASSCODE
+    FROM COOKING_CLASS t1
+    LEFT JOIN IMAGE i ON t1.IMAGE_NO = i.IMAGE_NO
+    LEFT JOIN USERS u ON t1.USER_NO = u.USER_NO
+    <where>
+        t1.DELETE_STATUS = 'N'
+        <if test="keyword != null and keyword != ''">
+            <choose>
+                <when test="searchType != null and searchType.toLowerCase() == 'classname'.toLowerCase()">
+                    AND t1.CLASS_NAME LIKE '%' || #{keyword} || '%'
+                </when>
+                <when test="searchType != null and searchType.toLowerCase() == 'username'.toLowerCase()">
+                    AND u.USERNAME LIKE '%' || #{keyword} || '%'
+                </when>
+                <otherwise>
+                    AND (
+                        t1.CLASS_NAME LIKE '%' || #{keyword} || '%'
+                        OR u.USERNAME LIKE '%' || #{keyword} || '%'
+                    )
+                </otherwise>
+            </choose>
+        </if>
+        <if test="excludeCode != null and excludeCode == true">
+            AND t1.PASSCODE IS NULL
+        </if>
+    </where>
+</select>
+
+<select id="selectMembersByRoomNo" resultType="com.kh.ypjp.community.ckclass.dto.CkclassDto" parameterType="int">
+    SELECT 
+        u.USER_NO,
+        u.USERNAME,
+        i.SERVER_NAME
+    FROM CLASS_ENROLL ce
+    JOIN USERS u ON ce.USER_NO = u.USER_NO
+    LEFT JOIN IMAGE i ON u.IMAGE_NO = i.IMAGE_NO
+    WHERE ce.ROOM_NO = #{roomNo}
+</select>
+
+<select id="checkEnrollment" parameterType="map" resultType="int">
+    SELECT 1 FROM CLASS_ENROLL
+    WHERE ROOM_NO = #{roomNo} AND USER_NO = #{userNo}
+</select>
+
+<insert id="enrollUser" parameterType="map">
+    INSERT INTO CLASS_ENROLL (ROOM_NO, USER_NO, NOTIFICATION, MESSAGE_NO, JOIN_TIME)
+    VALUES (
+        #{roomNo},
+        #{userNo},
+        'Y',
+        NULL,
+        SYSTIMESTAMP
+    )
+</insert>
+
+<!-- 방장인지 확인 -->
+<select id="isOwner" resultType="int">
+    SELECT COUNT(*) FROM COOKING_CLASS
+    WHERE ROOM_NO = #{roomNo} AND USER_NO = #{userNo}
+</select>
+
+<!-- 특정 유저 강퇴 -->
+<delete id="kickMember">
+    DELETE FROM CLASS_ENROLL
+    WHERE ROOM_NO = #{roomNo} AND USER_NO = #{userNo}
+</delete>
+
+<delete id="deleteClassMember">
+        DELETE FROM CLASS_ENROLL
+        WHERE ROOM_NO = #{roomNo} AND USER_NO = #{userNo}
+    </delete>
+
+<select id="searchAllFields" resultMap="CkclassDtoResultMap" parameterType="map">
+    SELECT
+        t1.ROOM_NO,
+        t1.CLASS_NAME,
+        t1.CLASS_INFO,
+        t1.USER_NO,
+        u.USERNAME AS USERNAME,
+        i.ORIGIN_NAME,
+        i.SERVER_NAME,
+        i.IMAGE_NO,
+        (SELECT COUNT(*) FROM CLASS_ENROLL ce WHERE ce.ROOM_NO = t1.ROOM_NO) AS MEMBER_COUNT,
+        t1.PASSCODE
+    FROM COOKING_CLASS t1
+    LEFT JOIN IMAGE i ON t1.IMAGE_NO = i.IMAGE_NO
+    LEFT JOIN USERS u ON t1.USER_NO = u.USER_NO
+    <where>
+        t1.DELETE_STATUS = 'N'
+        <if test="keyword != null and keyword != ''">
+            AND (
+                t1.CLASS_NAME LIKE '%' || #{keyword} || '%'
+                OR u.USERNAME LIKE '%' || #{keyword} || '%'
+            )
+        </if>
+        <if test="excludeCode != null and excludeCode == true">
+            AND t1.PASSCODE IS NULL
+        </if>
+    </where>
+</select>
+</mapper>

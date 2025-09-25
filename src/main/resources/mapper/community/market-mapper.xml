@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kh.ypjp.community.market.dao.MarketDao">
+
+    <resultMap id="MarketSellDtoResultMap" type="com.kh.ypjp.community.market.dto.MarketSellDto">
+        <id property="productId" column="PRODUCT_ID" />
+        <result property="userNo" column="USER_NO" />
+        <result property="title" column="TITLE" />
+        <result property="imageNo" column="IMAGE_NO" />
+        <result property="name" column="NAME" />
+        <result property="detail" column="DETAIL" />
+        <result property="price" column="PRICE" />
+        <result property="quantity" column="QUANTITY" />
+        <result property="createdAt" column="CREATED_AT" />
+        <result property="deadline" column="DEADLINE" />
+        <result property="phone" column="PHONE" />
+        <result property="accountNo" column="ACCOUNT_NO" />
+        <result property="views" column="VIEWS" />
+        <result property="deleteStatus" column="DELETE_STATUS" />
+        <result property="author" column="AUTHOR" />
+        <result property="sikBti" column="SIK_BTI" />
+        <result property="authorProfileUrl" column="AUTHOR_PROFILE_URL" />
+        <result property="imageUrl" column="IMAGE_URL" />
+        <result property="serverName" column="IMAGE_SERVER_NAME" />
+        <result property="alwaysOnSale" column="ALWAYS_ON_SALE" />
+        
+        <collection property="buyForms" ofType="com.kh.ypjp.community.market.dto.MarketBuyDto" javaType="java.util.ArrayList">
+            <id property="formNo" column="FORM_NO" />
+            <result property="count" column="COUNT" />
+            <result property="buyerName" column="BUYER_NAME" />
+            <result property="dlvrName" column="DLVR_NAME" />
+            <result property="address" column="ADDRESS" />
+            <result property="detailAddress" column="DETAIL_ADDRESS" />
+            <result property="buyerPhone" column="BUYER_PHONE" />
+            <result property="userNo" column="BUYER_USER_NO" />
+            <result property="createdAt" column="FORM_CREATED_AT" />
+        </collection>
+    </resultMap>
+
+    <resultMap id="MarketBuyDtoResultMap" type="com.kh.ypjp.community.market.dto.MarketBuyDto">
+        <id property="formNo" column="FORM_NO" />
+        <result property="productId" column="PRODUCT_ID" />
+        <result property="userNo" column="BUYER_USER_NO" />
+        <result property="count" column="COUNT" />
+        <result property="buyerName" column="BUYER_NAME" />
+        <result property="dlvrName" column="DLVR_NAME" />
+        <result property="address" column="ADDRESS" />
+        <result property="detailAddress" column="DETAIL_ADDRESS" />
+        <result property="buyerPhone" column="BUYER_PHONE" />
+        <result property="createdAt" column="CREATED_AT" />
+    </resultMap>
+
+    <select id="getAllPosts" resultMap="MarketSellDtoResultMap">
+        SELECT
+            mp.PRODUCT_ID, mp.USER_NO, mp.TITLE, mp.IMAGE_NO, mp.NAME, mp.DETAIL, mp.PRICE,
+            mp.QUANTITY, mp.CREATED_AT, mp.DEADLINE, mp.PHONE, mp.ACCOUNT_NO, mp.VIEWS, mp.DELETE_STATUS,
+            mp.ALWAYS_ON_SALE,
+            u.USERNAME AS AUTHOR, u.SIK_BTI AS SIK_BTI,
+            CONCAT('/images/', ui.SERVER_NAME) AS AUTHOR_PROFILE_URL,
+            pi.SERVER_NAME AS IMAGE_SERVER_NAME, CONCAT('/images/', pi.SERVER_NAME) AS IMAGE_URL
+        FROM MARKETPLACE mp
+        JOIN USERS u ON mp.USER_NO = u.USER_NO
+        LEFT JOIN IMAGE ui ON u.IMAGE_NO = ui.IMAGE_NO
+        LEFT JOIN IMAGE pi ON mp.IMAGE_NO = pi.IMAGE_NO
+        WHERE mp.PRODUCT_ID = #{productId}
+    </select>
+
+    <select id="getPopularPosts" resultMap="MarketSellDtoResultMap">
+        SELECT
+            mp.PRODUCT_ID, mp.USER_NO, mp.TITLE, mp.IMAGE_NO, mp.NAME, mp.DETAIL, mp.PRICE,
+            mp.QUANTITY, mp.CREATED_AT, mp.DEADLINE, mp.PHONE, mp.ACCOUNT_NO, mp.VIEWS, mp.DELETE_STATUS,
+            u.USERNAME AS AUTHOR, u.SIK_BTI AS SIK_BTI,
+            CONCAT('/images/', ui.SERVER_NAME) AS AUTHOR_PROFILE_URL,
+            pi.SERVER_NAME AS IMAGE_SERVER_NAME, CONCAT('/images/', pi.SERVER_NAME) AS IMAGE_URL
+        FROM MARKETPLACE mp
+        JOIN USERS u ON mp.USER_NO = u.USER_NO
+        LEFT JOIN IMAGE ui ON u.IMAGE_NO = ui.IMAGE_NO
+        LEFT JOIN IMAGE pi ON mp.IMAGE_NO = pi.IMAGE_NO
+        WHERE mp.DELETE_STATUS = 'N' AND mp.QUANTITY > 0
+        ORDER BY mp.VIEWS DESC
+    </select>
+
+    <select id="getRecentPosts" resultMap="MarketSellDtoResultMap">
+        SELECT *
+        FROM (
+            SELECT
+                mp.PRODUCT_ID, mp.QUANTITY, mp.TITLE, mp.CREATED_AT, mp.VIEWS,
+                pi.SERVER_NAME AS IMAGE_SERVER_NAME, u.USERNAME AS AUTHOR, u.SIK_BTI AS SIK_BTI,
+                CONCAT('/images/', ui.SERVER_NAME) AS AUTHOR_PROFILE_URL,
+                CONCAT('/images/', pi.SERVER_NAME) AS IMAGE_URL
+            FROM MARKETPLACE mp
+            JOIN USERS u ON mp.USER_NO = u.USER_NO
+            LEFT JOIN IMAGE ui ON u.IMAGE_NO = ui.IMAGE_NO
+            LEFT JOIN IMAGE pi ON mp.IMAGE_NO = pi.IMAGE_NO
+            WHERE mp.DELETE_STATUS = 'N' AND mp.QUANTITY > 0
+            ORDER BY mp.CREATED_AT DESC
+        )
+        WHERE ROWNUM &lt;= 12
+    </select>
+    
+    <select id="selectSikBtiByUserNo" resultType="String">
+        SELECT SIK_BTI FROM USERS WHERE USER_NO = #{userNo}
+    </select>
+    
+    <select id="getPostDetail" resultMap="MarketSellDtoResultMap">
+        SELECT
+            mp.PRODUCT_ID, mp.USER_NO, mp.TITLE, mp.IMAGE_NO, mp.NAME, mp.DETAIL, mp.PRICE,
+            mp.QUANTITY, mp.CREATED_AT, mp.DEADLINE, mp.PHONE, mp.ACCOUNT_NO, mp.VIEWS, mp.DELETE_STATUS,
+            u.USERNAME AS AUTHOR, u.SIK_BTI AS SIK_BTI,
+            pi.SERVER_NAME AS IMAGE_SERVER_NAME, CONCAT('/images/', ui.SERVER_NAME) AS AUTHOR_PROFILE_URL,
+            CONCAT('/images/', pi.SERVER_NAME) AS IMAGE_URL
+        FROM MARKETPLACE mp
+        JOIN USERS u ON mp.USER_NO = u.USER_NO
+        LEFT JOIN IMAGE ui ON u.IMAGE_NO = ui.IMAGE_NO
+        LEFT JOIN IMAGE pi ON mp.IMAGE_NO = pi.IMAGE_NO
+        WHERE mp.PRODUCT_ID = #{productId}
+    </select>
+    
+    <select id="findUserNoById" resultType="long">
+        SELECT USER_NO FROM MARKETPLACE WHERE PRODUCT_ID = #{productId}
+    </select>
+    
+    <select id="findImageServerName" resultType="string">
+        SELECT SERVER_NAME FROM IMAGE WHERE IMAGE_NO = #{imageNo}
+    </select>
+
+    <insert id="registerPost" parameterType="com.kh.ypjp.community.market.dto.MarketSellDto">
+        <selectKey keyProperty="productId" resultType="long" order="BEFORE">
+            SELECT SEQ_PRODUCT_ID.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO MARKETPLACE (
+            PRODUCT_ID, USER_NO, TITLE, IMAGE_NO, NAME, DETAIL, PRICE, QUANTITY, DEADLINE, PHONE, ACCOUNT_NO, CREATED_AT, VIEWS, DELETE_STATUS
+        ) VALUES (
+            #{productId}, #{userNo}, #{title}, #{imageNo}, #{name}, #{detail}, #{price}, #{quantity}, #{deadline}, #{phone}, #{accountNo}, SYSDATE, 0, 'N'
+        )
+    </insert>
+
+    <update id="updatePost" parameterType="com.kh.ypjp.community.market.dto.MarketSellDto">
+        UPDATE MARKETPLACE
+        SET
+            TITLE = #{title},
+            <if test="imageNo != null">
+                IMAGE_NO = #{imageNo},
+            </if>
+            NAME = #{name},
+            DETAIL = #{detail},
+            PRICE = #{price},
+            QUANTITY = #{quantity},
+            DEADLINE = #{deadline},
+            PHONE = #{phone},
+            ACCOUNT_NO = #{accountNo}
+        WHERE PRODUCT_ID = #{productId}
+    </update>
+
+    <update id="updateDeleteStatus">
+        UPDATE MARKETPLACE
+        SET DELETE_STATUS = #{deleteStatus}
+        WHERE PRODUCT_ID = #{productId}
+    </update>
+    
+    <update id="incrementViews">
+        UPDATE MARKETPLACE
+        SET VIEWS = VIEWS + 1
+        WHERE PRODUCT_ID = #{productId}
+    </update>
+
+    <insert id="registerPurchaseForm" parameterType="com.kh.ypjp.community.market.dto.MarketBuyDto">
+        <selectKey keyProperty="formNo" resultType="long" order="BEFORE">
+            SELECT SEQ_MP_FORM_NO.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO MARKET_FORM (
+            FORM_NO, PRODUCT_ID, USER_NO, COUNT, BUYER_NAME, DLVR_NAME, ADDRESS, PHONE, DETAIL_ADDRESS, CREATED_AT, DELETE_STATUS
+        ) VALUES (
+            #{formNo}, #{productId}, #{userNo}, #{count}, #{buyerName}, #{dlvrName}, #{address}, #{buyerPhone}, #{detailAddress}, SYSDATE, 'N'
+        )
+    </insert>
+
+    <update id="decreaseQuantity">
+        UPDATE MARKETPLACE
+        SET QUANTITY = QUANTITY - #{count}
+        WHERE PRODUCT_ID = #{productId}
+    </update>
+
+    <select id="getProductQuantity" resultType="int">
+        SELECT QUANTITY FROM MARKETPLACE WHERE PRODUCT_ID = #{productId}
+    </select>
+   
+    <select id="findMyPostsWithForms" resultMap="MarketSellDtoResultMap">
+        SELECT
+            mp.PRODUCT_ID, mp.USER_NO, mp.TITLE, mp.IMAGE_NO, mp.NAME, mp.DETAIL, mp.PRICE,
+            mp.QUANTITY, mp.CREATED_AT, mp.DEADLINE, mp.PHONE, mp.ACCOUNT_NO, mp.VIEWS, mp.DELETE_STATUS,
+            u.USERNAME AS AUTHOR, u.SIK_BTI AS SIK_BTI,
+            CONCAT('/images/', ui.SERVER_NAME) AS AUTHOR_PROFILE_URL,
+            CONCAT('/images/', pi.SERVER_NAME) AS IMAGE_URL,
+            f.FORM_NO AS FORM_NO, f.PRODUCT_ID AS FORM_PRODUCT_ID, f.USER_NO AS BUYER_USER_NO,
+            f.COUNT, f.BUYER_NAME, f.DLVR_NAME, f.ADDRESS, f.DETAIL_ADDRESS,
+            f.PHONE AS BUYER_PHONE, f.CREATED_AT AS FORM_CREATED_AT
+        FROM MARKETPLACE mp
+        JOIN USERS u ON mp.USER_NO = u.USER_NO
+        LEFT JOIN IMAGE ui ON u.IMAGE_NO = ui.IMAGE_NO
+        LEFT JOIN IMAGE pi ON mp.IMAGE_NO = pi.IMAGE_NO
+        LEFT JOIN MARKET_FORM f ON mp.PRODUCT_ID = f.PRODUCT_ID AND f.DELETE_STATUS = 'N'
+        WHERE 
+            mp.USER_NO = #{userNo}
+            AND mp.DELETE_STATUS = 'N'
+        ORDER BY mp.CREATED_AT DESC
+    </select>
+
+    <select id="findPurchaseForm" resultMap="MarketBuyDtoResultMap">
+        SELECT
+            FORM_NO, PRODUCT_ID, USER_NO AS BUYER_USER_NO, COUNT, BUYER_NAME, DLVR_NAME, ADDRESS, DETAIL_ADDRESS, PHONE AS BUYER_PHONE, CREATED_AT
+        FROM MARKET_FORM
+        WHERE FORM_NO = #{formId} AND DELETE_STATUS = 'N'
+    </select>
+
+    <select id="findSellerByFormId" resultType="long">
+        SELECT
+            mp.USER_NO
+        FROM MARKET_FORM f
+        JOIN MARKETPLACE mp ON f.PRODUCT_ID = mp.PRODUCT_ID
+        WHERE f.FORM_NO = #{formId}
+    </select>
+
+    <update id="updateBuyFormDeleteStatus">
+        UPDATE MARKET_FORM
+        SET DELETE_STATUS = #{status}
+        WHERE FORM_NO = #{formId}
+    </update>
+</mapper>
