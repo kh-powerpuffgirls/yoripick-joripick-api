@@ -35,12 +35,9 @@ public class CkclassService {
 
     @Transactional
     public void saveClass(CkclassDto dto, MultipartFile file) throws IOException {
-        // 패스코드 유효성 검사 (null 또는 빈 문자열 허용)
         if (dto.getPasscode() != null && !dto.getPasscode().isEmpty() && !dto.getPasscode().matches("\\d{4}")) {
             throw new IllegalArgumentException("패스코드는 4자리 숫자여야 합니다.");
         }
-
-        // 빈 문자열이면 null로 처리
         if (dto.getPasscode() != null && dto.getPasscode().isEmpty()) {
             dto.setPasscode(null);
         }
@@ -80,12 +77,10 @@ public class CkclassService {
 
     @Transactional
     public int updateClass(CkclassDto dto, MultipartFile file, int userNo, boolean isAdmin) throws IOException {
-        // 패스코드 유효성 검사 (null 또는 빈 문자열 허용)
         if (dto.getPasscode() != null && !dto.getPasscode().isEmpty() && !dto.getPasscode().matches("\\d{4}")) {
             throw new IllegalArgumentException("패스코드는 4자리 숫자여야 합니다.");
         }
 
-        // 빈 문자열이면 null로 처리
         if (dto.getPasscode() != null && dto.getPasscode().isEmpty()) {
             dto.setPasscode(null);
         }
@@ -127,21 +122,16 @@ public class CkclassService {
             return false;
         }
 
-        // [추가] 클래스 삭제 전 모든 참여자 삭제
         ckclassDao.deleteMembersByRoomNo(roomNo);
 
         int result = ckclassDao.deleteClass(roomNo);
         return result > 0;
     }
 
-    public void markMessagesRead(int roomNo, int userNo) {
-        ckclassDao.markMessagesRead(roomNo, userNo);
-    }
-
     @Transactional
     public CkclassDto toggleNotification(int roomNo, int userNo) {
         ckclassDao.toggleNotification(roomNo, userNo);
-        return ckclassDao.selectById(roomNo); // DB에서 업데이트된 객체를 다시 조회하여 반환
+        return ckclassDao.selectById(roomNo);
     }
 
     public List<CkclassDto> findAllClasses(boolean excludeCode) {
@@ -188,24 +178,21 @@ public class CkclassService {
 
     @Transactional
     public void enrollUser(int roomNo, int userNo) {
-        // 1. 이미 가입되어 있는지 확인
         Integer isEnrolled = ckclassDao.checkEnrollment(roomNo, userNo);
         if (isEnrolled != null) {
             throw new RuntimeException("이미 클래스에 가입되어 있습니다.");
         }
 
-        // 2. DAO를 위한 파라미터 준비
         Map<String, Object> paramMap = new HashMap<>();
         paramMap.put("roomNo", roomNo);
         paramMap.put("userNo", userNo); 
 
-        // 3. 사용자 가입 처리
         ckclassDao.enrollUser(paramMap);
     }
 
-    // ✅ 안 읽은 메시지 수를 업데이트하는 메서드
+    // 안 읽은 메시지 수를 업데이트하는 메서드 (여기 주석 해놓음)
     public void markMessagesAsRead(int roomNo, int userNo) {
-        ckclassDao.markMessagesRead(roomNo, userNo);
+        // ckclassDao.markMessagesRead(roomNo, userNo); // 채팅방 참여 시 message_no 업데이트
     }
     
     public boolean kickMember(int roomNo, int targetUserNo, int requesterUserNo) {
@@ -217,6 +204,20 @@ public class CkclassService {
 
         // 강퇴 실행
         int result = ckclassDao.kickMember(roomNo, targetUserNo);
+        return result > 0;
+    }
+    
+
+    @Transactional
+    public boolean leaveClass(int roomNo, int userNo) {
+        CkclassDto classInfo = ckclassDao.selectById(roomNo);
+        if (classInfo == null) {
+            return false; 
+        }
+        if (classInfo.getUserNo() == userNo) {
+            throw new IllegalStateException("본인이 개설한 클래스는 탈퇴할 수 없습니다. 삭제 기능을 이용해주세요.");
+        }
+        int result = ckclassDao.deleteClassMember(roomNo, userNo);
         return result > 0;
     }
 

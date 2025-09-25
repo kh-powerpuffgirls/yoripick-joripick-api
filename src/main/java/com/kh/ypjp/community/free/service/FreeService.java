@@ -131,16 +131,20 @@ public class FreeService {
         Integer count = freeDao.getLikesCount(boardNo);
         return count != null ? count : 0;
     }
-
-    // 댓글 전체 조회
+ // FreeService.java
     public List<ReplyDto> selectAllRepliesByBoardNo(int boardNo) {
         List<ReplyDto> replies = freeDao.selectAllRepliesByBoardNo(boardNo);
+        
         for (ReplyDto reply : replies) {
-            reply.setSik_bti(freeDao.selectSikBtiByUserNo(reply.getUserNo()));
+            String profileImageServerName = reply.getProfileImageServerName();
+            if (profileImageServerName != null && !profileImageServerName.isEmpty()) {
+                // "profile/{userno}/{파일이름.확장자}" 형식으로 경로를 완성합니다.
+                String fullPath = "profile/" + reply.getUserNo() + "/" + profileImageServerName;
+                reply.setProfileImageServerName(fullPath);
+            }
         }
         return replies;
     }
-
     // 댓글 등록
     @Transactional
     public int insertReply(ReplyDto replyDto) {
