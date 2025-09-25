@@ -24,12 +24,10 @@ public interface CkclassDao {
 
     int deleteClass(int roomNo);
 
-    // ✅ 클래스 삭제 시 모든 멤버를 삭제하는 메소드는 이미 존재합니다.
     void deleteMembersByRoomNo(int roomNo);
-
-    void markMessagesRead(int roomNo, int userNo);
     
-    // ✅ 이 메소드가 알림 상태를 토글합니다.
+    // void markMessagesAsRead(int roomNo, int userNo);
+    
     void toggleNotification(int roomNo, int userNo);
 
     List<CkclassDto> selectAllClasses(Map<String, Object> paramMap);
@@ -54,10 +52,10 @@ public interface CkclassDao {
 
     void enrollUser(Map<String, Object> paramMap);
     
- // 멤버 강퇴 (특정 유저를 방에서 제거)
     int kickMember(@Param("roomNo") int roomNo, @Param("userNo") int userNo);
 
-    // 방장이 맞는지 확인
     int isOwner(@Param("roomNo") int roomNo, @Param("userNo") int userNo);
+    
+    int deleteClassMember(@Param("roomNo") int roomNo, @Param("userNo") int userNo);
 
 }
