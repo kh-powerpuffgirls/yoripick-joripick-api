@@ -164,7 +164,7 @@ public class CkclassController {
             return new ResponseEntity<>("로그인 후 이용해주세요.", HttpStatus.UNAUTHORIZED);
         }
 
-        ckclassService.markMessagesRead(roomNo, userNo.intValue());
+        ckclassService.markMessagesAsRead(roomNo, userNo.intValue()); 
         return ResponseEntity.ok("읽음 처리 완료");
     }
     
@@ -189,7 +189,6 @@ public class CkclassController {
         }
     }
     
-    // ✅ 이 새로운 엔드포인트를 추가하세요.
     @PostMapping("/enroll")
     public ResponseEntity<String> enrollUser(
             @RequestBody CkclassDto ckclassDto,
@@ -215,22 +214,22 @@ public class CkclassController {
     public ResponseEntity<?> toggleNotification(@PathVariable int roomNo, @AuthenticationPrincipal Long userNo) {
         try {
             CkclassDto updatedClass = ckclassService.toggleNotification(roomNo, userNo.intValue());
-            return ResponseEntity.ok(updatedClass); // DTO 객체를 반환
+            return ResponseEntity.ok(updatedClass);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
     }
-    
-    // ✅ 안 읽은 메시지를 읽음 처리하는 API 엔드포인트
-    @PutMapping("/read-count")
-    public ResponseEntity<Void> markMessagesAsRead(@RequestBody CkclassDto ckclassDto) {
-        try {
-            ckclassService.markMessagesAsRead(ckclassDto.getRoomNo(), ckclassDto.getUserNo());
-            return ResponseEntity.ok().build();
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
-        }
-    }
+
+      // 안 읽은 메시지를 읽음 처리
+//    @PutMapping("/read-count")
+//    public ResponseEntity<Void> markMessagesAsRead(@RequestBody CkclassDto ckclassDto) {
+//        try {
+//            ckclassService.markMessagesAsRead(ckclassDto.getRoomNo(), ckclassDto.getUserNo());
+//            return ResponseEntity.ok().build();
+//        } catch (Exception e) {
+//            return ResponseEntity.internalServerError().build();
+//        }
+//    }
     
     @DeleteMapping("/{roomNo}/kick/{userNo}")
     public ResponseEntity<String> kickMember(
@@ -251,4 +250,24 @@ public class CkclassController {
         }
     }
 
+    @DeleteMapping("/{roomNo}/leave")
+    public ResponseEntity<String> leaveClass(@PathVariable int roomNo, @AuthenticationPrincipal Long userNo) {
+        if (userNo == null) {
+            return new ResponseEntity<>("로그인이 필요합니다.", HttpStatus.UNAUTHORIZED);
+        }
+        try {
+            boolean isLeft = ckclassService.leaveClass(roomNo, userNo.intValue());
+            
+            if (isLeft) {
+                return new ResponseEntity<>("클래스에서 성공적으로 탈퇴했습니다.", HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>("탈퇴에 실패했습니다. 클래스에 참여하지 않았거나 해당 클래스가 존재하지 않습니다.", HttpStatus.FORBIDDEN);
+            }
+        } catch (IllegalStateException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.FORBIDDEN);
+        } catch (Exception e) {
+            return new ResponseEntity<>("탈퇴 처리 중 예상치 못한 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    
 }
