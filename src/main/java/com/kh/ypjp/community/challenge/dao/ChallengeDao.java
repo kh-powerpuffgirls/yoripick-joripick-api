@@ -4,6 +4,7 @@ import com.kh.ypjp.community.challenge.dto.*;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import java.util.List;
+import java.time.LocalDate;
 
 @Mapper
 public interface ChallengeDao {
@@ -43,11 +44,9 @@ public interface ChallengeDao {
     
     ChallengeInfoDto findChallengeInfoByNo(@Param("chInfoNo") Long chInfoNo);
 
-    List<Long> findExpiredChInfoNos(@Param("currentDate") java.time.LocalDate currentDate);
+    List<Long> findExpiredChInfoNos(@Param("currentDate") LocalDate currentDate);
     int updateChallengesDeleteStatusByInfoNos(
     	    @Param("chInfoNos") List<Long> chInfoNos,
     	    @Param("deleteStatus") String deleteStatus
     	);
-
-
 }

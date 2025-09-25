@@ -23,23 +23,40 @@ public class ChallengeService {
     private final ChallengeDao challengeDao;
     private final UtilService utilService;
 
-    // 모든 챌린지 게시글 조회
+    // 모든 챌린지 게시글 조회 (프로필 이미지 경로 가공 로직 추가)
     public List<ChallengeDto> getAllPosts() {
-        return challengeDao.findAll();
-    }
+        List<ChallengeDto> postList = challengeDao.findAll();
+        
+        for (ChallengeDto post : postList) {
+            if (post.getProfileImageServerName() != null && !post.getProfileImageServerName().isEmpty()) {
+                String fullPath = "profile/" + post.getUserNo() + "/" + post.getProfileImageServerName();
 
-    // 게시글 조회 및 조회수 증가 처리
-    @Transactional
-    public Optional<ChallengeDto> getPostAndIncrementViews(Long id, Long userNo) {
-        ChallengeDto post = challengeDao.findByIdWithImage(id);
-        if (post == null) return Optional.empty();
-
-        if (userNo == null || !userNo.equals(post.getUserNo())) {
-            challengeDao.incrementViews(id);
-            post.setViews(post.getViews() + 1);
+                String imageUrl = "/images/" + fullPath;
+                post.setProfileImageServerName(imageUrl); 
+            }
         }
-        return Optional.of(post);
+        
+        return postList;
     }
+
+	 // 게시글 조회 및 조회수 증가
+	 @Transactional
+	 public Optional<ChallengeDto> getPostAndIncrementViews(Long id, Long userNo) {
+	     ChallengeDto post = challengeDao.findByIdWithImage(id); 
+	     if (post == null) return Optional.empty();
+	
+	     if (post.getProfileImageServerName() != null && !post.getProfileImageServerName().isEmpty()) {
+	         String fullPath = "profile/" + post.getUserNo() + "/" + post.getProfileImageServerName();
+	         String imageUrl = "/images/" + fullPath;
+	         post.setProfileImageServerName(imageUrl);
+	     }
+	     
+	     if (userNo == null || !userNo.equals(post.getUserNo())) {
+	         challengeDao.incrementViews(id);
+	         post.setViews(post.getViews() + 1);
+	     }
+	     return Optional.of(post);
+	 }
 
     // 이전/다음 게시글 번호 조회
     public Map<String, Long> getNavigation(Long challengeNo) {
@@ -116,10 +133,18 @@ public class ChallengeService {
 
     @Transactional
     public void setLikeStatus(Long challengeNo, Long userNo, String likeStatus) {
-        if (!likeStatus.equals("LIKE") && !likeStatus.equals("DISLIKE") && !likeStatus.equals("COMMON")) {
+        if (!"LIKE".equals(likeStatus) && !"DISLIKE".equals(likeStatus) && !"COMMON".equals(likeStatus)) {
             likeStatus = "COMMON";
         }
-        challengeDao.insertOrUpdateLike(userNo, challengeNo, likeStatus);
+        String currentStatus = challengeDao.findLikeStatus(userNo, challengeNo);
+
+        if ("COMMON".equals(likeStatus) || likeStatus.equals(currentStatus)) {
+            if (currentStatus != null) { 
+                challengeDao.deleteLike(userNo, challengeNo);
+            }
+        } else {
+            challengeDao.insertOrUpdateLike(userNo, challengeNo, likeStatus);
+        }
     }
 
 

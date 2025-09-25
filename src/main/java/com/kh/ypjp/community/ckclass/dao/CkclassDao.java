@@ -55,4 +55,5 @@ public interface CkclassDao {
     int isOwner(@Param("roomNo") int roomNo, @Param("userNo") int userNo);
     
     int deleteClassMember(@Param("roomNo") int roomNo, @Param("userNo") int userNo);
+
 }

@@ -84,7 +84,8 @@
         SELECT *
         FROM (
             SELECT
-                mp.PRODUCT_ID, mp.QUANTITY, mp.TITLE, mp.CREATED_AT, mp.VIEWS,
+                mp.PRODUCT_ID, 
+                mp.USER_NO, mp.QUANTITY, mp.TITLE, mp.CREATED_AT, mp.VIEWS,
                 pi.SERVER_NAME AS IMAGE_SERVER_NAME, u.USERNAME AS AUTHOR, u.SIK_BTI AS SIK_BTI,
                 CONCAT('/images/', ui.SERVER_NAME) AS AUTHOR_PROFILE_URL,
                 CONCAT('/images/', pi.SERVER_NAME) AS IMAGE_URL
@@ -100,6 +101,12 @@
     
     <select id="selectSikBtiByUserNo" resultType="String">
         SELECT SIK_BTI FROM USERS WHERE USER_NO = #{userNo}
+    </select>
+    
+    <select id="selectProfileFileNameByUserNo" resultType="string"> SELECT SERVER_NAME 
+        FROM IMAGE i
+        JOIN USERS u ON i.IMAGE_NO = u.IMAGE_NO
+        WHERE u.USER_NO = #{userNo}
     </select>
     
     <select id="getPostDetail" resultMap="MarketSellDtoResultMap">

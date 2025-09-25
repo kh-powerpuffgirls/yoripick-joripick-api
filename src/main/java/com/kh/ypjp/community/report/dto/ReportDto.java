@@ -16,4 +16,8 @@ public class ReportDto {
 
     private String category;    
     private String detail;   
+    
+    private int reportedUserNo;
+    private String reportedUserNickname; 
+    private String reportedUserProfileImageUrl;
 }

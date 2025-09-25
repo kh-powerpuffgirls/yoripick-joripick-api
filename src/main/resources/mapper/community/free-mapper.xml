@@ -161,14 +161,13 @@
 	        VALUES (#{userNo}, 'BOARD', #{boardNo}, #{likeStatus}, SYSDATE)
 	</update>
 	
-	<!-- 좋아요/싫어요 취소 -->
-	<update id="deleteLike">
-	    UPDATE LIKES
-	    SET LIKE_STATUS = 'COMMON', LIKED_AT = SYSDATE
-	    WHERE USER_NO = #{userNo} 
-	      AND REF_TYPE = 'BOARD' 
-	      AND REF_NO = #{boardNo}
-	</update>
+	<!-- 좋아요/싫어요 삭제 -->
+		<delete id="deleteLike">
+		    DELETE FROM LIKES
+		    WHERE USER_NO = #{userNo} 
+		      AND REF_TYPE = 'BOARD' 
+		      AND REF_NO = #{boardNo}
+		</delete>
 
 	<!-- 게시글 좋아요 개수 조회 -->
 	<select id="getLikesCount" resultType="int">

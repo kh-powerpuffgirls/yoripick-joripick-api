@@ -27,50 +27,62 @@ import jakarta.servlet.http.HttpServletRequest;
 public class ChallengeController {
 
     private final ChallengeService challengeService;
+	
+	 @GetMapping
+	 public ResponseEntity<List<ChallengeDto>> getAllPosts(HttpServletRequest request) {
+	     List<ChallengeDto> challengeList = challengeService.getAllPosts();
+	
+	     String baseUrl = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort();
+	
+	     for (ChallengeDto challenge : challengeList) {
+	         if (challenge.getServerName() != null && !challenge.getServerName().isEmpty()) {
+	             String imageUrl = UriComponentsBuilder.fromUriString(baseUrl)
+	                     .path("/images/")
+	                     .path(challenge.getServerName())
+	                     .toUriString();
+	             challenge.setImageUrl(imageUrl);
+	         }
+	         if (challenge.getProfileImageServerName() != null && !challenge.getProfileImageServerName().isEmpty()) {
+	             String profileUrl = UriComponentsBuilder.fromUriString(baseUrl)
+	                     .path(challenge.getProfileImageServerName())
+	                     .toUriString();
+	             challenge.setProfileImageServerName(profileUrl);
+	         }
+	     }
+	     return ResponseEntity.ok(challengeList);
+	 }
 
-    // 전체 게시글 조회
-    @GetMapping
-    public ResponseEntity<List<ChallengeDto>> getAllPosts(HttpServletRequest request) {
-        List<ChallengeDto> challengeList = challengeService.getAllPosts();
-
-        String baseUrl = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort();
-
-        for (ChallengeDto challenge : challengeList) {
-            if (challenge.getServerName() != null && !challenge.getServerName().isEmpty()) {
-                String imageUrl = UriComponentsBuilder.fromUriString(baseUrl)
-                        .path("/images/")
-                        .path(challenge.getServerName())
-                        .toUriString();
-                challenge.setImageUrl(imageUrl);
-            }
-        }
-        return ResponseEntity.ok(challengeList);
-    }
-
-    // 게시글 단건 조회
-    @GetMapping("/{id}")
-    public ResponseEntity<ChallengeDto> getPost(
-            @PathVariable Long id,
-            @AuthenticationPrincipal Long userNo,
-            HttpServletRequest request) {
-
-        Optional<ChallengeDto> optionalPost = challengeService.getPostAndIncrementViews(id, userNo);
-        
-        if (optionalPost.isPresent()) {
-            ChallengeDto post = optionalPost.get();
-            if (post.getServerName() != null && !post.getServerName().isEmpty()) {
-                String baseUrl = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort();
-                String imageUrl = UriComponentsBuilder.fromUriString(baseUrl)
-                        .path("/images/")
-                        .path(post.getServerName())
-                        .toUriString();
-                post.setImageUrl(imageUrl);
-            }
-            return ResponseEntity.ok(post);
-        } else {
-            return ResponseEntity.notFound().build();
-        }
-    }
+	 // 게시글 단건 조회
+	 @GetMapping("/{id}")
+	 public ResponseEntity<ChallengeDto> getPost(
+	         @PathVariable Long id,
+	         @AuthenticationPrincipal Long userNo,
+	         HttpServletRequest request) {
+	
+	     Optional<ChallengeDto> optionalPost = challengeService.getPostAndIncrementViews(id, userNo);
+	     
+	     if (optionalPost.isPresent()) {
+	         ChallengeDto post = optionalPost.get();
+	         String baseUrl = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort();
+	
+	         if (post.getServerName() != null && !post.getServerName().isEmpty()) {
+	             String imageUrl = UriComponentsBuilder.fromUriString(baseUrl)
+	                     .path("/images/")
+	                     .path(post.getServerName())
+	                     .toUriString();
+	             post.setImageUrl(imageUrl);
+	         }	
+	         if (post.getProfileImageServerName() != null && !post.getProfileImageServerName().isEmpty()) {
+	             String profileUrl = UriComponentsBuilder.fromUriString(baseUrl)
+	                     .path(post.getProfileImageServerName())
+	                     .toUriString();	          
+	             post.setProfileImageServerName(profileUrl); 
+	         }
+	         return ResponseEntity.ok(post);
+	     } else {
+	         return ResponseEntity.notFound().build();
+	     }
+	 }
     
     @GetMapping("/navigation/{challengeNo}")
     public ResponseEntity<Map<String, Long>> getNavigation(@PathVariable Long challengeNo) {
