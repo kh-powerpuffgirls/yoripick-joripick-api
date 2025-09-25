@@ -166,5 +166,28 @@
 		SELECT * FROM dual
 	</insert>
 	
+	<!--main-->
+	<select id="selectIngPediaMain" resultType="com.kh.ypjp.ingpedia.model.dto.IngPediaDto$IngPediaMainResponse">
+		SELECT * FROM (
+		    SELECT N.*, ROW_NUMBER() OVER (
+		        ORDER BY DBMS_RANDOM.VALUE(TO_NUMBER(TO_CHAR(SYSDATE, 'YYYYMMDD')), N.ING_NO)
+		    ) RNUM
+		    FROM (
+		        SELECT
+		            I.ING_NO,
+		            I.ING_NAME,
+		            IM.SERVER_NAME AS "imgUrl",
+		            M.BUYING_TIP,
+		            M.USAGE_TIP,
+		            M.STORAGE_METHOD,
+		            M.PREPARATION
+		        FROM INGREDIENT I
+		        LEFT JOIN IMAGE IM ON I.IMAGE_NO = IM.IMAGE_NO
+		        JOIN ING_METHOD M ON I.ING_NO = M.ING_NO
+		    ) N
+		) TMP
+       	<![CDATA[WHERE TMP.RNUM <= 5]]>
+	</select>
+	
 	
 </mapper>
