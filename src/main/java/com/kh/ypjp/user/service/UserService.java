@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -177,5 +178,24 @@ public class UserService {
             }
         }
     }
+
+	public boolean inactiveUser(Long userNo) {
+		int result = userDao.inactiveUser(userNo);
+		
+		return result > 0;
+	}
+
+	public Optional<User> getUserByUserNo(Long userNo) {
+	    User user = userDao.getUserByUserNo(userNo).orElse(null);
+	    return Optional.ofNullable(user);
+	}
+
+	public List<Map<String, Object>> getUserRecipes(Long userNo) {
+	    return userDao.getUserRecipes(userNo);
+	}
+
+	public List<Map<String, Object>> getUserLikedRecipes(Long userNo) {
+	    return userDao.getUserLikedRecipes(userNo);
+	}
 
 }
