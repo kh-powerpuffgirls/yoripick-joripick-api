@@ -190,4 +190,12 @@ public class UserService {
 	    return Optional.ofNullable(user);
 	}
 
+	public List<Map<String, Object>> getUserRecipes(Long userNo) {
+	    return userDao.getUserRecipes(userNo);
+	}
+
+	public List<Map<String, Object>> getUserLikedRecipes(Long userNo) {
+	    return userDao.getUserLikedRecipes(userNo);
+	}
+
 }

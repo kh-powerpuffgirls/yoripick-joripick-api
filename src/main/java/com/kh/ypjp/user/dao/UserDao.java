@@ -75,4 +75,22 @@ public class UserDao {
         User user = session.selectOne("user.getUserByUserNo", userNo);
         return Optional.ofNullable(user);
     }
+    
+    public List<Map<String, Object>> getUserRecipes(Long userNo) {
+        return session.selectList("user.getUserRecipes", userNo);
+    }
+
+    public List<Map<String, Object>> getUserLikedRecipes(Long userNo) {
+        return session.selectList("user.getUserLikedRecipes", userNo);
+    }
+    
+    public List<Map<String, Object>> getUserRecipesPaging(Long userNo, int startRow, int endRow) {
+        return session.selectList("user.getUserRecipesPaging",
+                Map.of("userNo", userNo, "startRow", startRow, "endRow", endRow));
+    }
+
+    public List<Map<String, Object>> getUserLikedRecipesPaging(Long userNo, int startRow, int endRow) {
+        return session.selectList("user.getUserLikedRecipesPaging",
+                Map.of("userNo", userNo, "startRow", startRow, "endRow", endRow));
+    }
 }

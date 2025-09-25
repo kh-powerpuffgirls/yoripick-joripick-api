@@ -9,7 +9,8 @@
 	</update>
 
 
-	<select id="getMypageInfo" parameterType="long" resultType="map">
+	<select
+		id="getMypageInfo" parameterType="long" resultType="map">
 		SELECT U.USER_NO,
 		U.USERNAME,
 		U.EMAIL,
@@ -19,16 +20,19 @@
 		WHERE U.USER_NO = #{userNo}
 	</select>
 
-	<select id="getUserImageNo" parameterType="long" resultType="long">
+	<select
+		id="getUserImageNo" parameterType="long" resultType="long">
 		SELECT IMAGE_NO FROM USERS WHERE USER_NO = #{userNo}
 	</select>
 
-	<delete id="deleteImage" parameterType="long">
+	<delete
+		id="deleteImage" parameterType="long">
 		DELETE FROM IMAGE WHERE IMAGE_NO = #{imageNo}
 	</delete>
 
 
-	<update id="updateUser" parameterType="map"> UPDATE users <set>
+	<update
+		id="updateUser" parameterType="map"> UPDATE users <set>
 			<if test="username != null">
 				username = #{username},
 			</if>
@@ -36,61 +40,112 @@
 				email = #{email},
 			</if>
 		</set> WHERE user_no =
-		#{userNo}
-	</update>
-	
+		#{userNo} </update>
+
 	<update id="updateAlarm">
-	    UPDATE USERS
-	    SET 
-	        MSG_NOTI = #{msgNoti},
-	        REPLY_NOTI = #{replyNoti},
-	        RVW_NOTI = #{rvwNoti},
-	        EXP_NOTI = #{expNoti}
-	    WHERE USER_NO = #{userNo}
+		UPDATE USERS
+		SET
+		MSG_NOTI = #{msgNoti},
+		REPLY_NOTI = #{replyNoti},
+		RVW_NOTI = #{rvwNoti},
+		EXP_NOTI = #{expNoti}
+		WHERE USER_NO = #{userNo}
 	</update>
-	
-	<select id="getAlarmSettings" resultType="map">
-	    SELECT 
-	        MSG_NOTI as msgNoti,
-	        REPLY_NOTI as replyNoti,
-	        RVW_NOTI as rvwNoti,
-	        EXP_NOTI as expNoti
-	    FROM USERS
-	    WHERE USER_NO = #{userNo}
+
+	<select
+		id="getAlarmSettings" resultType="map">
+		SELECT
+		MSG_NOTI as msgNoti,
+		REPLY_NOTI as replyNoti,
+		RVW_NOTI as rvwNoti,
+		EXP_NOTI as expNoti
+		FROM USERS
+		WHERE USER_NO = #{userNo}
 	</select>
-	
-	<select id="getUserAllergies" parameterType="long" resultType="long">
-	    SELECT ALLERGY_NO
-	    FROM USER_ALLERGY
-	    WHERE USER_NO = #{userNo}
+
+	<select
+		id="getUserAllergies" parameterType="long" resultType="long">
+		SELECT ALLERGY_NO
+		FROM USER_ALLERGY
+		WHERE USER_NO = #{userNo}
 	</select>
-	
-	<insert id="insertUserAllergy">
-	  INSERT INTO user_allergy(user_no, allergy_no)
-	  VALUES (#{userNo}, #{allergyNo})
+
+	<insert
+		id="insertUserAllergy">
+		INSERT INTO user_allergy(user_no, allergy_no)
+		VALUES (#{userNo}, #{allergyNo})
 	</insert>
-	
-	<delete id="deleteUserAllergy">
-	  DELETE FROM user_allergy
-	  WHERE user_no = #{userNo} AND allergy_no = #{allergyNo}
+
+	<delete
+		id="deleteUserAllergy">
+		DELETE FROM user_allergy
+		WHERE user_no = #{userNo} AND allergy_no = #{allergyNo}
 	</delete>
-	
-	<update id="inactiveUser">
+
+	<update
+		id="inactiveUser">
 		UPDATE USERS
 		SET STATUS = 'INACTIVE',INACTIVE_DATE = SYSDATE
 		WHERE USER_NO = #{userNo}
 	</update>
 
-    <select id="getUserByUserNo" parameterType="long" resultType="com.kh.ypjp.security.model.dto.AuthDto$User">
-        SELECT 
-            USER_NO,
-            USERNAME,
-            STATUS,
-            INACTIVE_DATE,
-            IMAGE_NO,
-            SIK_BTI
-        FROM USERS
-        WHERE USER_NO = #{userNo}
-    </select>
-	
+	<select
+		id="getUserByUserNo" parameterType="long"
+		resultType="com.kh.ypjp.security.model.dto.AuthDto$User">
+		SELECT
+		USER_NO,
+		USERNAME,
+		STATUS,
+		INACTIVE_DATE,
+		IMAGE_NO,
+		SIK_BTI
+		FROM USERS
+		WHERE USER_NO = #{userNo}
+	</select>
+
+	<select
+		id="getUserRecipes" parameterType="long" resultType="map">
+		SELECT
+		R.RCP_NO,
+		R.RCP_NAME,
+		NVL(L.LIKE_CNT, 0) AS RCP_LIKE,
+		I.SERVER_NAME
+		FROM RECIPE R
+		LEFT JOIN IMAGE I
+		ON R.IMAGE_NO = I.IMAGE_NO
+		LEFT JOIN (
+		SELECT REF_NO, COUNT(*) AS LIKE_CNT
+		FROM LIKES
+		WHERE REF_TYPE = 'RECIPE'
+		AND LIKE_STATUS = 'LIKE'
+		GROUP BY REF_NO
+		) L ON R.RCP_NO = L.REF_NO
+		AND DELETE_STATUS = 'N'
+		WHERE R.USER_NO = #{userNo}
+	</select>
+
+	<select id="getUserLikedRecipes" parameterType="long" resultType="map">
+		SELECT
+		R.RCP_NO,
+		R.RCP_NAME,
+		NVL(LC.LIKE_CNT, 0) AS RCP_LIKE,
+		I.SERVER_NAME
+		FROM LIKES L
+		JOIN RECIPE R
+		ON L.REF_NO = R.RCP_NO
+		AND L.REF_TYPE = 'RECIPE'
+		AND L.LIKE_STATUS = 'LIKE'
+		LEFT JOIN IMAGE I
+		ON R.IMAGE_NO = I.IMAGE_NO
+		LEFT JOIN (
+		SELECT REF_NO, COUNT(*) AS LIKE_CNT
+		FROM LIKES
+		WHERE REF_TYPE = 'RECIPE'
+		AND LIKE_STATUS = 'LIKE'
+		GROUP BY REF_NO
+		) LC ON R.RCP_NO = LC.REF_NO
+		AND DELETE_STATUS = 'N'
+		WHERE L.USER_NO = #{userNo}
+	</select>
+
 </mapper>

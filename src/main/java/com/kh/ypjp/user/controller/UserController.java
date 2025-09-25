@@ -47,32 +47,26 @@ public class UserController {
 				.path("profile/" + user.getUserNo() + "/" + changeName).toUriString();
 		return ResponseEntity.ok(imageUrl);
 	}
-	
+
 	@GetMapping("/profile/{userNo}")
 	public ResponseEntity<?> getUserProfile(@PathVariable Long userNo) {
-	    return userService.getUserByUserNo(userNo)
-	            .map(user -> {
-	                if ("INACTIVE".equalsIgnoreCase(user.getStatus())) {
-	                    return ResponseEntity.status(HttpStatus.GONE)
-	                            .body(Map.of("success", false, "message", "탈퇴한 회원입니다."));
-	                }
+		return userService.getUserByUserNo(userNo).map(user -> {
+			if ("INACTIVE".equalsIgnoreCase(user.getStatus())) {
+				return ResponseEntity.status(HttpStatus.GONE).body(Map.of("success", false, "message", "탈퇴한 회원입니다."));
+			}
 
-	                Map<String, Object> body = new HashMap<>();
-	                body.put("success", true);
-	                body.put("userNo", user.getUserNo());
-	                body.put("username", user.getUsername());
-	                body.put("sikbti", user.getSikbti());
-	                body.put("profile", user.getProfile());
-	                body.put("provider", user.getProvider());
-	                return ResponseEntity.ok(body);
-	            })
-	            .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
-	                    .body(Map.of("success", false, "message", "유저를 찾을 수 없습니다.")));
+			Map<String, Object> body = new HashMap<>();
+			body.put("success", true);
+			body.put("userNo", user.getUserNo());
+			body.put("username", user.getUsername());
+			body.put("sikbti", user.getSikbti());
+			body.put("profile", user.getProfile());
+			body.put("provider", user.getProvider());
+			return ResponseEntity.ok(body);
+		}).orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
+				.body(Map.of("success", false, "message", "유저를 찾을 수 없습니다.")));
 	}
 
-
-
-	
 	@PostMapping("/another-profile")
 	public ResponseEntity<Map<String, Object>> updateProfile(@RequestParam MultipartFile file,
 			@RequestParam Long userNo) {
@@ -92,10 +86,10 @@ public class UserController {
 			res.put("message", "프로필이 변경되었습니다.");
 			res.putAll(out);
 			return ResponseEntity.ok(res);
-	    } catch (Exception e) {
-	        e.printStackTrace();
-	        throw new MypageException("UPLOAD_FAILED");
-	    }
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new MypageException("UPLOAD_FAILED");
+		}
 	}
 
 	@PutMapping("/update")
@@ -137,53 +131,75 @@ public class UserController {
 			return ResponseEntity.status(500).body(Map.of("errorCode", "INTERNAL_SERVER_ERROR"));
 		}
 	}
-	
+
 	@PutMapping("/alarm")
 	public ResponseEntity<?> updateAlarmSettings(@RequestBody User alarmRequest) {
-	    try {
-	        Map<String, Object> updated = userService.updateAlarmSettings(alarmRequest.getUserNo(), alarmRequest);
-	        return ResponseEntity.ok(updated);
-	    } catch (Exception e) {
-	        return ResponseEntity.badRequest().body("알림 설정 업데이트 실패");
-	    }
+		try {
+			Map<String, Object> updated = userService.updateAlarmSettings(alarmRequest.getUserNo(), alarmRequest);
+			return ResponseEntity.ok(updated);
+		} catch (Exception e) {
+			return ResponseEntity.badRequest().body("알림 설정 업데이트 실패");
+		}
 	}
-	
-    @GetMapping("/allergy-list")
-    public ResponseEntity<List<AllergyList>> getAllergyList() {
-        try {
-            List<AllergyList> allergyTree = userService.getAllergyTree();
-            return ResponseEntity.ok(allergyTree);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.internalServerError().build();
-        }
-    }
-    
-    @GetMapping("/allergy")
-    public ResponseEntity<List<Long>> getUserAllergyNos(@RequestParam Long userNo) {
-        List<Long> allergyNos = userService.getUserAllergies(userNo);
-        return ResponseEntity.ok(allergyNos);
-    }
-    
-    @PostMapping("/update/allergy")
-    public ResponseEntity updateUserAllergy(@RequestBody Map<String, Object> body) {
-        Long userNo = ((Number) body.get("userNo")).longValue();
-        List<Integer> allergyNos = (List<Integer>) body.get("allergyNos");
 
-        userService.updateUserAllergies(userNo, allergyNos.stream()
-                .map(Long::valueOf)
-                .toList());
+	@GetMapping("/allergy-list")
+	public ResponseEntity<List<AllergyList>> getAllergyList() {
+		try {
+			List<AllergyList> allergyTree = userService.getAllergyTree();
+			return ResponseEntity.ok(allergyTree);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return ResponseEntity.internalServerError().build();
+		}
+	}
 
-        return ResponseEntity.ok().build();
-    }
-    
-    @PostMapping("/inactive")
-    public ResponseEntity<Void> inactiveUser(@RequestBody User user) {
-        boolean result = userService.inactiveUser(user.getUserNo());
-        if(result) {
-            return ResponseEntity.ok().build();
-        } else {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-    }
+	@GetMapping("/allergy")
+	public ResponseEntity<List<Long>> getUserAllergyNos(@RequestParam Long userNo) {
+		List<Long> allergyNos = userService.getUserAllergies(userNo);
+		return ResponseEntity.ok(allergyNos);
+	}
+
+	@PostMapping("/update/allergy")
+	public ResponseEntity updateUserAllergy(@RequestBody Map<String, Object> body) {
+		Long userNo = ((Number) body.get("userNo")).longValue();
+		List<Integer> allergyNos = (List<Integer>) body.get("allergyNos");
+
+		userService.updateUserAllergies(userNo, allergyNos.stream().map(Long::valueOf).toList());
+
+		return ResponseEntity.ok().build();
+	}
+
+	@PostMapping("/inactive")
+	public ResponseEntity<Void> inactiveUser(@RequestBody User user) {
+		boolean result = userService.inactiveUser(user.getUserNo());
+		if (result) {
+			return ResponseEntity.ok().build();
+		} else {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+		}
+	}
+
+	@GetMapping("/{userNo}/recipes")
+	public ResponseEntity<?> getUserRecipes(@PathVariable Long userNo) {
+		try {
+			List<Map<String, Object>> recipes = userService.getUserRecipes(userNo);
+			return ResponseEntity.ok(recipes);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body(Map.of("success", false, "message", "레시피 조회 실패"));
+		}
+	}
+
+	@GetMapping("/{userNo}/likes")
+	public ResponseEntity<?> getUserLikedRecipes(@PathVariable Long userNo) {
+		try {
+			List<Map<String, Object>> likedRecipes = userService.getUserLikedRecipes(userNo);
+			return ResponseEntity.ok(likedRecipes);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body(Map.of("success", false, "message", "찜한 레시피 조회 실패"));
+		}
+	}
 }
