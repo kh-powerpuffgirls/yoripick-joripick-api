@@ -114,11 +114,15 @@
 <update id="updateClass" parameterType="com.kh.ypjp.community.ckclass.dto.CkclassDto">
     UPDATE COOKING_CLASS
     <set>
-        <if test="className != null">CLASS_NAME = #{className},</if>
-        <if test="classInfo != null">CLASS_INFO = #{classInfo},</if>
-        <if test="passcode != null">PASSCODE = #{passcode},</if>
-    </set>
-    WHERE ROOM_NO = #{roomNo}
+		<if test="className != null">CLASS_NAME = #{className},</if>
+		        <if test="classInfo != null">CLASS_INFO = #{classInfo},</if>
+		        PASSCODE = 
+		        <choose>
+		            <when test="passcode == ''">NULL</when>
+		            <otherwise>#{passcode}</otherwise>
+		        </choose>
+		    </set>
+		    WHERE ROOM_NO = #{roomNo}
 </update>
 
 <update id="deleteClass" parameterType="int">
