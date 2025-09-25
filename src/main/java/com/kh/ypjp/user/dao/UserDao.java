@@ -2,11 +2,13 @@ package com.kh.ypjp.user.dao;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.apache.ibatis.session.SqlSession;
 import org.springframework.stereotype.Repository;
 
 import com.kh.ypjp.model.dto.AllergyDto.AllergyList;
+import com.kh.ypjp.security.model.dto.AuthDto.User;
 
 import lombok.RequiredArgsConstructor;
 
@@ -67,5 +69,10 @@ public class UserDao {
     
     public int inactiveUser(Long userNo) {
     	return session.update("user.inactiveUser", userNo);
+    }
+	
+    public Optional<User> getUserByUserNo(Long userNo) {
+        User user = session.selectOne("user.getUserByUserNo", userNo);
+        return Optional.ofNullable(user);
     }
 }

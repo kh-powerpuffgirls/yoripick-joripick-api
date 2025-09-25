@@ -81,6 +81,16 @@
 		WHERE USER_NO = #{userNo}
 	</update>
 
-
+    <select id="getUserByUserNo" parameterType="long" resultType="com.kh.ypjp.security.model.dto.AuthDto$User">
+        SELECT 
+            USER_NO,
+            USERNAME,
+            STATUS,
+            INACTIVE_DATE,
+            IMAGE_NO,
+            SIK_BTI
+        FROM USERS
+        WHERE USER_NO = #{userNo}
+    </select>
 	
 </mapper>

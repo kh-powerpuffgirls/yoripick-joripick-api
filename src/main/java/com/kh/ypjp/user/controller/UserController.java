@@ -7,6 +7,7 @@ import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -28,7 +29,7 @@ import com.kh.ypjp.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/users/{userNo}")
+@RequestMapping("/users")
 @RequiredArgsConstructor
 public class UserController {
 
@@ -46,7 +47,32 @@ public class UserController {
 				.path("profile/" + user.getUserNo() + "/" + changeName).toUriString();
 		return ResponseEntity.ok(imageUrl);
 	}
+	
+	@GetMapping("/profile/{userNo}")
+	public ResponseEntity<?> getUserProfile(@PathVariable Long userNo) {
+	    return userService.getUserByUserNo(userNo)
+	            .map(user -> {
+	                if ("INACTIVE".equalsIgnoreCase(user.getStatus())) {
+	                    return ResponseEntity.status(HttpStatus.GONE)
+	                            .body(Map.of("success", false, "message", "탈퇴한 회원입니다."));
+	                }
 
+	                Map<String, Object> body = new HashMap<>();
+	                body.put("success", true);
+	                body.put("userNo", user.getUserNo());
+	                body.put("username", user.getUsername());
+	                body.put("sikbti", user.getSikbti());
+	                body.put("profile", user.getProfile());
+	                body.put("provider", user.getProvider());
+	                return ResponseEntity.ok(body);
+	            })
+	            .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
+	                    .body(Map.of("success", false, "message", "유저를 찾을 수 없습니다.")));
+	}
+
+
+
+	
 	@PostMapping("/another-profile")
 	public ResponseEntity<Map<String, Object>> updateProfile(@RequestParam MultipartFile file,
 			@RequestParam Long userNo) {
