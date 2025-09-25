@@ -40,4 +40,14 @@ public interface ChallengeDao {
     
     Long findNextChallenge(@Param("challengeNo") Long challengeNo);
     Long findPreviousChallenge(@Param("challengeNo") Long challengeNo);
+    
+    ChallengeInfoDto findChallengeInfoByNo(@Param("chInfoNo") Long chInfoNo);
+
+    List<Long> findExpiredChInfoNos(@Param("currentDate") java.time.LocalDate currentDate);
+    int updateChallengesDeleteStatusByInfoNos(
+    	    @Param("chInfoNos") List<Long> chInfoNos,
+    	    @Param("deleteStatus") String deleteStatus
+    	);
+
+
 }

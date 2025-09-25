@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.springframework.scheduling.annotation.Scheduled;
 
 @Service
 @RequiredArgsConstructor
@@ -53,15 +54,6 @@ public class ChallengeService {
     public Long createPostAndReturnNo(ChallengeDto challengeDto, MultipartFile file) throws Exception {
         if (challengeDto.getUserNo() == null)
             throw new IllegalArgumentException("로그인 후 이용할 수 있습니다.");
-        
-        List<ChallengeInfoDto> activeChallenges = challengeDao.findActiveChallengeInfo();
-        if (activeChallenges == null || activeChallenges.isEmpty())
-            throw new IllegalStateException("진행 중인 챌린지가 없습니다.");
-
-        ChallengeInfoDto activeChallenge = activeChallenges.get(0);
-        LocalDate today = LocalDate.now();
-        if (today.isBefore(activeChallenge.getStartDate()) || today.isAfter(activeChallenge.getEndDate()))
-            throw new IllegalStateException("챌린지 기간 내에만 등록 가능합니다.");
 
         if (file == null || file.isEmpty())
             throw new IllegalArgumentException("챌린지 이미지는 필수입니다.");
@@ -79,7 +71,6 @@ public class ChallengeService {
         utilService.insertImage(param);
         Long imageNo = utilService.getImageNo(param);
 
-        challengeDto.setChInfoNo(activeChallenge.getChInfoNo());
         challengeDto.setImageNo(imageNo.intValue());
         challengeDao.saveChallenge(challengeDto);
 
@@ -161,6 +152,46 @@ public class ChallengeService {
             }
         }
         return replies;
+    }
+    
+ // 챌린지 등록 가능 기간 확인
+    public boolean isRegistrationPeriodValid(Long chInfoNo) {
+        ChallengeInfoDto info = challengeDao.findChallengeInfoByNo(chInfoNo);
+
+        Optional<ChallengeInfoDto> infoOptional = Optional.ofNullable(info);
+
+        if (infoOptional.isEmpty()) {
+            log.warn("ChallengeInfo not found for chInfoNo: {}", chInfoNo);
+            return false;
+        }
+
+        ChallengeInfoDto challengeInfo = infoOptional.get();
+        LocalDate today = LocalDate.now();
+
+        boolean isValid = (today.isEqual(challengeInfo.getStartDate()) || today.isAfter(challengeInfo.getStartDate())) &&
+                          (today.isEqual(challengeInfo.getEndDate()) || today.isBefore(challengeInfo.getEndDate()));
+
+        return isValid;
+    }
+    
+    @Transactional
+    @Scheduled(cron = "0 0 0 * * *") // 초 분 시 일 월 요일
+    public void updateExpiredChallengeDeleteStatus() {
+        log.info("🗓️ 만료된 챌린지 상태(delete_status) 일괄 업데이트 작업 시작. 기준 날짜: {}", LocalDate.now());
+
+        List<Long> expiredChInfoNos = challengeDao.findExpiredChInfoNos(LocalDate.now());
+
+        if (expiredChInfoNos.isEmpty()) {
+            log.info("만료된 챌린지 정보가 없습니다. 상태 변경 작업을 완료합니다.");
+            return;
+        }
+        
+        log.info("만료된 챌린지 정보 번호(ch_info_no): {}", expiredChInfoNos);
+
+        int updatedCount = challengeDao.updateChallengesDeleteStatusByInfoNos(expiredChInfoNos, "Y");
+
+        log.info("✅ 총 {}개의 챌린지 정보 번호에 연결된 {}개의 등록 챌린지 상태가 'Y'로 업데이트되었습니다.", 
+                 expiredChInfoNos.size(), updatedCount);
     }
     
     // 댓글 등록

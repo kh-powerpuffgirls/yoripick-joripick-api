@@ -189,24 +189,18 @@ public class CkclassService {
 
         ckclassDao.enrollUser(paramMap);
     }
-
-    // 안 읽은 메시지 수를 업데이트하는 메서드 (여기 주석 해놓음)
-    public void markMessagesAsRead(int roomNo, int userNo) {
-        // ckclassDao.markMessagesRead(roomNo, userNo); // 채팅방 참여 시 message_no 업데이트
-    }
     
     public boolean kickMember(int roomNo, int targetUserNo, int requesterUserNo) {
         // 방장인지 확인
         int ownerCheck = ckclassDao.isOwner(roomNo, requesterUserNo);
         if (ownerCheck == 0) {
-            return false; // 방장이 아님 → 권한 없음
+            return false; 
         }
 
         // 강퇴 실행
         int result = ckclassDao.kickMember(roomNo, targetUserNo);
         return result > 0;
     }
-    
 
     @Transactional
     public boolean leaveClass(int roomNo, int userNo) {

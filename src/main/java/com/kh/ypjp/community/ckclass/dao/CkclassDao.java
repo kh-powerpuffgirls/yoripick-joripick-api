@@ -11,9 +11,9 @@ import java.util.Map;
 public interface CkclassDao {
 
     List<CkclassDto> selectMyClasses(int userNo);
-
+    
     List<CkclassDto> selectJoinedClasses(int userNo);
-
+    
     CkclassDto selectById(int roomNo);
     
     void insertClass(CkclassDto dto);
@@ -25,31 +25,29 @@ public interface CkclassDao {
     int deleteClass(int roomNo);
 
     void deleteMembersByRoomNo(int roomNo);
-    
-    // void markMessagesAsRead(int roomNo, int userNo);
-    
+  
     void toggleNotification(int roomNo, int userNo);
 
     List<CkclassDto> selectAllClasses(Map<String, Object> paramMap);
 
     List<CkclassDto> selectClassesForSearch(Map<String, Object> paramMap);
-    
+
     List<CkclassDto> selectMembersByRoomNo(int roomNo);
 
     void insertImage(Map<String, Object> param);
 
     Long getImageNo(Map<String, Object> param);
-    
+
     void updateClassImageNo(int roomNo, int imageNo);
 
     Integer selectImageNoByRoomNo(int roomNo);
 
     void deleteImageByImageNo(int imageNo);
-    
-    List<CkclassDto> searchAllFields(Map<String, Object> paramMap);
-    
-    Integer checkEnrollment(@Param("roomNo") int roomNo, @Param("userNo") int userNo);
 
+    List<CkclassDto> searchAllFields(Map<String, Object> paramMap);
+
+    Integer checkEnrollment(@Param("roomNo") int roomNo, @Param("userNo") int userNo);
+    
     void enrollUser(Map<String, Object> paramMap);
     
     int kickMember(@Param("roomNo") int roomNo, @Param("userNo") int userNo);
@@ -57,5 +55,4 @@ public interface CkclassDao {
     int isOwner(@Param("roomNo") int roomNo, @Param("userNo") int userNo);
     
     int deleteClassMember(@Param("roomNo") int roomNo, @Param("userNo") int userNo);
-
 }

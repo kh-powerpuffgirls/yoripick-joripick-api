@@ -55,30 +55,31 @@
 
     <!-- ===================== 챌린지 조회 ===================== -->
 
-    <select id="findAll" resultMap="ChallengeDtoResultMap">
-        SELECT
-            c.CHALLENGE_NO,
-            c.USER_NO,
-            c.CH_INFO_NO,
-            c.VIDEO_URL,
-            c.VIEWS,
-            c.CREATED_AT,
-            u.USERNAME,
-            u.SIK_BTI AS SIK_BTI,
-            ci.TITLE,
-            ci.START_DATE,
-            ci.END_DATE,
-            i.SERVER_NAME AS SERVER_NAME,
-            (SELECT COUNT(*) 
-             FROM LIKES l 
-             WHERE l.REF_TYPE = 'CHALLENGE' AND l.REF_NO = c.CHALLENGE_NO) AS LIKES
-        FROM CHALLENGE c
-        JOIN USERS u ON c.USER_NO = u.USER_NO
-        JOIN CHALLENGE_INFO ci ON c.CH_INFO_NO = ci.CH_INFO_NO
-        LEFT JOIN IMAGE i ON c.IMAGE_NO = i.IMAGE_NO
-        WHERE c.DELETE_STATUS = 'N'
-        ORDER BY c.CREATED_AT DESC
-    </select>
+	<select id="findAll" resultMap="ChallengeDtoResultMap">
+	    SELECT
+	        c.CHALLENGE_NO,
+	        c.USER_NO,
+	        c.CH_INFO_NO,
+	        c.VIDEO_URL,
+	        c.VIEWS,
+	        c.CREATED_AT,
+	        u.USERNAME,
+	        u.SIK_BTI AS SIK_BTI,
+	        ci.TITLE,
+	        ci.START_DATE,
+	        ci.END_DATE,
+	        i.SERVER_NAME AS SERVER_NAME,
+	        (SELECT COUNT(*) 
+	         FROM LIKES l 
+	         WHERE l.REF_TYPE = 'CHALLENGE' AND l.REF_NO = c.CHALLENGE_NO) AS LIKES
+	    FROM CHALLENGE c
+	    JOIN USERS u ON c.USER_NO = u.USER_NO
+	    JOIN CHALLENGE_INFO ci ON c.CH_INFO_NO = ci.CH_INFO_NO
+	    LEFT JOIN IMAGE i ON c.IMAGE_NO = i.IMAGE_NO
+	    WHERE c.DELETE_STATUS = 'N'
+	    AND TRUNC(SYSDATE) BETWEEN ci.START_DATE AND ci.END_DATE
+	    ORDER BY c.CREATED_AT DESC
+	</select>
     
 	<select id="findNextChallenge" resultType="java.lang.Long">
 	    SELECT CHALLENGE_NO
@@ -303,6 +304,29 @@
         CONNECT BY NOCYCLE PRIOR REF_NO = REPLY_NO
         WHERE REPLY_NO = #{replyNo}
     </select>
+    
+	<select id="findChallengeInfoByNo" resultMap="ChallengeInfoDtoResultMap">
+	    SELECT CH_INFO_NO, TITLE, START_DATE, END_DATE, IMAGE_NO
+	    FROM CHALLENGE_INFO
+	    WHERE CH_INFO_NO = #{chInfoNo}
+	</select>
+	
+	<select id="findExpiredChInfoNos" resultType="java.lang.Long">
+	    SELECT CH_INFO_NO
+	    FROM CHALLENGE_INFO
+	    WHERE END_DATE &lt;= TRUNC(#{currentDate})
+	 </select>
+	
+	<update id="updateChallengesDeleteStatusByInfoNos">
+	    UPDATE CHALLENGE
+	    SET DELETE_STATUS = #{deleteStatus}
+	    WHERE CH_INFO_NO IN
+	    <foreach item="item" index="index" collection="chInfoNos"
+	             open="(" separator="," close=")">
+	        #{item}
+	    </foreach>
+	    AND DELETE_STATUS = 'N' 
+	</update>
 
     <!-- ===================== 챌린지 제안(Suggestion) ===================== -->
     <insert id="insertSuggestion" parameterType="com.kh.ypjp.community.challenge.dto.ChallengeSuggestionDto">
