@@ -11,6 +11,7 @@ import com.kh.ypjp.chat.model.dto.ChatDto.ChatMsgDto;
 import com.kh.ypjp.chat.model.dto.ChatDto.ChatRoomDto;
 import com.kh.ypjp.chat.model.dto.ChatDto.FaqMsgDto;
 import com.kh.ypjp.chat.model.dto.ChatDto.MessageDto;
+import com.kh.ypjp.community.ckclass.dto.CkclassDto;
 
 @Repository
 public class ChatDao {

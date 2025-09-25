@@ -46,6 +46,7 @@
 		    FROM message m
 		    WHERE m.ref_no = cc.room_no
 		    	AND m.user_no != 0
+		    	AND m.user_no != #{userNo}
 		        AND m.message_no > (
 		            SELECT NVL(ce_user.message_no, 0)
 		            FROM class_enroll ce_user
@@ -56,7 +57,7 @@
 		    FROM cooking_class cc
 		    JOIN class_enroll ce ON ce.room_no = cc.room_no
 		    JOIN users u ON cc.user_no = u.user_no
-		    JOIN image i ON cc.image_no = i.image_no
+		    LEFT JOIN image i ON cc.image_no = i.image_no
 		    WHERE ce.user_no = #{userNo}
 	</select>
 	

@@ -16,6 +16,7 @@ import com.kh.ypjp.chat.model.dto.ChatDto.ChatMsgDto;
 import com.kh.ypjp.chat.model.dto.ChatDto.ChatRoomDto;
 import com.kh.ypjp.chat.model.dto.ChatDto.FaqMsgDto;
 import com.kh.ypjp.chat.model.dto.ChatDto.MessageDto;
+import com.kh.ypjp.community.ckclass.dto.CkclassDto;
 import com.kh.ypjp.security.model.dao.AuthDao;
 import com.kh.ypjp.security.model.dto.AuthDto.User;
 
