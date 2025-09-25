@@ -10,7 +10,6 @@ import java.util.Map;
 
 @Mapper
 public interface FreeDao {
-
     List<FreeDto> selectAllBoards();
     FreeDto selectBoardByNo(int boardNo);
     int insertBoard(FreeDto freeDto);

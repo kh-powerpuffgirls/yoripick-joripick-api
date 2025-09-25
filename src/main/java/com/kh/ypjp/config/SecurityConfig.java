@@ -63,11 +63,13 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/auth/**").permitAll()
                 .requestMatchers("/login/**", "/oauth2/**", "/error").permitAll()
-                .requestMatchers("/mealplan/**").authenticated()
+                .requestMatchers("/common/**").permitAll()
                 .requestMatchers("/chat/**").permitAll()
                 .requestMatchers("/ws/**").permitAll()
+                .requestMatchers("/community/**").permitAll()
                 .requestMatchers("/images/**").permitAll()
-                .requestMatchers("/api/recipe/**").permitAll()
+                .requestMatchers("/recipe/**").permitAll()
+                .requestMatchers("/mealplan/**").authenticated()
                 .requestMatchers(HttpMethod.GET, 
 				        "/api/community/recipe/**", 
 				        "/api/options/**", 

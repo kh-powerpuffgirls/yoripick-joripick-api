@@ -11,7 +11,8 @@
     <select id="getAllCserviceRooms" resultMap="chatRoomResultMap">
 		SELECT room_no AS roomNo,
 				username AS className,
-               'admin' AS type
+               'admin' AS type,
+               'Y' AS notification
         FROM CUSTOMER_SERVICE
         JOIN USERS USING (user_no)
 	</select>
