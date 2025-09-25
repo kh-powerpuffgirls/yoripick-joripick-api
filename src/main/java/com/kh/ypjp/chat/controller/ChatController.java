@@ -13,9 +13,11 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
@@ -46,6 +48,38 @@ public class ChatController {
 	public void sendMessage(@DestinationVariable Long roomNo, MessageDto message) {
 		log.debug("mess {} ", message);
 		messagingTemplate.convertAndSend("/topic/" + roomNo, message);
+	}
+	
+	@PatchMapping("/reads")
+	public ResponseEntity<Void> updateLastRead(
+			@RequestParam Long userNo, @RequestParam Long roomNo, @RequestParam Long messageNo) {
+		if (userNo == null) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null); // 401
+		}
+		Map <String, Object> param = new HashMap<>();
+		param.put("userNo", userNo);
+		param.put("roomNo", roomNo);
+		param.put("messageNo", messageNo);
+		if (chatService.updateLastRead(param) > 0) {
+			return ResponseEntity.ok().build(); // 201
+		}
+		return ResponseEntity.badRequest().build(); // 400
+	}
+	
+	@GetMapping("/reads/{userNo}/{roomNo}")
+	public ResponseEntity<Long> getLastRead(
+			@PathVariable Long userNo, @PathVariable Long roomNo) {
+		if (userNo == null) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null); // 401
+		}
+		Map <String, Object> param = new HashMap<>();
+		param.put("userNo", userNo);
+		param.put("roomNo", roomNo);
+		Long messageNo = chatService.getLastRead(param);
+		if (messageNo == null) {
+			return ResponseEntity.badRequest().build(); // 400
+		}
+		return ResponseEntity.ok(messageNo); // 200
 	}
 
 	@GetMapping("/rooms/{userNo}")

@@ -2,11 +2,13 @@ package com.kh.ypjp.user.dao;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.apache.ibatis.session.SqlSession;
 import org.springframework.stereotype.Repository;
 
 import com.kh.ypjp.model.dto.AllergyDto.AllergyList;
+import com.kh.ypjp.security.model.dto.AuthDto.User;
 
 import lombok.RequiredArgsConstructor;
 
@@ -64,6 +66,31 @@ public class UserDao {
         return session.delete("user.deleteUserAllergy",
                 Map.of("userNo", userNo, "allergyNo", allergyNo));
     }
+    
+    public int inactiveUser(Long userNo) {
+    	return session.update("user.inactiveUser", userNo);
+    }
+	
+    public Optional<User> getUserByUserNo(Long userNo) {
+        User user = session.selectOne("user.getUserByUserNo", userNo);
+        return Optional.ofNullable(user);
+    }
+    
+    public List<Map<String, Object>> getUserRecipes(Long userNo) {
+        return session.selectList("user.getUserRecipes", userNo);
+    }
 
+    public List<Map<String, Object>> getUserLikedRecipes(Long userNo) {
+        return session.selectList("user.getUserLikedRecipes", userNo);
+    }
+    
+    public List<Map<String, Object>> getUserRecipesPaging(Long userNo, int startRow, int endRow) {
+        return session.selectList("user.getUserRecipesPaging",
+                Map.of("userNo", userNo, "startRow", startRow, "endRow", endRow));
+    }
 
+    public List<Map<String, Object>> getUserLikedRecipesPaging(Long userNo, int startRow, int endRow) {
+        return session.selectList("user.getUserLikedRecipesPaging",
+                Map.of("userNo", userNo, "startRow", startRow, "endRow", endRow));
+    }
 }

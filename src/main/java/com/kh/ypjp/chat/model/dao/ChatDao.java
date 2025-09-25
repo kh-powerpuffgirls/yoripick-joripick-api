@@ -70,4 +70,12 @@ public class ChatDao {
 		return session.selectList("chat.getAllCserviceRooms");
 	}
 
+	public int updateLastRead(Map<String, Object> param) {
+		return session.update("chat.updateLastRead", param);
+	}
+
+	public Long getLastRead(Map<String, Object> param) {
+		return session.selectOne("chat.getLastRead", param);
+	}
+
 }
