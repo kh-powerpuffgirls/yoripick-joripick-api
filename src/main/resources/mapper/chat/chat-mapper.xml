@@ -19,8 +19,47 @@
         <result property="className" column="className"/>
         <result property="type" column="type"/>
         <result property="notification" column="notification"/>
+        
+        <result property="description" column="description"/>
+        <result property="username" column="username"/>
+        <result property="imageUrl" column="serverName"/>
+        <result property="memberCount" column="memberCount"/>
     </resultMap>
     
+	<select id="findCookingClasses" resultMap="chatRoomResultMap">
+		SELECT
+		    cc.room_no AS roomNo,
+		    cc.class_name AS className,
+		    'cclass' AS type,
+		    ce.notification,
+		    cc.class_info AS description,
+		    u.username,
+		    i.server_name AS serverName,
+		
+		    -- 멤버 수
+		    (SELECT COUNT(*)
+		     FROM class_enroll ce_all
+		     WHERE ce_all.room_no = cc.room_no) AS memberCount,
+		
+		    -- 안 읽은 메시지 수
+		    (SELECT COUNT(*)
+		    FROM message m
+		    WHERE m.ref_no = cc.room_no
+		    	AND m.user_no != 0
+		        AND m.message_no > (
+		            SELECT NVL(ce_user.message_no, 0)
+		            FROM class_enroll ce_user
+		            WHERE ce_user.room_no = cc.room_no
+		            AND ce_user.user_no = #{userNo})
+		        ) AS unreadCount
+		
+		    FROM cooking_class cc
+		    JOIN class_enroll ce ON ce.room_no = cc.room_no
+		    JOIN users u ON cc.user_no = u.user_no
+		    JOIN image i ON cc.image_no = i.image_no
+		    WHERE ce.user_no = #{userNo}
+	</select>
+	
     <select id="getAllCserviceRooms" resultMap="chatRoomResultMap">
 		SELECT room_no AS roomNo,
 				username AS className,
@@ -30,16 +69,6 @@
         JOIN USERS USING (user_no)
 	</select>
 
-	<select id="findCookingClasses" resultMap="chatRoomResultMap">
-		SELECT cc.room_no AS roomNo,
-               cc.class_name AS className,
-               'cclass' AS type,
-               ce.notification
-        FROM cooking_class cc
-        JOIN class_enroll ce ON ce.room_no = cc.room_no
-        WHERE ce.user_no = #{userNo}
-	</select>
-	
 	<select id="findFaqChat" resultType="int">
 		SELECT count(*) FROM CHATBOT
 		WHERE user_no = #{userNo}

@@ -70,6 +70,12 @@ public class ChatDto {
         private String type;
         private List<? extends MessageDto> messages;
         private String notification;
+        
+        private String description;
+        private String username;
+        private String imageUrl;
+        private Integer memberCount;
+        private Integer unreadCount;
     }
 
 }

@@ -102,12 +102,12 @@ public class ChatController {
 		ChatRoomDto chatRoom = null;
 		if (type.equals("cservice")) {
 			chatService.deleteFaqChat(userNo);
-			chatRoom = new ChatRoomDto(0L, "FAQ BOT, 요픽", "cservice", new ArrayList<>(), null);
+			chatRoom = new ChatRoomDto(0L, "FAQ BOT, 요픽", "cservice", new ArrayList<>(), null, null, null, null, null, null);
 		}
 		if (type.equals("admin")) {
 			chatService.deleteAdminChat(userNo);
 			Long csNo = chatService.newCservice(userNo);
-			chatRoom = new ChatRoomDto(csNo, "관리자 문의하기", "admin", new ArrayList<>(), null);
+			chatRoom = new ChatRoomDto(csNo, "관리자 문의하기", "admin", new ArrayList<>(), null, null, null, null, null, null);
 		}
 		if (chatRoom != null) {
 			return ResponseEntity.ok().body(chatRoom); // 201
