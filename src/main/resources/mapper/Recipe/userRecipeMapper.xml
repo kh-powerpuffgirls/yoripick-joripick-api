@@ -5,6 +5,7 @@
     <sql id="recipeSearchCondition">
         <where>
             R.DELETE_STATUS = 'N'
+            AND R.APPROVAL = 'N'
             <if test="rcpMthNo != null and rcpMthNo != ''">
                 AND R.RCP_MTH_NO = #{rcpMthNo}
             </if>
@@ -85,7 +86,6 @@
 	            U.SIK_BTI       AS sikBti,
 	            RI.SERVER_NAME  AS serverName,
 	            UI.SERVER_NAME  AS userProfileImage,
-	            NVL(REV.AVG_STARS, 0) AS avgStars,
 	            NVL(REV.REVIEW_COUNT, 0) AS reviewCount,
 	            L.LIKE_COUNT
 	        FROM RECIPE R
@@ -510,7 +510,11 @@
 	        U.USER_NO        AS "writer.userNo",
 	        U.USERNAME       AS "writer.username",
 	        U.SIK_BTI        AS "writer.sikBti",
-	        
+	        NVL(( 	SELECT AVG(STARS) 
+             		FROM REVIEW 
+            		WHERE REF_NO = R.RCP_NO 
+               		AND DELETE_STATUS = 'N'), 0
+            ) AS avgStars,	        
 	        (SELECT COUNT(*) FROM REVIEW WHERE REF_NO = R.RCP_NO AND DELETE_STATUS = 'N') AS reviewCount,
 	        (SELECT COUNT(*) FROM BOOKMARK WHERE REF_NO = R.RCP_NO) AS bookmarkCount
         
@@ -622,6 +626,14 @@
 		        U.USER_NO        AS "userNo",
 		        U.USERNAME       AS "username",
 		        U.SIK_BTI        AS "sikBti",
+		        UI.SERVER_NAME  AS userProfileImage,
+		        NVL((
+					SELECT AVG(STARS) 
+	                FROM REVIEW 
+	                WHERE REF_NO = R.RCP_NO 
+	                AND RCP_SOURCE = 'COMM' 
+	                AND DELETE_STATUS = 'N'), 0
+	            ) AS avgStars,
 	            (
 	                SELECT COUNT(*) 
 	                FROM BOOKMARK B 
@@ -642,6 +654,7 @@
 	        FROM RECIPE R
 	        LEFT JOIN USERS U ON R.USER_NO = U.USER_NO
 	        LEFT JOIN IMAGE I ON (R.IMAGE_NO = I.IMAGE_NO)
+	        LEFT JOIN IMAGE UI ON (U.IMAGE_NO = UI.IMAGE_NO)
 	        <include refid="officialRecipeSearchCondition"/>
 	        <choose>
 	            <when test="sort == 'views'">
