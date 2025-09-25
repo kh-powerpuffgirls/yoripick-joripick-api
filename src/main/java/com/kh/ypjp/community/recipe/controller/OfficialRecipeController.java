@@ -2,6 +2,7 @@ package com.kh.ypjp.community.recipe.controller;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
@@ -28,21 +29,20 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/api/recipe")
+@RequestMapping("/api")
 public class OfficialRecipeController {
 
 
 	private final UserRecipeService recipeService;
 
-	@GetMapping
-	@CrossOrigin(origins = "http://localhost:5173/", exposedHeaders = "Location")
+	@GetMapping("/recipe/{userNo}")
 	public ResponseEntity<OfficialRecipePage> selectOfficialList(
 			@RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "bookmarks_desc") String sort,
             @RequestParam(required = false) String ingredients,
             @RequestParam(required = false) String rcpMthNo,
             @RequestParam(required = false) String rcpStaNo,
-            @PathVariable int userNo // 북마크 여부 확인을 위한 userNo
+            @PathVariable String userNo // 북마크 여부 확인을 위한 userNo
 			){
 		
 		HashMap<String, Object> params = new HashMap<>();
@@ -53,14 +53,12 @@ public class OfficialRecipeController {
         params.put("rcpStaNo", rcpStaNo);
         params.put("loginUserNo", userNo);
         
-        log.info("나오나?:{}",params);
-        
         OfficialRecipePage recipePage = recipeService.selectOfficialRecipePage(params);
         
 		return ResponseEntity.ok(recipePage);
 	}
 
-	@GetMapping("/{rcpNo}")
+	@GetMapping("/recipe/detail/{rcpNo}")
 	public ResponseEntity<RecipeDetailResponse> selectOfficialRecipeDetailForGuest(@PathVariable int rcpNo,
 			HttpServletRequest req, HttpServletResponse res) {
 
@@ -69,10 +67,12 @@ public class OfficialRecipeController {
 	}
 
 	// --- 공식 레시피 상세 조회 API ---
-	@GetMapping("/{rcpNo}/{userNo}")
+	@GetMapping("/recipe/detail/{rcpNo}/{userNo}")
 	public ResponseEntity<RecipeDetailResponse> selectOfficialRecipeDetail(
 			@PathVariable int rcpNo,
-			@PathVariable(required = false) Long userNo, HttpServletRequest req, HttpServletResponse res) {
+			@PathVariable(required = false) Long userNo,
+			HttpServletRequest req, 
+			HttpServletResponse res) {
 
 		// 조회수 중복 방지 로직 (기존과 동일)
 		String cookieName = "readRecipeNo";
@@ -112,12 +112,27 @@ public class OfficialRecipeController {
 	}
 
 	// 북마크 토글 API
-	@PostMapping("/{rcpNo}/bookmark/{userNo}")
-	public ResponseEntity<UserRecipeDto.BookmarkResponse> toggleBookmark(@PathVariable int rcpNo,
+	@PostMapping("/recipe/{rcpNo}/bookmark/{userNo}")
+	public ResponseEntity<UserRecipeDto.BookmarkResponse> toggleBookmark(
+			@PathVariable int rcpNo,
 			@PathVariable long userNo) {
 
 		UserRecipeDto.BookmarkResponse response = recipeService.toggleBookmark(rcpNo, userNo);
 		return ResponseEntity.ok(response);
 	}
+	
+	@GetMapping("/recipe/{rcpNo}/bookmark/{userNo}")
+	public ResponseEntity<UserRecipeDto.BookmarkResponse> getBookmarkStatus(@PathVariable int rcpNo,
+			@PathVariable long userNo) {
+
+		UserRecipeDto.BookmarkResponse response = recipeService.getBookmarkStatus(rcpNo, userNo);
+		
+		return ResponseEntity.ok(response);
+	}
+	@GetMapping("/recipe/ranking")
+    public ResponseEntity<List<UserRecipeDto.OfficialRecipeResponse>> selectOfficialRankingList() {
+        List<UserRecipeDto.OfficialRecipeResponse> list = recipeService.selectOfficialRankingRecipes();
+        return ResponseEntity.ok(list);
+    }
 	
 }

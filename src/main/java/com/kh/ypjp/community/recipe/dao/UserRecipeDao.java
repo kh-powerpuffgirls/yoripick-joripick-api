@@ -103,5 +103,7 @@ public interface UserRecipeDao {
 
 	long selectOfficialRecipeCount(HashMap<String, Object> params);
 
+	List<OfficialRecipeResponse> selectOfficialRankingRecipes();
+
 
 }

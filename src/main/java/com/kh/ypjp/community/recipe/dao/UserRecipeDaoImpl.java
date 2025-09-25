@@ -37,14 +37,14 @@ public class UserRecipeDaoImpl implements UserRecipeDao{
         return session.selectList("userRecipeMapper.selectRecipeList", params);
     }
     
-    // ✨ 추가: 전체 게시글 수 조회
+    // 전체 게시글 수 조회
     public long selectRecipeCount(HashMap<String, Object> params) {
         return session.selectOne("userRecipeMapper.selectRecipeCount", params);
     }
     
-    // ✨ 추가: 랭킹 목록 조회
+    // 랭킹 목록 조회
     public List<UserRecipeResponse> selectRankingRecipes() {
-        return session.selectList("userRecipeMapper.selectRankingRecipes");
+        return session.selectList(NAMESPACE + "selectRankingRecipes");
     }
 
     @Override
@@ -239,6 +239,11 @@ public class UserRecipeDaoImpl implements UserRecipeDao{
 	@Override
 	public long selectOfficialRecipeCount(HashMap<String, Object> params) {
 		return session.selectOne(NAMESPACE + "selectOfficialRecipeCount", params);
+	}
+
+	@Override
+	public List<OfficialRecipeResponse> selectOfficialRankingRecipes() {
+		return session.selectList(NAMESPACE + "selectOfficialRankingRecipes");
 	}
 	
 

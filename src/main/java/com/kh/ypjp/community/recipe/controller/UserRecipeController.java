@@ -63,7 +63,7 @@ public class UserRecipeController {
     }
     @GetMapping("/community/recipe/ranking")
     public ResponseEntity<List<UserRecipeDto.UserRecipeResponse>> selectRankingList() {
-        List<UserRecipeDto.UserRecipeResponse> list = recipeService.selectRankingRecipes();
+    	List<UserRecipeDto.UserRecipeResponse> list = recipeService.selectRankingRecipes();
         return ResponseEntity.ok(list);
     }
 

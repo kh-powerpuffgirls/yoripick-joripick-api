@@ -75,39 +75,41 @@
     </select>
 
     <select id="selectRankingRecipes" resultType="com.kh.ypjp.community.recipe.dto.UserRecipeDto$UserRecipeResponse">
-         SELECT * FROM (
-            SELECT
-                R.RCP_NO        AS rcpNo,
-                R.RCP_NAME      AS rcpName,
-                R.CREATED_AT    AS createdAt,
-                U.USERNAME,
-                U.SIK_BTI       AS sikBti,
-                RI.SERVER_NAME   AS serverName,
-                UI.SERVER_NAME   AS userProfileImage,
-                NVL(V.AVG_STARS, 0) AS avgStars,
-                NVL(V.REVIEW_COUNT, 0) AS reviewCount
-            FROM RECIPE R
-            JOIN USERS U ON (R.USER_NO = U.USER_NO)
-            LEFT JOIN IMAGE  RI ON (R.IMAGE_NO = RI.IMAGE_NO)
-            LEFT JOIN IMAGE  UI ON (U.IMAGE_NO = UI.IMAGE_NO)
-            LEFT JOIN (
-                SELECT REF_NO, AVG(STARS) AS AVG_STARS, COUNT(*) AS REVIEW_COUNT
-                FROM REVIEW WHERE RCP_SOURCE = 'COMM' GROUP BY REF_NO
-            ) V ON R.RCP_NO = V.REF_NO
-            JOIN (
-                SELECT REF_NO, COUNT(*) AS LIKE_COUNT
-                FROM LIKES
-                WHERE REF_TYPE = 'RCP'
-                  AND LIKE_STATUS = 'LIKE' -- '좋아요' 상태만 카운트
-                  AND LIKED_AT >= TRUNC(SYSDATE, 'MM') -- 이번 달 1일 00시부터
-                  AND LIKED_AT &lt; ADD_MONTHS(TRUNC(SYSDATE, 'MM'), 1) -- 다음 달 1일 00시 전까지
-                GROUP BY REF_NO
-            ) L ON R.RCP_NO = L.REF_NO
-            WHERE R.DELETE_STATUS = 'N'
-            ORDER BY L.LIKE_COUNT DESC, R.CREATED_AT DESC
-        )
-        FETCH FIRST 4 ROWS ONLY
-</select>
+	    SELECT * FROM (
+	        SELECT
+	            R.RCP_NO        AS rcpNo,
+	            R.RCP_NAME      AS rcpName,
+	            R.CREATED_AT    AS createdAt,
+	            U.USER_NO       AS userNo,
+	            U.USERNAME,
+	            U.SIK_BTI       AS sikBti,
+	            RI.SERVER_NAME  AS serverName,
+	            UI.SERVER_NAME  AS userProfileImage,
+	            NVL(REV.AVG_STARS, 0) AS avgStars,
+	            NVL(REV.REVIEW_COUNT, 0) AS reviewCount,
+	            L.LIKE_COUNT
+	        FROM RECIPE R
+	        JOIN USERS U ON (R.USER_NO = U.USER_NO)
+	        JOIN (
+	            SELECT REF_NO, COUNT(*) AS LIKE_COUNT
+	            FROM LIKES
+	            WHERE REF_TYPE = 'RECIPE'
+	              AND LIKE_STATUS = 'LIKE'
+	              AND LIKED_AT >= TRUNC(SYSDATE, 'MM') -- 이번 달 1일 00시부터
+	              AND LIKED_AT &lt; ADD_MONTHS(TRUNC(SYSDATE, 'MM'), 1) -- 다음 달 1일 00시 전까지
+	            GROUP BY REF_NO
+	        ) L ON R.RCP_NO = L.REF_NO
+	        LEFT JOIN IMAGE RI ON (R.IMAGE_NO = RI.IMAGE_NO)
+	        LEFT JOIN IMAGE UI ON (U.IMAGE_NO = UI.IMAGE_NO)
+	        LEFT JOIN (
+	            SELECT REF_NO, AVG(STARS) AS AVG_STARS, COUNT(*) AS REVIEW_COUNT
+	            FROM REVIEW WHERE DELETE_STATUS = 'N' GROUP BY REF_NO
+	        ) REV ON R.RCP_NO = REV.REF_NO
+	        WHERE R.DELETE_STATUS = 'N' AND R.USER_NO IS NOT NULL
+	        ORDER BY L.LIKE_COUNT DESC, R.CREATED_AT DESC
+	    )
+	    FETCH FIRST 4 ROWS ONLY
+	</select>
 
     <select id="selectRcpMethods" resultType="com.kh.ypjp.community.recipe.model.vo.RcpMethod">
         SELECT RCP_MTH_NO, RCP_METHOD 
@@ -617,13 +619,16 @@
 	            R.VIEWS         AS views,
 	            I.SERVER_NAME   AS serverName,
 	            1               AS isOfficial,
+		        U.USER_NO        AS "userNo",
+		        U.USERNAME       AS "username",
+		        U.SIK_BTI        AS "sikBti",
 	            (
 	                SELECT COUNT(*) 
 	                FROM BOOKMARK B 
 	                WHERE B.REF_NO = R.RCP_NO
 	            ) AS bookmarkCount,
 	            <choose>
-	                <when test="loginUserNo != null">
+	                <when test="loginUserNo != null and !loginUserNo.equals('undefined')">
 	                    CASE 
 	                        WHEN (SELECT COUNT(*) FROM BOOKMARK B WHERE B.REF_NO = R.RCP_NO AND B.USER_NO = #{loginUserNo}) > 0 
 	                        THEN 1 
@@ -635,6 +640,7 @@
 	                </otherwise>
 	            </choose> AS isBookmarked
 	        FROM RECIPE R
+	        LEFT JOIN USERS U ON R.USER_NO = U.USER_NO
 	        LEFT JOIN IMAGE I ON (R.IMAGE_NO = I.IMAGE_NO)
 	        <include refid="officialRecipeSearchCondition"/>
 	        <choose>
@@ -656,6 +662,31 @@
 	    SELECT COUNT(*)
 	    FROM RECIPE R
 	    <include refid="officialRecipeSearchCondition"/>
+	</select>
+	<select id="selectOfficialRankingRecipes" resultType="com.kh.ypjp.community.recipe.dto.UserRecipeDto$OfficialRecipeResponse">
+	    SELECT * FROM (
+	        SELECT
+	            R.RCP_NO        AS rcpNo,
+	            R.RCP_NAME      AS rcpName,
+	            I.SERVER_NAME   AS serverName,
+	            1               AS isOfficial,
+	            U.USERNAME      AS username,
+	            U.SIK_BTI       AS sikBti,
+	            UI.SERVER_NAME  AS userProfileImage,
+	            NVL(B.BOOKMARK_CNT, 0) AS bookmarkCount
+	        FROM RECIPE R
+	        LEFT JOIN (
+	            SELECT REF_NO, COUNT(*) AS BOOKMARK_CNT
+	            FROM BOOKMARK
+	            GROUP BY REF_NO
+	        ) B ON R.RCP_NO = B.REF_NO
+	        LEFT JOIN IMAGE I ON (R.IMAGE_NO = I.IMAGE_NO)
+	        LEFT JOIN USERS U ON (R.USER_NO = U.USER_NO)
+	        LEFT JOIN IMAGE UI ON (U.IMAGE_NO = UI.IMAGE_NO)
+	        WHERE R.APPROVAL = 'Y' AND R.DELETE_STATUS = 'N'
+	        ORDER BY bookmarkCount DESC, R.CREATED_AT DESC
+	    )
+	    FETCH FIRST 4 ROWS ONLY
 	</select>
 	
 </mapper>

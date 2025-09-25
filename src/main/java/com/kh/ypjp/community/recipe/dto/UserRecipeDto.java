@@ -194,11 +194,15 @@ public class UserRecipeDto {
         private String rcpName;
         private String serverName;
         private int views;
+        private long userNo;
+        private String username;
+        private String sikBti;
         
         @JsonProperty("isOfficial")
         private boolean isOfficial;
         
         private int bookmarkCount;
+        
         
         @JsonProperty("isBookmarked")
         private boolean isBookmarked;

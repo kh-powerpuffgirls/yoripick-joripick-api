@@ -18,6 +18,7 @@ import com.kh.ypjp.common.UtilService;
 import com.kh.ypjp.common.model.vo.Nutrient;
 import com.kh.ypjp.community.recipe.dao.UserRecipeDao;
 import com.kh.ypjp.community.recipe.dto.UserRecipeDto;
+import com.kh.ypjp.community.recipe.dto.UserRecipeDto.BookmarkResponse;
 import com.kh.ypjp.community.recipe.dto.UserRecipeDto.IngredientInfo;
 import com.kh.ypjp.community.recipe.dto.UserRecipeDto.IngredientJsonDto;
 import com.kh.ypjp.community.recipe.dto.UserRecipeDto.OfficialRecipePage;
@@ -92,7 +93,19 @@ public class UserRecipeServiceImpl implements UserRecipeService {
 
     @Override
     public List<UserRecipeResponse> selectRankingRecipes() {
-        return dao.selectRankingRecipes();
+    	List<UserRecipeResponse> rankingList = dao.selectRankingRecipes();
+        
+        // 이미지 전체 URL 생성 로직
+        for (UserRecipeResponse recipe : rankingList) {
+        	if(recipe.getServerName() != null && !recipe.getServerName().isEmpty()) {
+        		// createFullUrl 메소드는 기존 ServiceImpl 클래스에 이미 존재합니다.
+        		recipe.setServerName(createFullUrl(recipe.getServerName()));
+        	}
+        	if(recipe.getUserProfileImage() != null && !recipe.getUserProfileImage().isEmpty()) {
+        		recipe.setUserProfileImage(createFullUrl(recipe.getUserProfileImage()));
+        	}
+        }
+        return rankingList;
     }
 
     @Override
@@ -608,9 +621,23 @@ public class UserRecipeServiceImpl implements UserRecipeService {
                 }
             }
         }
+        
+        System.out.println(">> isOfficial: " + recipe.isOfficial());
         return recipe;
 	}
 
+	@Override
+	public BookmarkResponse getBookmarkStatus(int rcpNo, long userNo) {
+		Map<String, Object> params = new HashMap<>();
+        params.put("rcpNo", rcpNo);
+        params.put("userNo", userNo);
+        
+        boolean isBookmarked = dao.checkBookmark(params) > 0;
+        int bookmarkCount = dao.countBookmarks(rcpNo);
+        
+        return new UserRecipeDto.BookmarkResponse(isBookmarked, bookmarkCount);
+	}
+	
 	@Override
 	public UserRecipeDto.BookmarkResponse toggleBookmark(int rcpNo, long userNo) {
 		Map<String, Object> params = new HashMap<>();
@@ -648,11 +675,12 @@ public class UserRecipeServiceImpl implements UserRecipeService {
         long totalElements = dao.selectOfficialRecipeCount(params);
         List<OfficialRecipeResponse> recipes = dao.selectOfficialRecipeList(params);
         
-        log.debug("DB에서 조회된 전체 레시피 개수: {}", totalElements);
-        log.debug("DAO로부터 변환된 레시피 리스트: {}", recipes);
-        log.debug("변환된 리스트의 크기: {}", recipes.size());
-        
+//        log.debug("DB에서 조회된 전체 레시피 개수: {}", totalElements);
+//        log.debug("DAO로부터 변환된 레시피 리스트: {}", recipes);
+//        log.debug("변환된 리스트의 크기: {}", recipes.size());
+//        
         int totalPages = (int) Math.ceil((double) totalElements / pageSize);
+       
         
         // 이미지 전체 URL 생성
         for (OfficialRecipeResponse recipe : recipes) {
@@ -665,6 +693,21 @@ public class UserRecipeServiceImpl implements UserRecipeService {
         
         return new OfficialRecipePage(recipes, totalPages, totalElements);
 	}
+
+	@Override
+	public List<OfficialRecipeResponse> selectOfficialRankingRecipes() {
+		List<OfficialRecipeResponse> rankingList = dao.selectOfficialRankingRecipes();
+        
+        // 이미지 전체 URL 생성
+        for (OfficialRecipeResponse recipe : rankingList) {
+        	if(recipe.getServerName() != null && !recipe.getServerName().isEmpty()) {
+        		recipe.setServerName(createFullUrl(recipe.getServerName()));
+        	}
+        }
+        return rankingList;
+	}
+
+
 
 	
 }
