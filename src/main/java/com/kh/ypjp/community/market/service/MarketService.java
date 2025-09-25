@@ -42,12 +42,14 @@ public class MarketService {
     
     public Optional<MarketSellDto> getPost(Long productId) {
         MarketSellDto post = marketDao.getPostDetail(productId);
-        
+
         if (post != null) {
+            // SikBti 정보만 추가하고
             String sikBti = marketDao.selectSikBtiByUserNo(post.getUserNo().intValue());
             post.setSikBti(sikBti);
+
         }
-        
+
         return Optional.ofNullable(post);
     }
 
@@ -148,31 +150,24 @@ public class MarketService {
     
     // 판매자용 구매 신청 폼 상세 조회 메서드
     public Optional<MarketBuyDto> getSellBuyFormById(Long formId, Long userNo) {
-        // 폼과 연결된 상품의 판매자가 현재 로그인한 사용자인지 확인
         Long sellerId = marketDao.findSellerByFormId(formId);
 
         if (sellerId != null && sellerId.equals(userNo)) {
-            // 판매자가 맞으면 폼 정보 조회
             MarketBuyDto buyForm = marketDao.findPurchaseForm(formId);
             return Optional.ofNullable(buyForm);
         }
-        // 판매자가 아니거나 폼을 찾을 수 없으면 Optional.empty() 반환
         return Optional.empty();
     }
 
-    // 🔥 구매 폼 삭제 메서드
     @Transactional
     public boolean deleteBuyForm(Long formId, Long userNo) {
-        // 폼과 연결된 상품의 판매자가 현재 로그인한 사용자인지 확인
         Long sellerId = marketDao.findSellerByFormId(formId);
 
         if (sellerId != null && sellerId.equals(userNo)) {
-            // 판매자가 맞으면 삭제 상태로 업데이트
             int rowsAffected = marketDao.updateBuyFormDeleteStatus(formId, "Y");
             return rowsAffected > 0;
         }
         
-        // 판매자가 아니면 권한 없음 로그를 남기고 실패 반환
         log.warn("구매 폼 삭제 권한 없음: formId={}, userNo={}", formId, userNo);
         return false;
     }

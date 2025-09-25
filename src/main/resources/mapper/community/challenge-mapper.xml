@@ -80,17 +80,29 @@
         ORDER BY c.CREATED_AT DESC
     </select>
     
-            <select id="findNextChallenge" resultType="java.lang.Long">
-        SELECT MIN(CHALLENGE_NO)
-        FROM CHALLENGE
-        WHERE CHALLENGE_NO > #{challengeNo} AND DELETE_STATUS = 'N'
-    </select>
-
-    <select id="findPreviousChallenge" resultType="java.lang.Long">
-        SELECT MAX(CHALLENGE_NO)
-        FROM CHALLENGE
-        WHERE CHALLENGE_NO &lt; #{challengeNo} AND DELETE_STATUS = 'N'
-    </select>
+	<select id="findNextChallenge" resultType="java.lang.Long">
+	    SELECT CHALLENGE_NO
+	    FROM (
+	        SELECT CHALLENGE_NO
+	        FROM CHALLENGE
+	        WHERE CREATED_AT > (SELECT CREATED_AT FROM CHALLENGE WHERE CHALLENGE_NO = #{challengeNo})
+	          AND DELETE_STATUS = 'N'
+	        ORDER BY CREATED_AT ASC
+	    )
+	    WHERE ROWNUM = 1
+	</select>
+	
+	<select id="findPreviousChallenge" resultType="java.lang.Long">
+	    SELECT CHALLENGE_NO
+	    FROM (
+	        SELECT CHALLENGE_NO
+	        FROM CHALLENGE
+	        WHERE CREATED_AT &lt; (SELECT CREATED_AT FROM CHALLENGE WHERE CHALLENGE_NO = #{challengeNo})
+	          AND DELETE_STATUS = 'N'
+	        ORDER BY CREATED_AT DESC
+	    )
+	    WHERE ROWNUM = 1
+	</select>
 
     <select id="findActiveChallengeInfo" resultMap="ChallengeInfoDtoResultMap">
         SELECT CH_INFO_NO, TITLE, START_DATE, END_DATE

@@ -148,11 +148,21 @@ public class ChallengeService {
         return Optional.ofNullable(challengeDao.findActiveChallengeInfo());
     }
 
-    // 댓글 전체 조회
     public List<ChallengeReplyDto> selectAllRepliesByChallengeId(Long challengeId) {
-        return challengeDao.selectAllRepliesByChallengeId(challengeId);
-    }
+        List<ChallengeReplyDto> replies = challengeDao.selectAllRepliesByChallengeId(challengeId);
 
+        for (ChallengeReplyDto reply : replies) {
+            if (reply.getProfileImageServerName() != null && !reply.getProfileImageServerName().isEmpty()) {
+
+                String fullPath = "profile/" + reply.getUserNo() + "/" + reply.getProfileImageServerName();
+
+                String imageUrl = "/images/" + fullPath;
+                reply.setProfileImageServerName(imageUrl);
+            }
+        }
+        return replies;
+    }
+    
     // 댓글 등록
     @Transactional
     public int insertReply(ChallengeReplyDto replyDto) {
