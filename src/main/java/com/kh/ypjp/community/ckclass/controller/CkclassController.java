@@ -73,7 +73,7 @@ public class CkclassController {
 
         try {
             ckclassService.saveClass(ckclassDto, file);
-            return new ResponseEntity<>("클래스가 성공적으로 등록되었습니다.", HttpStatus.CREATED);
+            return new ResponseEntity<>(ckclassDto.getRoomNo().toString(), HttpStatus.CREATED);
         } catch (IllegalArgumentException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         } catch (IOException e) {
