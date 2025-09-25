@@ -22,9 +22,11 @@ import com.kh.ypjp.security.model.dto.UserNotiDto;
 import com.kh.ypjp.security.model.provider.JWTProvider;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AuthService {
 
     private final SecurityConfig securityConfig;
@@ -92,14 +94,14 @@ public class AuthService {
         if (!encoder.matches(password, user.getPassword())) {
             throw new AuthException("WRONG_PASSWORD");
         }
-
-        if ("LOCKED".equalsIgnoreCase(user.getStatus())) {
-            throw new AuthException("ACCOUNT_LOCKED");
-        }
+        
+        log.info("user : {}",user);
+    	if("INACTIVE".equalsIgnoreCase(user.getStatus())) {
+    		throw new AuthException("INACTIVE_USER");
+    	}
 
         return issueTokens(user);
     }
-
 
     
     @Transactional
