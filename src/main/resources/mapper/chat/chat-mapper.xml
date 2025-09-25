@@ -1,6 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
 <mapper namespace="chat">
+	<update id="updateLastRead">
+		UPDATE CLASS_ENROLL
+		SET message_no = #{messageNo}
+		WHERE user_no = #{userNo}
+			AND room_no = #{roomNo}
+	</update>
+	
+	<select id="getLastRead" resultType="long">
+		SELECT message_no FROM CLASS_ENROLL
+		WHERE user_no = #{userNo}
+			AND room_no = #{roomNo}
+	</select>
+
 	<resultMap id="chatRoomResultMap" type="com.kh.ypjp.chat.model.dto.ChatDto$ChatRoomDto">
         <result property="roomNo" column="roomNo"/>
         <result property="className" column="className"/>

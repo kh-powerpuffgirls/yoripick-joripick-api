@@ -107,4 +107,12 @@ public class ChatService {
 		return chatDao.insertMessage(message);
 	}
 
+	public int updateLastRead(Map<String, Object> param) {
+		return chatDao.updateLastRead(param);
+	}
+
+	public Long getLastRead(Map<String, Object> param) {
+		return chatDao.getLastRead(param);
+	}
+
 }
