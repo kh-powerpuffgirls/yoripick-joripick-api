@@ -66,6 +66,7 @@
 		            GROUP BY ref_no
 		            HAVING COUNT(*) > 5
 		        ) l ON r.rcp_no = l.ref_no
+            	WHERE r.approval = 'N'
 		
 		        UNION ALL
 		
@@ -612,4 +613,40 @@
 			) u
 		) WHERE rnum BETWEEN #{offset} + 1 AND #{offset} + #{limit}
 	</select>
+	
+	<select id="findReportCategory" resultType="string">
+        SELECT rt.CATEGORY
+        FROM report rep
+        JOIN report_type rt ON rep.REPORT_TYPE = rt.REPORT_TYPE
+        WHERE rep.REPORT_NO = #{reportNo}
+    </select>
+    
+    <select id="findRecipeTarget" resultType="long">
+        SELECT rec.RCP_NO
+        FROM report rep
+        JOIN report_type rt ON rep.REPORT_TYPE = rt.REPORT_TYPE
+        JOIN review rv ON rep.REF_NO = rv.REVIEW_NO
+        JOIN recipe rec ON rv.RCP_SOURCE = rec.RCP_NO
+        WHERE rep.REPORT_NO = #{reportNo}
+          AND rt.CATEGORY = 'REVIEW'
+    </select>
+    
+    <select id="findReplyTarget" resultType="com.kh.ypjp.admin.model.dto.AdminDto$ReportTargetDto">
+        SELECT parent.CATEGORY AS category,
+               parent.REF_NO AS targetNo
+        FROM (
+            SELECT r.CATEGORY, r.REF_NO
+            FROM reply r
+            START WITH r.REPLY_NO = (
+                SELECT rep.REF_NO
+                FROM report rep
+                JOIN report_type rt ON rep.REPORT_TYPE = rt.REPORT_TYPE
+                WHERE rep.REPORT_NO = #{reportNo}
+                  AND rt.CATEGORY = 'REPLY'
+            )
+            CONNECT BY PRIOR r.REF_NO = r.REPLY_NO
+        ) parent
+        WHERE parent.CATEGORY IN ('CHALLENGE','MARKET','BOARD')
+        FETCH FIRST 1 ROWS ONLY
+    </select>
 </mapper>

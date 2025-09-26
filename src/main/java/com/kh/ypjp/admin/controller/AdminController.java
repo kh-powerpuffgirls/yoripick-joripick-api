@@ -34,6 +34,7 @@ import com.kh.ypjp.admin.model.dto.AdminDto.Ingredient;
 import com.kh.ypjp.admin.model.dto.AdminDto.Recipe;
 import com.kh.ypjp.admin.model.dto.AdminDto.RecipeInfo;
 import com.kh.ypjp.admin.model.dto.AdminDto.Report;
+import com.kh.ypjp.admin.model.dto.AdminDto.ReportTargetDto;
 import com.kh.ypjp.admin.model.dto.AdminDto.UserInfo;
 import com.kh.ypjp.admin.model.service.AdminService;
 import com.kh.ypjp.chat.model.dto.ChatDto.ChatMsgDto;
@@ -352,5 +353,11 @@ public class AdminController {
 	    response.put("pageInfo", pageInfo);
 		return ResponseEntity.ok(response);
 	}
+	
+	@GetMapping("/reports/{reportNo}")
+    public ResponseEntity<ReportTargetDto> getParentRep(@PathVariable Long reportNo) {
+		ReportTargetDto parentReport = service.getParentRep(reportNo);
+        return ResponseEntity.ok(parentReport);
+    }
 	
 }

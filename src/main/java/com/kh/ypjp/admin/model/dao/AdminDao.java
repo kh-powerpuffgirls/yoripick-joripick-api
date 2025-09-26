@@ -3,7 +3,7 @@ package com.kh.ypjp.admin.model.dao;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.ibatis.session.SqlSession;
+import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.stereotype.Repository;
 
 import com.kh.ypjp.admin.model.dto.AdminDto.Announcement;
@@ -17,6 +17,7 @@ import com.kh.ypjp.admin.model.dto.AdminDto.Ingredient;
 import com.kh.ypjp.admin.model.dto.AdminDto.Recipe;
 import com.kh.ypjp.admin.model.dto.AdminDto.RecipeInfo;
 import com.kh.ypjp.admin.model.dto.AdminDto.Report;
+import com.kh.ypjp.admin.model.dto.AdminDto.ReportTargetDto;
 import com.kh.ypjp.admin.model.dto.AdminDto.UserInfo;
 import com.kh.ypjp.chat.model.dto.ChatDto.ChatMsgDto;
 import com.kh.ypjp.chat.model.dto.ChatDto.ChatRoomDto;
@@ -27,7 +28,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AdminDao {
 	
-	private final SqlSession session;
+	private final SqlSessionTemplate session;
 
 	public Long countAllChallenges() {
 		return session.selectOne("admin.countAllChallenges");
@@ -199,6 +200,18 @@ public class AdminDao {
 
 	public List<Ingredient> getIngredients(Map<String, Object> param) {
 		return session.selectList("admin.getIngredients", param);
+	}
+
+	public String findReportCategory(Long reportNo) {
+		return session.selectOne("admin.findReportCategory", reportNo);
+	}
+
+	public Long findRecipeTarget(Long reportNo) {
+		return session.selectOne("admin.findRecipeTarget", reportNo);
+	}
+
+	public ReportTargetDto findReplyTarget(Long reportNo) {
+		return session.selectOne("admin.findReplyTarget", reportNo);
 	}
 
 }

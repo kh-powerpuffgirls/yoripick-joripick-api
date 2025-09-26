@@ -155,6 +155,14 @@ public class AdminDto {
 	@Data
 	@NoArgsConstructor
 	@AllArgsConstructor
+	public static class ReportTargetDto {
+		private String category;
+	    private Long targetNo;
+	}
+	
+	@Data
+	@NoArgsConstructor
+	@AllArgsConstructor
 	public static class UserInfo {
 		private Long userNo;
 		private String userName;
