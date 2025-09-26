@@ -54,7 +54,7 @@ public class UserRecipeServiceImpl implements UserRecipeService {
 
     @Override
     public RecipePage selectRecipePage(HashMap<String, Object> params) {
-        // 1. 페이지당 보여줄 게시글 수 설정 (예: 8개)
+        // 1. 페이지당 보여줄 게시글 수 설정 
         int pageSize = 12;
         params.put("pageSize", pageSize);
         
@@ -684,10 +684,16 @@ public class UserRecipeServiceImpl implements UserRecipeService {
         
         // 이미지 전체 URL 생성
         for (OfficialRecipeResponse recipe : recipes) {
-        	String imageUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
-	                .path("/images/")
-	                .path(recipe.getServerName())
-	                .toUriString();
+        	
+        	String imageUrl;
+        	
+        	if(recipe.getUserNo() > 0) {
+        		imageUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
+    					.path("/images/" + recipe.getServerName()).toUriString();
+        	} else {
+        		imageUrl = "http://www.foodsafetykorea.go.kr" + recipe.getServerName();                		
+        	}
+           
         	recipe.setServerName(imageUrl);
         }
         

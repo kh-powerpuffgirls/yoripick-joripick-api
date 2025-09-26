@@ -95,6 +95,7 @@ public class UserRecipeDto {
         private Date updatedAt; 
         private int views;
         private String tag;
+        private String approval;
         
         @JsonProperty("isOfficial")
         private boolean isOfficial;

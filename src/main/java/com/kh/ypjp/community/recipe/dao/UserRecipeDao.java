@@ -9,7 +9,6 @@ import com.kh.ypjp.common.model.vo.Nutrient;
 import com.kh.ypjp.community.recipe.dto.UserRecipeDto;
 import com.kh.ypjp.community.recipe.dto.UserRecipeDto.OfficialRecipeResponse;
 import com.kh.ypjp.community.recipe.dto.UserRecipeDto.RecipeDetailResponse;
-import com.kh.ypjp.community.recipe.dto.UserRecipeDto.UserRecipeResponse;
 import com.kh.ypjp.community.recipe.model.vo.CookingStep;
 import com.kh.ypjp.community.recipe.model.vo.RcpDetail;
 import com.kh.ypjp.community.recipe.model.vo.RcpIngredient;
