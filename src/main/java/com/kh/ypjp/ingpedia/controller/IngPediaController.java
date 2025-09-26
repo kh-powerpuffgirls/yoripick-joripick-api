@@ -19,6 +19,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.kh.ypjp.common.PageInfo;
 import com.kh.ypjp.common.UtilService;
+import com.kh.ypjp.ingpedia.model.dto.IngPediaDto.IngDetailResponse;
 import com.kh.ypjp.ingpedia.model.dto.IngPediaDto.IngListResponse;
 import com.kh.ypjp.ingpedia.model.dto.IngPediaDto.IngPairResponse;
 import com.kh.ypjp.ingpedia.model.dto.IngPediaDto.IngPediaMainResponse;
@@ -77,7 +78,17 @@ public class IngPediaController {
 			@PathVariable long ingNo
 			){
 		IngPediaResponse ingPedia = new IngPediaResponse();
-		ingPedia.setIngDetail(ingPediaService.selectIngPediaDetail(ingNo));
+		IngDetailResponse detail = ingPediaService.selectIngPediaDetail(ingNo);
+		
+		if (detail.getImgUrl() != null && !detail.getImgUrl().isEmpty()) {
+			String imageUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
+					.path("/images/")
+					.path(detail.getImgUrl())
+					.toUriString();
+			
+			detail.setImgUrl(imageUrl);
+		}
+		ingPedia.setIngDetail(detail);
 		
 		List<IngPairResponse> ingpair = ingPediaService.selectIngPediaPair(ingNo);
 		if(ingpair != null) ingPedia.setPairList(ingpair);
@@ -166,7 +177,7 @@ public class IngPediaController {
 		List<IngPediaMainResponse> response = new ArrayList();
 		response = ingPediaService.selectIngPediaMain();
 		
-			for (IngPediaMainResponse ing : response) {
+		for (IngPediaMainResponse ing : response) {
 				if (ing.getImgUrl() != null && !ing.getImgUrl().isEmpty()) {
 					String imageUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
 							.path("/images/")
