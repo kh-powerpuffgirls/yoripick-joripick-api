@@ -98,7 +98,6 @@ public class UserRecipeServiceImpl implements UserRecipeService {
         // 이미지 전체 URL 생성 로직
         for (UserRecipeResponse recipe : rankingList) {
         	if(recipe.getServerName() != null && !recipe.getServerName().isEmpty()) {
-        		// createFullUrl 메소드는 기존 ServiceImpl 클래스에 이미 존재합니다.
         		recipe.setServerName(createFullUrl(recipe.getServerName())); 
         	}
         	if(recipe.getUserProfileImage() != null && !recipe.getUserProfileImage().isEmpty()) {
@@ -140,11 +139,11 @@ public class UserRecipeServiceImpl implements UserRecipeService {
         	String webPath = "community/recipe/" + rcpNo;
             String changeName = utilService.getChangeName(mainImageFile, webPath);
             
-            String serverNameForDb = webPath + "/" + changeName;
+//            String serverNameForDb = webPath + "/" + changeName;
             
             Map<String, Object> imageParam = new HashMap<>();
             imageParam.put("originName", mainImageFile.getOriginalFilename());
-            imageParam.put("serverName", serverNameForDb);
+            imageParam.put("serverName", changeName);
             
             utilService.insertImage(imageParam);
             mainImageNo = utilService.getImageNo(imageParam);
@@ -192,13 +191,12 @@ public class UserRecipeServiceImpl implements UserRecipeService {
             if (stepImgFile != null && !stepImgFile.isEmpty()) {
             	String webPath = "community/recipe/" + rcpNo;
                 String changeName = utilService.getChangeName(stepImgFile, webPath);
-                String serverNameForDb = webPath + "/" + changeName;
+//                String serverNameForDb = webPath + "/" + changeName;
                 
                 Map<String, Object> imageParam = new HashMap<>();
                 imageParam.put("originName", stepImgFile.getOriginalFilename());
-                imageParam.put("serverName", serverNameForDb);
+                imageParam.put("serverName", changeName);
                 
-                // ✨ 동일한 로직으로 순서 이미지도 처리합니다.
                 utilService.insertImage(imageParam);
                 long stepImageNo = utilService.getImageNo(imageParam);
                 detail.setImageNo((int)stepImageNo);
@@ -264,19 +262,36 @@ public class UserRecipeServiceImpl implements UserRecipeService {
 
         // 대표 이미지
         if (recipe.getMainImage() != null && !recipe.getMainImage().isEmpty()) {
-            recipe.setMainImage(createFullUrl(recipe.getMainImage()));
+        	String imageUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
+	                .path("/images/community/recipe/"+ recipe.getRcpNo()+"/")
+	                .path(recipe.getMainImage())
+	                .toUriString();
+        	recipe.setMainImage(imageUrl);
+//            recipe.setMainImage(createFullUrl(recipe.getMainImage()));
         }
 
         //작성자 프로필 이미지
         if (recipe.getWriter() != null && recipe.getWriter().getProfileImage() != null && !recipe.getWriter().getProfileImage().isEmpty()) {
-            recipe.getWriter().setProfileImage(createFullUrl(recipe.getWriter().getProfileImage()));
+        	String profileImageUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
+	                .path("/images/profile/"+ recipe.getWriter().getUserNo()+"/")
+	                .path(recipe.getWriter().getProfileImage())
+	                .toUriString();
+        	recipe.getWriter().setProfileImage(profileImageUrl);
+        	
+//            recipe.getWriter().setProfileImage(createFullUrl(recipe.getWriter().getProfileImage()));
+            
         }
         
         // 요리 순서(Steps) 이미지 
         if (recipe.getSteps() != null) {
             for (CookingStep step : recipe.getSteps()) {
                 if (step.getServerName() != null && !step.getServerName().isEmpty()) {
-                    step.setServerName(createFullUrl(step.getServerName()));
+                	String imageUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
+        	                .path("/images/community/recipe/"+ recipe.getRcpNo()+"/")
+        	                .path(step.getServerName())
+        	                .toUriString();
+                	step.setServerName(imageUrl);
+//                    step.setServerName(createFullUrl(step.getServerName()));
                 }
             }
         }
@@ -347,11 +362,11 @@ public class UserRecipeServiceImpl implements UserRecipeService {
         if (imageFile != null && !imageFile.isEmpty()) {
             String webPath = "community/recipe/review/" + rcpNo; // 리뷰 이미지 저장 경로
             String changeName = utilService.getChangeName(imageFile, webPath);
-            String serverNameForDb = webPath + "/" + changeName;
+//            String serverNameForDb = webPath + "/" + changeName;
             
             Map<String, Object> imageParam = new HashMap<>();
             imageParam.put("originName", imageFile.getOriginalFilename());
-            imageParam.put("serverName", serverNameForDb);
+            imageParam.put("serverName", changeName);
             
             utilService.insertImage(imageParam);
             imageNo = utilService.getImageNo(imageParam);
@@ -401,7 +416,12 @@ public class UserRecipeServiceImpl implements UserRecipeService {
             
             // userProfileImage가 null이 아닐 때만 전체 URL로 변환
             if (review.getUserProfileImage() != null && !review.getUserProfileImage().isEmpty()) {
-                userInfo.setProfileImage(createFullUrl(review.getUserProfileImage()));
+            	String profileImageUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
+    	                .path("/images/profile/"+ review.getUserNo()+"/")
+    	                .path(review.getUserProfileImage())
+    	                .toUriString();
+            	 userInfo.setProfileImage(profileImageUrl);
+//                userInfo.setProfileImage(createFullUrl(review.getUserProfileImage()));
             }
             // 4-2. 리뷰 자체 이미지 경로 변환
             ReviewResponseDto reviewDto = new ReviewResponseDto();
@@ -410,9 +430,15 @@ public class UserRecipeServiceImpl implements UserRecipeService {
             reviewDto.setStars(review.getStars());
             reviewDto.setContent(review.getContent());
             reviewDto.setReviewDate(review.getReviewDate());
+            
             // imageUrl이 null이 아닐 때만 전체 URL로 변환
             if (review.getServerName() != null && !review.getServerName().isEmpty()) {
-	            reviewDto.setServerName(createFullUrl(review.getServerName()));
+            	String imageUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
+    	                .path("/images/community/recipe/review/"+ review.getReviewNo()+"/")
+    	                .path(review.getServerName())
+    	                .toUriString();
+            	reviewDto.setServerName(imageUrl);
+//	            reviewDto.setServerName(createFullUrl(review.getServerName()));
 	        }
             
             reviewResponseList.add(reviewDto);
@@ -436,7 +462,12 @@ public class UserRecipeServiceImpl implements UserRecipeService {
 	            userInfo.setUsername(review.getUsername());
 	            userInfo.setSikBti(review.getSikBti());
 	            if (review.getUserProfileImage() != null && !review.getUserProfileImage().isEmpty()) {
-	                userInfo.setProfileImage(createFullUrl(review.getUserProfileImage()));
+	            	String profileImageUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
+	    	                .path("/images/profile/"+ review.getUserNo()+"/")
+	    	                .path(review.getUserProfileImage())
+	    	                .toUriString();
+	            	 userInfo.setProfileImage(profileImageUrl);
+//	                userInfo.setProfileImage(createFullUrl(review.getUserProfileImage()));
 	            }
 
 	            ReviewResponseDto reviewDto = new ReviewResponseDto();
@@ -446,7 +477,12 @@ public class UserRecipeServiceImpl implements UserRecipeService {
 	            reviewDto.setContent(review.getContent());
 	            reviewDto.setReviewDate(review.getReviewDate());
 	            if (review.getServerName() != null && !review.getServerName().isEmpty()) {
-	                reviewDto.setServerName(createFullUrl(review.getServerName()));
+	            	String imageUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
+	    	                .path("/images/community/recipe/review/"+ review.getReviewNo()+"/")
+	    	                .path(review.getServerName())
+	    	                .toUriString();
+	            	reviewDto.setServerName(imageUrl);
+//	                reviewDto.setServerName(createFullUrl(review.getServerName()));
 	            }
 	            
 	            photoReviewResponseList.add(reviewDto);
@@ -594,7 +630,7 @@ public class UserRecipeServiceImpl implements UserRecipeService {
         	String officialImageUrl;
         	if(recipe.getWriter() != null) {
         		 officialImageUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
-    					.path("/images/" + recipe.getMainImage()).toUriString();
+    					.path("/images/community/recipe/" + recipe.getRcpNo()+"/" + recipe.getMainImage()).toUriString();
         	} else {
         		 officialImageUrl = "http://www.foodsafetykorea.go.kr" + recipe.getMainImage();
         	}
@@ -603,7 +639,12 @@ public class UserRecipeServiceImpl implements UserRecipeService {
 
         //작성자 프로필 이미지
         if (recipe.getWriter() != null && recipe.getWriter().getProfileImage() != null && !recipe.getWriter().getProfileImage().isEmpty()) {
-            recipe.getWriter().setProfileImage(createFullUrl(recipe.getWriter().getProfileImage()));
+        	String profileImageUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
+	                .path("/images/profile/"+ recipe.getWriter().getUserNo()+"/")
+	                .path(recipe.getWriter().getProfileImage())
+	                .toUriString();
+        	recipe.getWriter().setProfileImage(profileImageUrl);
+//            recipe.getWriter().setProfileImage(createFullUrl(recipe.getWriter().getProfileImage()));
         }
         
         // 요리 순서(Steps) 이미지 
@@ -613,7 +654,7 @@ public class UserRecipeServiceImpl implements UserRecipeService {
                 	String officialStepImageUrl;
                 	if(recipe.getWriter() != null) {
                 		officialStepImageUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
-            					.path("/images/" + recipe.getMainImage()).toUriString();
+            					.path("/images/community/recipe/" + recipe.getRcpNo()+"/" + recipe.getMainImage()).toUriString();
                 	} else {
                 		officialStepImageUrl = "http://www.foodsafetykorea.go.kr" + step.getServerName();                		
                 	}
@@ -689,7 +730,7 @@ public class UserRecipeServiceImpl implements UserRecipeService {
         	
         	if(recipe.getUserNo() > 0) {
         		imageUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
-    					.path("/images/" + recipe.getServerName()).toUriString();
+    					.path("/images/community/recipe/" + recipe.getRcpNo()+"/"  + recipe.getServerName()).toUriString();
         	} else {
         		imageUrl = "http://www.foodsafetykorea.go.kr" + recipe.getServerName();                		
         	}
@@ -706,9 +747,21 @@ public class UserRecipeServiceImpl implements UserRecipeService {
         
         // 이미지 전체 URL 생성
         for (OfficialRecipeResponse recipe : rankingList) {
-        	if(recipe.getServerName() != null && !recipe.getServerName().isEmpty()) {
-        		recipe.setServerName(createFullUrl(recipe.getServerName()));
+        	String imageUrl;
+        	
+        	if(recipe.getUserNo() > 0) {
+        		imageUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
+    					.path("/images/community/recipe/" + recipe.getRcpNo() + "/"  + recipe.getServerName()).toUriString();
+        	} else {
+        		imageUrl = "http://www.foodsafetykorea.go.kr" + recipe.getServerName();                		
         	}
+           
+        	recipe.setServerName(imageUrl);
+        	
+//        	if(recipe.getServerName() != null && !recipe.getServerName().isEmpty()) {
+//        		
+//        		recipe.setServerName(createFullUrl(recipe.getServerName()));
+//        	}
         }
         return rankingList;
 	}
