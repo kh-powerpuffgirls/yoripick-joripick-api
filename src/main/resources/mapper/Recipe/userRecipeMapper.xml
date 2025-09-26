@@ -5,6 +5,7 @@
     <sql id="recipeSearchCondition">
         <where>
             R.DELETE_STATUS = 'N'
+            AND R.APPROVAL = 'N'
             <if test="rcpMthNo != null and rcpMthNo != ''">
                 AND R.RCP_MTH_NO = #{rcpMthNo}
             </if>
@@ -75,39 +76,40 @@
     </select>
 
     <select id="selectRankingRecipes" resultType="com.kh.ypjp.community.recipe.dto.UserRecipeDto$UserRecipeResponse">
-         SELECT * FROM (
-            SELECT
-                R.RCP_NO        AS rcpNo,
-                R.RCP_NAME      AS rcpName,
-                R.CREATED_AT    AS createdAt,
-                U.USERNAME,
-                U.SIK_BTI       AS sikBti,
-                RI.SERVER_NAME   AS serverName,
-                UI.SERVER_NAME   AS userProfileImage,
-                NVL(V.AVG_STARS, 0) AS avgStars,
-                NVL(V.REVIEW_COUNT, 0) AS reviewCount
-            FROM RECIPE R
-            JOIN USERS U ON (R.USER_NO = U.USER_NO)
-            LEFT JOIN IMAGE  RI ON (R.IMAGE_NO = RI.IMAGE_NO)
-            LEFT JOIN IMAGE  UI ON (U.IMAGE_NO = UI.IMAGE_NO)
-            LEFT JOIN (
-                SELECT REF_NO, AVG(STARS) AS AVG_STARS, COUNT(*) AS REVIEW_COUNT
-                FROM REVIEW WHERE RCP_SOURCE = 'COMM' GROUP BY REF_NO
-            ) V ON R.RCP_NO = V.REF_NO
-            JOIN (
-                SELECT REF_NO, COUNT(*) AS LIKE_COUNT
-                FROM LIKES
-                WHERE REF_TYPE = 'RCP'
-                  AND LIKE_STATUS = 'LIKE' -- '좋아요' 상태만 카운트
-                  AND LIKED_AT >= TRUNC(SYSDATE, 'MM') -- 이번 달 1일 00시부터
-                  AND LIKED_AT &lt; ADD_MONTHS(TRUNC(SYSDATE, 'MM'), 1) -- 다음 달 1일 00시 전까지
-                GROUP BY REF_NO
-            ) L ON R.RCP_NO = L.REF_NO
-            WHERE R.DELETE_STATUS = 'N'
-            ORDER BY L.LIKE_COUNT DESC, R.CREATED_AT DESC
-        )
-        FETCH FIRST 4 ROWS ONLY
-</select>
+	    SELECT * FROM (
+	        SELECT
+	            R.RCP_NO        AS rcpNo,
+	            R.RCP_NAME      AS rcpName,
+	            R.CREATED_AT    AS createdAt,
+	            U.USER_NO       AS userNo,
+	            U.USERNAME,
+	            U.SIK_BTI       AS sikBti,
+	            RI.SERVER_NAME  AS serverName,
+	            UI.SERVER_NAME  AS userProfileImage,
+	            NVL(REV.REVIEW_COUNT, 0) AS reviewCount,
+	            L.LIKE_COUNT
+	        FROM RECIPE R
+	        JOIN USERS U ON (R.USER_NO = U.USER_NO)
+	        JOIN (
+	            SELECT REF_NO, COUNT(*) AS LIKE_COUNT
+	            FROM LIKES
+	            WHERE REF_TYPE = 'RECIPE'
+	              AND LIKE_STATUS = 'LIKE'
+	              AND LIKED_AT >= TRUNC(SYSDATE, 'MM') -- 이번 달 1일 00시부터
+	              AND LIKED_AT &lt; ADD_MONTHS(TRUNC(SYSDATE, 'MM'), 1) -- 다음 달 1일 00시 전까지
+	            GROUP BY REF_NO
+	        ) L ON R.RCP_NO = L.REF_NO
+	        LEFT JOIN IMAGE RI ON (R.IMAGE_NO = RI.IMAGE_NO)
+	        LEFT JOIN IMAGE UI ON (U.IMAGE_NO = UI.IMAGE_NO)
+	        LEFT JOIN (
+	            SELECT REF_NO, AVG(STARS) AS AVG_STARS, COUNT(*) AS REVIEW_COUNT
+	            FROM REVIEW WHERE DELETE_STATUS = 'N' GROUP BY REF_NO
+	        ) REV ON R.RCP_NO = REV.REF_NO
+	        WHERE R.DELETE_STATUS = 'N' AND R.USER_NO IS NOT NULL
+	        ORDER BY L.LIKE_COUNT DESC, R.CREATED_AT DESC
+	    )
+	    FETCH FIRST 4 ROWS ONLY
+	</select>
 
     <select id="selectRcpMethods" resultType="com.kh.ypjp.community.recipe.model.vo.RcpMethod">
         SELECT RCP_MTH_NO, RCP_METHOD 
@@ -505,19 +507,26 @@
 	        N.PROTEIN        AS "totalNutrient.protein",
 	        N.FAT            AS "totalNutrient.fat",
 	        N.SODIUM         AS "totalNutrient.sodium",
-	        
+	        U.USER_NO        AS "writer.userNo",
+	        U.USERNAME       AS "writer.username",
+	        U.SIK_BTI        AS "writer.sikBti",
+	        NVL(( 	SELECT AVG(STARS) 
+             		FROM REVIEW 
+            		WHERE REF_NO = R.RCP_NO 
+               		AND DELETE_STATUS = 'N'), 0
+            ) AS avgStars,	        
 	        (SELECT COUNT(*) FROM REVIEW WHERE REF_NO = R.RCP_NO AND DELETE_STATUS = 'N') AS reviewCount,
 	        (SELECT COUNT(*) FROM BOOKMARK WHERE REF_NO = R.RCP_NO) AS bookmarkCount
         
 	        
 	    FROM RECIPE R
+	    LEFT JOIN USERS U ON R.USER_NO = U.USER_NO
 	    LEFT JOIN IMAGE IMG ON R.IMAGE_NO = IMG.IMAGE_NO
 	    LEFT JOIN RCP_METHOD RM ON R.RCP_MTH_NO = RM.RCP_MTH_NO
 	    LEFT JOIN RCP_SITUATION RS ON R.RCP_STA_NO = RS.RCP_STA_NO
 	    LEFT JOIN NUTRIENT N ON R.NUTRIENT_NO = N.NUTRIENT_NO
 	    
 	    WHERE R.RCP_NO = #{rcpNo}
-	      AND R.USER_NO IS NULL
 	      AND R.APPROVAL = 'Y'
 	</select>
 	
@@ -538,6 +547,12 @@
 	    <result property="reviewCount" column="reviewCount"/>
 	    <result property="avgStars" column="avgStars"/>
 	   <result property="bookmarkCount" column="bookmarkCount"/> 
+	   <association property="writer" javaType="com.kh.ypjp.community.recipe.dto.UserRecipeDto$RecipeDetailResponse$Writer">
+	        <result property="userNo" column="writer.userNo"/>
+	        <result property="username" column="writer.username"/>
+	        <result property="sikBti" column="writer.sikBti"/>
+	        <result property="profileImage" column="writer.profileImage"/>
+	    </association>
        
 	    
 	    <association property="totalNutrient" javaType="com.kh.ypjp.community.recipe.dto.UserRecipeDto$NutrientDetailDto">
@@ -577,88 +592,114 @@
 	    SELECT COUNT(*) FROM BOOKMARK WHERE REF_NO = #{rcpNo}
 	</select>
 	
-	<select id="selectOfficialRecipeList" parameterType="map" resultType="com.kh.ypjp.community.recipe.dto.UserRecipeDto$UserRecipeResponse">
+	<sql id="officialRecipeSearchCondition">
+	    <where>
+	        R.APPROVAL = 'Y'
+	        AND R.DELETE_STATUS = 'N'
+	        <if test="rcpMthNo != null and rcpMthNo != ''">
+	            AND R.RCP_MTH_NO = #{rcpMthNo}
+	        </if>
+	        <if test="rcpStaNo != null and rcpStaNo != ''">
+	            AND R.RCP_STA_NO = #{rcpStaNo}
+	        </if>
+	        <if test="ingredientList != null and !ingredientList.isEmpty()">
+	            <foreach item="ingredientName" collection="ingredientList">
+	                AND EXISTS (
+	                    SELECT 1 
+	                    FROM RCP_INGS RI
+	                    WHERE RI.RCP_NO = R.RCP_NO 
+	                    AND RI.RCP_ING_LIST LIKE '%' || #{ingredientName} || '%'
+	                )
+	            </foreach>
+	        </if>
+	    </where>
+	</sql>
+	
+	<select id="selectOfficialRecipeList" parameterType="map" resultType="com.kh.ypjp.community.recipe.dto.UserRecipeDto$OfficialRecipeResponse">
 	    SELECT * FROM (
 	        SELECT
 	            R.RCP_NO        AS rcpNo,
 	            R.RCP_NAME      AS rcpName,
-	            R.CREATED_AT    AS createdAt,
-	            U.USER_NO       AS userNo,
-	            U.USERNAME,
-	            U.SIK_BTI       AS sikBti,
-	            RI.SERVER_NAME  AS serverName,
-	            0 AS isOfficial,	           
-	            (SELECT COUNT(*) FROM REVIEW WHERE REF_NO = R.RCP_NO AND DELETE_STATUS = 'N') AS reviewCount,
-	        	(SELECT COUNT(*) FROM BOOKMARK WHERE REF_NO = R.RCP_NO) AS bookmarkCount
-	               
+	            R.VIEWS         AS views,
+	            I.SERVER_NAME   AS serverName,
+	            1               AS isOfficial,
+		        U.USER_NO        AS "userNo",
+		        U.USERNAME       AS "username",
+		        U.SIK_BTI        AS "sikBti",
+		        UI.SERVER_NAME  AS userProfileImage,
+		        NVL((
+					SELECT AVG(STARS) 
+	                FROM REVIEW 
+	                WHERE REF_NO = R.RCP_NO 
+	                AND RCP_SOURCE = 'COMM' 
+	                AND DELETE_STATUS = 'N'), 0
+	            ) AS avgStars,
+	            (
+	                SELECT COUNT(*) 
+	                FROM BOOKMARK B 
+	                WHERE B.REF_NO = R.RCP_NO
+	            ) AS bookmarkCount,
+	            <choose>
+	                <when test="loginUserNo != null and !loginUserNo.equals('undefined')">
+	                    CASE 
+	                        WHEN (SELECT COUNT(*) FROM BOOKMARK B WHERE B.REF_NO = R.RCP_NO AND B.USER_NO = #{loginUserNo}) > 0 
+	                        THEN 1 
+	                        ELSE 0 
+	                    END
+	                </when>
+	                <otherwise>
+	                    0
+	                </otherwise>
+	            </choose> AS isBookmarked
 	        FROM RECIPE R
-	        JOIN USERS U ON R.USER_NO = U.USER_NO
-	        LEFT JOIN IMAGE RI ON R.IMAGE_NO = RI.IMAGE_NO
-	        WHERE R.DELETE_STATUS = 'N' AND R.USER_NO IS NOT NULL AND APPROVAL = 'Y'
-	        
-	        UNION ALL
-	        
-	        SELECT
-	            R.RCP_NO,
-	            R.RCP_NAME,
-	            R.CREATED_AT,
-	            NULL AS userNo,
-	            '공식' AS username,
-	            NULL AS sikBti,
-	            R.MAIN_IMG AS serverName,
-	            NULL AS userProfileImage,
-	            (SELECT COUNT(*) FROM REVIEW WHERE REF_NO = R.RCP_NO AND DELETE_STATUS = 'N') AS reviewCount,
-	            NVL((SELECT AVG(STARS) FROM REVIEW WHERE REF_NO = R.RCP_NO AND DELETE_STATUS = 'N'), 0) AS avgStars,
-	            1 AS isOfficial, 
-	        	(SELECT COUNT(*) FROM BOOKMARK WHERE REF_NO = R.RCP_NO) AS bookmarkCount
-	        FROM RECIPE R
-	        WHERE R.DELETE_STATUS = 'N' AND R.USER_NO IS NULL AND R.APPROVAL = 'Y'
-	    ) A
-        <where>
-	        <if test="ingredientName != null and ingredientName != ''">
-	            EXISTS (
-	                SELECT 1
-	                FROM RCP_INGS I
-	                WHERE I.RCP_NO = A.rcpNo AND I.RCP_ING_LIST LIKE '%' || #{ingredientName} || '%'
-	            )
-	        </if>
-	    </where>
-	    <choose>
-	        <when test="sort == 'stars'">
-	            ORDER BY avgStars DESC, createdAt DESC
-	        </when>
-	        <when test="sort == 'bookmarks'">
-	            ORDER BY bookmarkCount DESC, createdAt DESC
-	        </when>
-	        <otherwise>
-	            ORDER BY createdAt DESC
-	        </otherwise>
-	    </choose>
+	        LEFT JOIN USERS U ON R.USER_NO = U.USER_NO
+	        LEFT JOIN IMAGE I ON (R.IMAGE_NO = I.IMAGE_NO)
+	        LEFT JOIN IMAGE UI ON (U.IMAGE_NO = UI.IMAGE_NO)
+	        <include refid="officialRecipeSearchCondition"/>
+	        <choose>
+	            <when test="sort == 'views'">
+	                ORDER BY R.VIEWS DESC
+	            </when>
+	            <when test="sort == 'bookmarks_asc'">
+	                ORDER BY bookmarkCount ASC
+	            </when>
+	            <otherwise> ORDER BY bookmarkCount DESC
+	            </otherwise>
+	        </choose>
+	    )
 	    OFFSET (#{page} * #{pageSize}) ROWS
 	    FETCH NEXT #{pageSize} ROWS ONLY
 	</select>
 	
 	<select id="selectOfficialRecipeCount" parameterType="map" resultType="_long">
 	    SELECT COUNT(*)
-	    FROM (
-	        SELECT R.RCP_NO
+	    FROM RECIPE R
+	    <include refid="officialRecipeSearchCondition"/>
+	</select>
+	<select id="selectOfficialRankingRecipes" resultType="com.kh.ypjp.community.recipe.dto.UserRecipeDto$OfficialRecipeResponse">
+	    SELECT * FROM (
+	        SELECT
+	            R.RCP_NO        AS rcpNo,
+	            R.RCP_NAME      AS rcpName,
+	            I.SERVER_NAME   AS serverName,
+	            1               AS isOfficial,
+	            U.USERNAME      AS username,
+	            U.SIK_BTI       AS sikBti,
+	            UI.SERVER_NAME  AS userProfileImage,
+	            NVL(B.BOOKMARK_CNT, 0) AS bookmarkCount
 	        FROM RECIPE R
-	        JOIN USERS U ON R.USER_NO = U.USER_NO
-	        WHERE R.DELETE_STATUS = 'N' AND R.USER_NO IS NOT NULL
-	        UNION ALL
-	        SELECT R.RCP_NO
-	        FROM RECIPE R
-	        WHERE R.DELETE_STATUS = 'N' AND R.USER_NO IS NULL AND R.APPROVAL = 'Y'
-	    ) A
-	    <where>
-	        <if test="ingredientName != null and ingredientName != ''">
-	            EXISTS (
-	                SELECT 1
-	                FROM RCP_INGS I
-	                WHERE I.RCP_NO = A.rcpNo AND I.RCP_ING_LIST LIKE '%' || #{ingredientName} || '%'
-	            )
-	        </if>
-	    </where>
+	        LEFT JOIN (
+	            SELECT REF_NO, COUNT(*) AS BOOKMARK_CNT
+	            FROM BOOKMARK
+	            GROUP BY REF_NO
+	        ) B ON R.RCP_NO = B.REF_NO
+	        LEFT JOIN IMAGE I ON (R.IMAGE_NO = I.IMAGE_NO)
+	        LEFT JOIN USERS U ON (R.USER_NO = U.USER_NO)
+	        LEFT JOIN IMAGE UI ON (U.IMAGE_NO = UI.IMAGE_NO)
+	        WHERE R.APPROVAL = 'Y' AND R.DELETE_STATUS = 'N'
+	        ORDER BY bookmarkCount DESC, R.CREATED_AT DESC
+	    )
+	    FETCH FIRST 4 ROWS ONLY
 	</select>
 	
 </mapper>

@@ -68,8 +68,8 @@ public class SecurityConfig {
                 .requestMatchers("/ws/**").permitAll()
                 .requestMatchers("/community/**").permitAll()
                 .requestMatchers("/images/**").permitAll()
+                .requestMatchers("/api/recipe/**").permitAll()
                 .requestMatchers("/mealplan/**").authenticated()
-                .requestMatchers(HttpMethod.GET, "/api/recipe/**").permitAll()
                 .requestMatchers(HttpMethod.GET, 
 				        "/api/community/recipe/**", 
 				        "/api/options/**", 

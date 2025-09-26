@@ -264,5 +264,21 @@ public class AuthService {
     public Optional<User> findUserByEmail(String email) {
         return authDao.findUserByEmail(email);
     }
+
+    public boolean restoreAccount(String email) {
+        Optional<User> userOpt = authDao.findUserByEmail(email);
+        if (userOpt.isEmpty()) {
+            return false;
+        }
+
+        User user = userOpt.get();
+
+        if ("INACTIVE".equals(user.getStatus())) {
+            authDao.updateUserStatus(user.getUserNo(), "ACTIVE");
+            return true;
+        }
+        return false;
+    }
+
 	
 }

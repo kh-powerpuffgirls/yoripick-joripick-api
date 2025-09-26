@@ -1,6 +1,7 @@
 package com.kh.ypjp.security.model.dao;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional; // Optional을 사용하면 null 처리가 용이해집니다.
 
 import org.mybatis.spring.SqlSessionTemplate;
@@ -65,5 +66,10 @@ public class AuthDao {
 
 	public String getKakaoAccessToken(Long userNo) {
 		return session.selectOne("auth.getKakaoAccessToken", userNo);
+	}
+	
+	public void updateUserStatus(Long userNo, String status) {
+	    session.update("auth.updateUserStatus", 
+	        Map.of("userNo", userNo, "status", status));
 	}
 }
