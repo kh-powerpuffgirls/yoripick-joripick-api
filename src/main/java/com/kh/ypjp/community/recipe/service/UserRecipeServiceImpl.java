@@ -18,8 +18,11 @@ import com.kh.ypjp.common.UtilService;
 import com.kh.ypjp.common.model.vo.Nutrient;
 import com.kh.ypjp.community.recipe.dao.UserRecipeDao;
 import com.kh.ypjp.community.recipe.dto.UserRecipeDto;
+import com.kh.ypjp.community.recipe.dto.UserRecipeDto.BookmarkResponse;
 import com.kh.ypjp.community.recipe.dto.UserRecipeDto.IngredientInfo;
 import com.kh.ypjp.community.recipe.dto.UserRecipeDto.IngredientJsonDto;
+import com.kh.ypjp.community.recipe.dto.UserRecipeDto.OfficialRecipePage;
+import com.kh.ypjp.community.recipe.dto.UserRecipeDto.OfficialRecipeResponse;
 import com.kh.ypjp.community.recipe.dto.UserRecipeDto.RecipeDetailResponse;
 import com.kh.ypjp.community.recipe.dto.UserRecipeDto.RecipePage;
 import com.kh.ypjp.community.recipe.dto.UserRecipeDto.RecipeWriteRequest;
@@ -90,7 +93,19 @@ public class UserRecipeServiceImpl implements UserRecipeService {
 
     @Override
     public List<UserRecipeResponse> selectRankingRecipes() {
-        return dao.selectRankingRecipes();
+    	List<UserRecipeResponse> rankingList = dao.selectRankingRecipes();
+        
+        // 이미지 전체 URL 생성 로직
+        for (UserRecipeResponse recipe : rankingList) {
+        	if(recipe.getServerName() != null && !recipe.getServerName().isEmpty()) {
+        		// createFullUrl 메소드는 기존 ServiceImpl 클래스에 이미 존재합니다.
+        		recipe.setServerName(createFullUrl(recipe.getServerName()));
+        	}
+        	if(recipe.getUserProfileImage() != null && !recipe.getUserProfileImage().isEmpty()) {
+        		recipe.setUserProfileImage(createFullUrl(recipe.getUserProfileImage()));
+        	}
+        }
+        return rankingList;
     }
 
     @Override
@@ -576,7 +591,13 @@ public class UserRecipeServiceImpl implements UserRecipeService {
         
         // 대표 이미지
         if (recipe.getMainImage() != null && !recipe.getMainImage().isEmpty()) {
-            String officialImageUrl = "http://www.foodsafetykorea.go.kr" + recipe.getMainImage();
+        	String officialImageUrl;
+        	if(recipe.getWriter() != null) {
+        		 officialImageUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
+    					.path("/images/" + recipe.getMainImage()).toUriString();
+        	} else {
+        		 officialImageUrl = "http://www.foodsafetykorea.go.kr" + recipe.getMainImage();
+        	}
             recipe.setMainImage(officialImageUrl);
         }
 
@@ -587,16 +608,36 @@ public class UserRecipeServiceImpl implements UserRecipeService {
         
         // 요리 순서(Steps) 이미지 
         if (recipe.getSteps() != null) {
-            for (CookingStep step : recipe.getSteps()) {
+            for (CookingStep step : recipe.getSteps()) {            	
                 if (step.getServerName() != null && !step.getServerName().isEmpty()) {
-                	String officialStepImageUrl = "http://www.foodsafetykorea.go.kr" + step.getServerName();
+                	String officialStepImageUrl;
+                	if(recipe.getWriter() != null) {
+                		officialStepImageUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
+            					.path("/images/" + recipe.getMainImage()).toUriString();
+                	} else {
+                		officialStepImageUrl = "http://www.foodsafetykorea.go.kr" + step.getServerName();                		
+                	}
                     step.setServerName(officialStepImageUrl);
                 }
             }
         }
+        
+        System.out.println(">> isOfficial: " + recipe.isOfficial());
         return recipe;
 	}
 
+	@Override
+	public BookmarkResponse getBookmarkStatus(int rcpNo, long userNo) {
+		Map<String, Object> params = new HashMap<>();
+        params.put("rcpNo", rcpNo);
+        params.put("userNo", userNo);
+        
+        boolean isBookmarked = dao.checkBookmark(params) > 0;
+        int bookmarkCount = dao.countBookmarks(rcpNo);
+        
+        return new UserRecipeDto.BookmarkResponse(isBookmarked, bookmarkCount);
+	}
+	
 	@Override
 	public UserRecipeDto.BookmarkResponse toggleBookmark(int rcpNo, long userNo) {
 		Map<String, Object> params = new HashMap<>();
@@ -619,25 +660,55 @@ public class UserRecipeServiceImpl implements UserRecipeService {
 	}
 
 	@Override
-	public RecipePage selectOfficialRecipePage(Map<String, Object> params) {
-		int pageSize = 12;
+	public OfficialRecipePage selectOfficialRecipePage(HashMap<String, Object> params) {
+		int pageSize = 12; // 페이지 당 게시글 수
         params.put("pageSize", pageSize);
         
-        long totalElements = dao.selectOfficialRecipeCount(params);
-        int totalPages = (int) Math.ceil((double) totalElements / pageSize);
-        
-        List<UserRecipeResponse> recipes = dao.selectOfficialRecipeList(params);
-        
-        // 이미지 경로를 전체 URL로 변환
-        for (UserRecipeResponse recipe : recipes) {
-            if (recipe.getServerName() != null && !recipe.getServerName().isEmpty()) {
-                // 공식 레시피 이미지 경로 규칙에 맞게 수정
-                String imageUrl = "http://www.foodsafetykorea.go.kr" + recipe.getServerName();
-                recipe.setServerName(imageUrl);
-            }
+        // 프론트에서 받은 재료 문자열을 리스트로 변환 (기존 로직과 동일)
+        String ingredientsParam = (String) params.get("ingredients");
+        if (ingredientsParam != null && !ingredientsParam.isEmpty()) {
+            List<String> ingredientList = Arrays.asList(ingredientsParam.split(","));
+            params.put("ingredientList", ingredientList);
         }
         
-        return new RecipePage(recipes, totalPages, totalElements);
+        // DAO 호출
+        long totalElements = dao.selectOfficialRecipeCount(params);
+        List<OfficialRecipeResponse> recipes = dao.selectOfficialRecipeList(params);
+        
+//        log.debug("DB에서 조회된 전체 레시피 개수: {}", totalElements);
+//        log.debug("DAO로부터 변환된 레시피 리스트: {}", recipes);
+//        log.debug("변환된 리스트의 크기: {}", recipes.size());
+//        
+        int totalPages = (int) Math.ceil((double) totalElements / pageSize);
+       
+        
+        // 이미지 전체 URL 생성
+        for (OfficialRecipeResponse recipe : recipes) {
+        	String imageUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
+	                .path("/images/")
+	                .path(recipe.getServerName())
+	                .toUriString();
+        	recipe.setServerName(imageUrl);
+        }
+        
+        return new OfficialRecipePage(recipes, totalPages, totalElements);
 	}
+
+	@Override
+	public List<OfficialRecipeResponse> selectOfficialRankingRecipes() {
+		List<OfficialRecipeResponse> rankingList = dao.selectOfficialRankingRecipes();
+        
+        // 이미지 전체 URL 생성
+        for (OfficialRecipeResponse recipe : rankingList) {
+        	if(recipe.getServerName() != null && !recipe.getServerName().isEmpty()) {
+        		recipe.setServerName(createFullUrl(recipe.getServerName()));
+        	}
+        }
+        return rankingList;
+	}
+
+
+
+	
 }
 

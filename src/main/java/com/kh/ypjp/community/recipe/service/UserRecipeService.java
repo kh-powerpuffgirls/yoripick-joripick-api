@@ -5,6 +5,9 @@ import java.util.List;
 import java.util.Map;
 
 import com.kh.ypjp.community.recipe.dto.UserRecipeDto;
+import com.kh.ypjp.community.recipe.dto.UserRecipeDto.BookmarkResponse;
+import com.kh.ypjp.community.recipe.dto.UserRecipeDto.OfficialRecipePage;
+import com.kh.ypjp.community.recipe.dto.UserRecipeDto.OfficialRecipeResponse;
 import com.kh.ypjp.community.recipe.dto.UserRecipeDto.RecipeDetailResponse;
 import com.kh.ypjp.community.recipe.dto.UserRecipeDto.RecipePage;
 import com.kh.ypjp.community.recipe.dto.UserRecipeDto.RecipeWriteRequest;
@@ -50,5 +53,10 @@ public interface UserRecipeService {
 
 	UserRecipeDto.BookmarkResponse toggleBookmark(int rcpNo, long userNo);
 
-	RecipePage selectOfficialRecipePage(Map<String, Object> params);
+	OfficialRecipePage selectOfficialRecipePage(HashMap<String, Object> params);
+
+	BookmarkResponse getBookmarkStatus(int rcpNo, long userNo);
+
+	List<OfficialRecipeResponse> selectOfficialRankingRecipes();
+
 }
