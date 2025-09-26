@@ -121,4 +121,8 @@ public class ChatService {
 		return chatDao.getLastRead(param);
 	}
 
+	public Long getAdminChatRoomNo(Long userNo) {
+		return chatDao.findAdminChat(userNo);
+	}
+
 }

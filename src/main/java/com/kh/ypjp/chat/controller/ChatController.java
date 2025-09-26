@@ -66,9 +66,9 @@ public class ChatController {
 		param.put("roomNo", roomNo);
 		param.put("messageNo", messageNo);
 		if (chatService.updateLastRead(param) > 0) {
-			return ResponseEntity.ok().build(); // 201
 		}
-		return ResponseEntity.badRequest().build(); // 400
+		return ResponseEntity.ok().build(); // 201
+//		return ResponseEntity.badRequest().build(); // 400
 	}
 	
 	@GetMapping("/reads/{userNo}/{roomNo}")
@@ -81,9 +81,9 @@ public class ChatController {
 		param.put("userNo", userNo);
 		param.put("roomNo", roomNo);
 		Long messageNo = chatService.getLastRead(param);
-		if (messageNo == null) {
-			return ResponseEntity.badRequest().build(); // 400
-		}
+//		if (messageNo == null) {
+//			return ResponseEntity.badRequest().build(); // 400
+//		}
 		return ResponseEntity.ok(messageNo); // 200
 	}
 
@@ -177,5 +177,20 @@ public class ChatController {
 		} else {
 			return ResponseEntity.badRequest().build(); // 400
 		}
+	}
+	
+	@GetMapping("/rooms/{type}/{userNo}")
+	public ResponseEntity<Long> getRoomNo(@PathVariable String type, @PathVariable Long userNo) {
+		if (userNo == null) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null); // 401
+		}
+		Long roomNo = null;
+		if (type.equals("admin")) {
+			roomNo = chatService.getAdminChatRoomNo(userNo);
+			if (roomNo == null) {
+				return ResponseEntity.notFound().build(); // 404
+			}
+		}
+		return ResponseEntity.ok().body(roomNo);
 	}
 }
