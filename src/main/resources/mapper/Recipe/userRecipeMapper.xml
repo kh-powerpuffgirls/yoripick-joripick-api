@@ -51,9 +51,8 @@
 	               	AND DELETE_STATUS = 'N'
 	            ) AS reviewCount
             FROM RECIPE R
-            JOIN USERS U ON (R.USER_NO = U.USER_NO)
-            LEFT JOIN IMAGE RI ON (R.IMAGE_NO = RI.IMAGE_NO)
-            LEFT JOIN IMAGE UI ON (U.IMAGE_NO = UI.IMAGE_NO)
+		    LEFT JOIN USERS U ON (R.USER_NO = U.USER_NO) LEFT JOIN IMAGE RI ON (R.IMAGE_NO = RI.IMAGE_NO)
+		    LEFT JOIN IMAGE UI ON (U.IMAGE_NO = UI.IMAGE_NO)
             
             <include refid="recipeSearchCondition"/>
             
