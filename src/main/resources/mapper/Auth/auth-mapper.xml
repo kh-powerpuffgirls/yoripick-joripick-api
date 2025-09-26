@@ -3,11 +3,11 @@
 <mapper namespace="auth">
 
 	<select id="getNotiByUserNo" resultType="userNotiDto">
-		SELECT 
-			msg_noti AS newMessage,
-			reply_noti AS newReply,
-			rvw_noti AS newReview,
-			exp_noti AS expiration
+		SELECT
+		msg_noti AS newMessage,
+		reply_noti AS newReply,
+		rvw_noti AS newReview,
+		exp_noti AS expiration
 		FROM USERS
 		WHERE user_no = #{userNo}
 	</select>
@@ -26,7 +26,7 @@
 		</collection>
 	</resultMap>
 
-<select id="findUserByEmail" resultMap="UserResult">
+	<select id="findUserByEmail" resultMap="UserResult">
 		SELECT
 		U.USER_NO, U.EMAIL, U.USERNAME, U.IMAGE_NO, C.PASSWORD, U.STATUS,
 		A.AUTHORITY,
@@ -36,7 +36,7 @@
 		JOIN AUTHORITY A ON U.USER_NO = A.USER_NO
 		LEFT JOIN USER_IDENTITIES I ON U.USER_NO = I.USER_ID
 		WHERE UPPER(U.EMAIL) = UPPER(#{email})
-</select>
+	</select>
 
 	<insert id="insertUser">
 		<selectKey keyProperty="userNo" resultType="long" order="BEFORE">
@@ -63,31 +63,32 @@
 		WHERE USER_NO = #{userNo}
 	</update>
 
-<select id="findUserByUserNo" resultMap="UserResult">
-    SELECT
-        U.*,
-        C.PASSWORD,
-        A.AUTHORITY,
-        I.PROVIDER 
-    FROM USERS U
-    LEFT JOIN CREDENTIAL C ON U.USER_NO = C.USER_NO
-    JOIN AUTHORITY A ON U.USER_NO = A.USER_NO
-    LEFT JOIN USER_IDENTITIES I ON U.USER_NO = I.USER_ID 
-    WHERE U.USER_NO = #{userNo}
-</select>
+	<select id="findUserByUserNo" resultMap="UserResult">
+		SELECT
+		U.*,
+		C.PASSWORD,
+		A.AUTHORITY,
+		I.PROVIDER
+		FROM USERS U
+		LEFT JOIN CREDENTIAL C ON U.USER_NO = C.USER_NO
+		JOIN AUTHORITY A ON U.USER_NO = A.USER_NO
+		LEFT JOIN USER_IDENTITIES I ON U.USER_NO = I.USER_ID
+		WHERE U.USER_NO = #{userNo}
+	</select>
 
-<select id="findUserByUsername" parameterType="string" resultMap="UserResult">
-    SELECT
-        U.*,
-        C.PASSWORD,
-        A.AUTHORITY,
-        I.PROVIDER
-    FROM USERS U
-    LEFT JOIN CREDENTIAL C ON U.USER_NO = C.USER_NO
-    JOIN AUTHORITY A ON U.USER_NO = A.USER_NO
-    LEFT JOIN USER_IDENTITIES I ON U.USER_NO = I.USER_ID
-    WHERE UPPER(U.USERNAME) = UPPER(#{username})
-</select>
+	<select id="findUserByUsername" parameterType="string"
+		resultMap="UserResult">
+		SELECT
+		U.*,
+		C.PASSWORD,
+		A.AUTHORITY,
+		I.PROVIDER
+		FROM USERS U
+		LEFT JOIN CREDENTIAL C ON U.USER_NO = C.USER_NO
+		JOIN AUTHORITY A ON U.USER_NO = A.USER_NO
+		LEFT JOIN USER_IDENTITIES I ON U.USER_NO = I.USER_ID
+		WHERE UPPER(U.USERNAME) = UPPER(#{username})
+	</select>
 
 	<insert id="insertUserIdentities">
 		INSERT INTO USER_IDENTITIES (
@@ -108,6 +109,13 @@
 		SELECT ACCESS_TOKEN FROM USER_IDENTITIES WHERE USER_ID = #{userNo}
 	</select>
 
+	<update id="updateUserStatus" parameterType="map">
+		UPDATE users
+		SET status = #{status}
+		WHERE user_no = #{userNo}
+	</update>
+	
+	
 	<resultMap id="AuthorityResult"
 		type="com.kh.ypjp.security.model.dto.AuthDto$Authority"
 		autoMapping="true">
