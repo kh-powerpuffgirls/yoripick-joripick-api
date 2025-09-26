@@ -13,6 +13,7 @@ import com.kh.ypjp.ingpedia.model.dao.IngPediaDao;
 import com.kh.ypjp.ingpedia.model.dto.IngPediaDto.IngDetailResponse;
 import com.kh.ypjp.ingpedia.model.dto.IngPediaDto.IngListResponse;
 import com.kh.ypjp.ingpedia.model.dto.IngPediaDto.IngPairResponse;
+import com.kh.ypjp.ingpedia.model.dto.IngPediaDto.IngPediaMainResponse;
 import com.kh.ypjp.ingpedia.model.dto.IngPediaDto.IngPediaPost;
 import com.kh.ypjp.ingpedia.model.dto.IngPediaDto.IngPediaPut;
 import com.kh.ypjp.ingpedia.model.dto.IngPediaDto.IngPediaResponse;
@@ -65,6 +66,10 @@ public class IngPediaService {
 
 	public int deleteIngPairs(IngPediaPut ingPedia) {
 		return dao.deleteIngPairs(ingPedia);
+	}
+
+	public List<IngPediaMainResponse> selectIngPediaMain() {
+		return dao.selectIngPediaMain();
 	}
 
 	
