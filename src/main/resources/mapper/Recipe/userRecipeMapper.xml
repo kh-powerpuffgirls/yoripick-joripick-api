@@ -404,6 +404,7 @@
 	    SELECT * FROM (
 	        SELECT
 	            R.REVIEW_NO,
+	            R.REF_NO AS rcpNo,
 	            R.USER_NO,
 	            R.REVIEW_DATE,
 	            R.STARS,
@@ -438,6 +439,7 @@
 	    SELECT
 	        R.REVIEW_NO, R.USER_NO, R.REVIEW_DATE, R.STARS, R.CONTENT, R.RCP_SOURCE, R.REF_NO,
 	        U.USERNAME,
+	        R.REF_NO AS rcpNo,
 	        U.SIK_BTI,
 	        UI.SERVER_NAME AS USER_PROFILE_IMAGE,
 	        RI.SERVER_NAME AS REVIEW_IMAGE_URL

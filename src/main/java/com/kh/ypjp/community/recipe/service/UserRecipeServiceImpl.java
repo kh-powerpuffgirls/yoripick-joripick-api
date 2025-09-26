@@ -98,10 +98,20 @@ public class UserRecipeServiceImpl implements UserRecipeService {
         // 이미지 전체 URL 생성 로직
         for (UserRecipeResponse recipe : rankingList) {
         	if(recipe.getServerName() != null && !recipe.getServerName().isEmpty()) {
-        		recipe.setServerName(createFullUrl(recipe.getServerName())); 
+        		String imageUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
+    	                .path("/images/community/recipe/"+ recipe.getRcpNo()+"/")
+    	                .path(recipe.getServerName())
+    	                .toUriString();
+            	recipe.setServerName(imageUrl);
+//        		recipe.setServerName(createFullUrl(recipe.getServerName())); 
         	}
         	if(recipe.getUserProfileImage() != null && !recipe.getUserProfileImage().isEmpty()) {
-        		recipe.setUserProfileImage(createFullUrl(recipe.getUserProfileImage()));
+        		String profileImageUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
+    	                .path("/images/profile/"+ recipe.getUserNo()+"/")
+    	                .path(recipe.getUserProfileImage())
+    	                .toUriString();
+            	recipe.setUserProfileImage(profileImageUrl);
+//        		recipe.setUserProfileImage(createFullUrl(recipe.getUserProfileImage()));
         	}
         }
         return rankingList;
@@ -434,7 +444,7 @@ public class UserRecipeServiceImpl implements UserRecipeService {
             // imageUrl이 null이 아닐 때만 전체 URL로 변환
             if (review.getServerName() != null && !review.getServerName().isEmpty()) {
             	String imageUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
-    	                .path("/images/community/recipe/review/"+ review.getReviewNo()+"/")
+    	                .path("/images/community/recipe/review/"+ review.getRcpNo()+"/")
     	                .path(review.getServerName())
     	                .toUriString();
             	reviewDto.setServerName(imageUrl);
@@ -478,7 +488,7 @@ public class UserRecipeServiceImpl implements UserRecipeService {
 	            reviewDto.setReviewDate(review.getReviewDate());
 	            if (review.getServerName() != null && !review.getServerName().isEmpty()) {
 	            	String imageUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
-	    	                .path("/images/community/recipe/review/"+ review.getReviewNo()+"/")
+	    	                .path("/images/community/recipe/review/"+ review.getRefNo()+"/")
 	    	                .path(review.getServerName())
 	    	                .toUriString();
 	            	reviewDto.setServerName(imageUrl);

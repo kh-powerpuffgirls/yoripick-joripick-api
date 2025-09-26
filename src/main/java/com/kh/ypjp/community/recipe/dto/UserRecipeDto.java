@@ -175,6 +175,7 @@ public class UserRecipeDto {
     @Data
     public static class ReviewResponseDto {
         private int reviewNo;
+        private int rcpNo;
         private ReviewWriterDto userInfo; // ◀️ 프론트엔드가 원하는 userInfo 객체
         private double stars;
         private String content;
