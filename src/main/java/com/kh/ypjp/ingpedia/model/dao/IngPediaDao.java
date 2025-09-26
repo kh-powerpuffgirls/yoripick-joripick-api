@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.kh.ypjp.ingpedia.model.dto.IngPediaDto;
 import com.kh.ypjp.ingpedia.model.dto.IngPediaDto.IngDetailResponse;
 import com.kh.ypjp.ingpedia.model.dto.IngPediaDto.IngListResponse;
+import com.kh.ypjp.ingpedia.model.dto.IngPediaDto.IngPediaMainResponse;
 import com.kh.ypjp.ingpedia.model.dto.IngPediaDto.IngPediaPost;
 import com.kh.ypjp.ingpedia.model.dto.IngPediaDto.IngPediaPut;
 
@@ -72,5 +73,9 @@ public class IngPediaDao {
 
 	public int deleteIngMethod(long ingNo) {
 		return session.insert("ingpedia.deleteIngMethod", ingNo);
+	}
+
+	public List<IngPediaMainResponse> selectIngPediaMain() {
+		return session.selectList("ingpedia.selectIngPediaMain");
 	}
 }

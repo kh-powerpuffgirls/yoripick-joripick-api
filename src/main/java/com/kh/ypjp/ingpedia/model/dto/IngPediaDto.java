@@ -38,6 +38,7 @@ public class IngPediaDto {
 		private long ingCode;
 		private String ingCodeName;
 		private long nutrientNo;
+		private String imgUrl;
 		
 //		NUTRIENT
 		private Double energy;
@@ -87,5 +88,18 @@ public class IngPediaDto {
 		private List<IngPairResponse> pairList;
 	}
 	
-	
+//	Mainpage
+	@Data
+	@NoArgsConstructor
+	@AllArgsConstructor
+	public static class IngPediaMainResponse {
+		private long ingNo;
+		private String ingName;
+		private String imgUrl;
+
+		private String buyingTip;
+		private String usageTip;
+		private String storageMethod;
+		private String preparation;
+	}
 }
