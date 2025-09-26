@@ -93,4 +93,8 @@ public class UserDao {
         return session.selectList("user.getUserLikedRecipesPaging",
                 Map.of("userNo", userNo, "startRow", startRow, "endRow", endRow));
     }
+
+    public int deleteInactiveUsersOver90Days() {
+        return session.delete("user.deleteInactiveUsersOver90Days");
+    }
 }

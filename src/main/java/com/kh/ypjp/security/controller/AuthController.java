@@ -279,5 +279,24 @@ public class AuthController {
 
         return ResponseEntity.ok("비밀번호 변경 완료");
     }
+    
+	@PostMapping("/restore")
+	public ResponseEntity<?> restoreAccount(@RequestBody Map<String, String> req) {
+	    String email = req.get("email");
+
+	    if (email == null || email.isBlank()) {
+	        throw new AuthException("INVALID_EMAIL");
+	    }
+
+	    boolean restored = authService.restoreAccount(email);
+	    if (!restored) {
+	        throw new AuthException("EMAIL_NOT_FOUND"); // 없는 이메일이면 예외
+	    }
+
+	    return ResponseEntity.ok(Map.of(
+	        "success", true,
+	        "message", "계정 복구 완료"
+	    ));
+	}
 
 }
