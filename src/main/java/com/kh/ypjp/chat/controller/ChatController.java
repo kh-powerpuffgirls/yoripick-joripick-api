@@ -50,6 +50,11 @@ public class ChatController {
 		messagingTemplate.convertAndSend("/topic/" + roomNo, message);
 	}
 	
+	@MessageMapping("/remove/{roomNo}")
+	public void sendMessage(@DestinationVariable Long roomNo, String message) {
+		messagingTemplate.convertAndSend("/topic/remove/" + roomNo, message);
+	}
+	
 	@PatchMapping("/reads")
 	public ResponseEntity<Void> updateLastRead(
 			@RequestParam Long userNo, @RequestParam Long roomNo, @RequestParam Long messageNo) {
