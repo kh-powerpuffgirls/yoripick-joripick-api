@@ -135,18 +135,11 @@
     DELETE FROM CLASS_ENROLL WHERE ROOM_NO = #{roomNo}
 </delete>
 
-<!-- 읽음 처리(MESSAGE_NO 업데이트 기능)
-	<update id="markMessagesAsRead" parameterType="map">
-    UPDATE CLASS_ENROLL
-    SET MESSAGE_NO = (
-        SELECT NVL(MAX(MESSAGE_NO), 0)
-        FROM MESSAGE
-        WHERE REF_NO = #{roomNo}
-    )
-    WHERE USER_NO = #{userNo}
-      AND ROOM_NO = #{roomNo}
-</update>
- -->
+<delete id="deleteImageByImageNo" parameterType="int">
+    DELETE FROM IMAGE
+    WHERE IMAGE_NO = #{imageNo}
+</delete>
+
 
 <update id="toggleNotification" parameterType="map">
     UPDATE CLASS_ENROLL

@@ -17,12 +17,15 @@
         <result property="accountNo" column="ACCOUNT_NO" />
         <result property="views" column="VIEWS" />
         <result property="deleteStatus" column="DELETE_STATUS" />
+        <result property="alwaysOnSale" column="ALWAYS_ON_SALE" />
+        
         <result property="author" column="AUTHOR" />
         <result property="sikBti" column="SIK_BTI" />
         <result property="authorProfileUrl" column="AUTHOR_PROFILE_URL" />
         <result property="imageUrl" column="IMAGE_URL" />
         <result property="serverName" column="IMAGE_SERVER_NAME" />
-        <result property="alwaysOnSale" column="ALWAYS_ON_SALE" />
+        
+        <result property="isPurchased" column="IS_PURCHASED" />
         
         <collection property="buyForms" ofType="com.kh.ypjp.community.market.dto.MarketBuyDto" javaType="java.util.ArrayList">
             <id property="formNo" column="FORM_NO" />
@@ -109,13 +112,22 @@
         WHERE u.USER_NO = #{userNo}
     </select>
     
-    <select id="getPostDetail" resultMap="MarketSellDtoResultMap">
+<select id="getPostDetail" resultMap="MarketSellDtoResultMap">
         SELECT
             mp.PRODUCT_ID, mp.USER_NO, mp.TITLE, mp.IMAGE_NO, mp.NAME, mp.DETAIL, mp.PRICE,
             mp.QUANTITY, mp.CREATED_AT, mp.DEADLINE, mp.PHONE, mp.ACCOUNT_NO, mp.VIEWS, mp.DELETE_STATUS,
             u.USERNAME AS AUTHOR, u.SIK_BTI AS SIK_BTI,
             pi.SERVER_NAME AS IMAGE_SERVER_NAME, CONCAT('/images/', ui.SERVER_NAME) AS AUTHOR_PROFILE_URL,
-            CONCAT('/images/', pi.SERVER_NAME) AS IMAGE_URL
+            CONCAT('/images/', pi.SERVER_NAME) AS IMAGE_URL,
+            
+            (
+                SELECT CASE WHEN COUNT(f.FORM_NO) > 0 THEN 'Y' ELSE 'N' END
+                FROM MARKET_FORM f
+                WHERE f.PRODUCT_ID = mp.PRODUCT_ID
+                  AND f.DELETE_STATUS = 'N' 
+                  AND ROWNUM = 1 
+            ) AS IS_PURCHASED 
+            
         FROM MARKETPLACE mp
         JOIN USERS u ON mp.USER_NO = u.USER_NO
         LEFT JOIN IMAGE ui ON u.IMAGE_NO = ui.IMAGE_NO

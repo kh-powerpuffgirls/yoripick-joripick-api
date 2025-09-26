@@ -12,7 +12,6 @@ import java.util.List;
 @Repository
 public interface MarketDao {
 
-    // 게시글 조회 관련 메서드
     List<MarketSellDto> getAllPosts();
     List<MarketSellDto> getPopularPosts();
     List<MarketSellDto> getRecentPosts();
@@ -42,4 +41,6 @@ public interface MarketDao {
     Long findSellerByFormId(Long formId);
 
     int updateBuyFormDeleteStatus(@Param("formId") Long formId, @Param("status") String status);
+    
+    int countBuyFormsByProductId(@Param("productId") Long productId);
 }

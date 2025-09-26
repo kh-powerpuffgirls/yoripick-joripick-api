@@ -20,6 +20,7 @@
         <result property="serverName" column="serverName" />
         <result property="username" column="username" />
         <result property="sik_bti" column="sik_bti" />
+        <result property="profileImageServerName" column="profileImageServerName" />
     </resultMap>
 
     <!-- ReplyDto 매핑 -->
@@ -68,24 +69,23 @@
 
     <!-- 특정 게시글 조회 -->
     <select id="selectBoardByNo" resultMap="freeResultMap">
-        SELECT
-            b.board_no AS boardNo,
-            b.user_no AS userNo,
-            b.subheading,
-            b.title,
-            b.content,
-            b.created_at AS createdDate,
-            b.views,
-            U.username,
-            U.sik_bti,
-            (SELECT COUNT(*) FROM LIKES l WHERE l.ref_no = b.board_no AND l.ref_type = 'BOARD') AS likes,
-            (SELECT COUNT(*) FROM REPLY START WITH ref_no = b.board_no AND category = 'BOARD' CONNECT BY PRIOR reply_no = ref_no) AS replyCount,
-            i.origin_name AS originName,
-            i.server_name AS serverName
-        FROM BOARD b
-        JOIN USERS U ON b.user_no = U.user_no
-        LEFT JOIN IMAGE i ON b.image_no = i.image_no
-        WHERE b.board_no = #{boardNo}
+SELECT
+        b.board_no AS boardNo,
+        b.user_no AS userNo,
+        b.subheading,
+        b.title,
+        b.content,
+        b.created_at AS createdDate,
+        b.views,
+        U.username,
+        U.sik_bti,
+        (SELECT COUNT(*) FROM LIKES l WHERE l.ref_no = b.board_no AND l.ref_type = 'BOARD') AS likes,
+        (SELECT COUNT(*) FROM REPLY START WITH ref_no = b.board_no AND category = 'BOARD' CONNECT BY PRIOR reply_no = ref_no) AS replyCount,
+        i_post.origin_name AS originName,
+        i_post.server_name AS serverName,
+        i_profile.server_name AS profileImageServerName  FROM BOARD b
+    JOIN USERS U ON b.user_no = U.user_no
+    LEFT JOIN IMAGE i_post ON b.image_no = i_post.image_no  LEFT JOIN IMAGE i_profile ON U.image_no = i_profile.image_no WHERE b.board_no = #{boardNo}
     </select>
 
 

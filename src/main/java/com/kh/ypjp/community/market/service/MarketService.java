@@ -32,7 +32,6 @@ public class MarketService {
                 String profileFileName = marketDao.selectProfileFileNameByUserNo(post.getUserNo()); 
                 
                 if (profileFileName != null && !profileFileName.isEmpty()) {
-                    // 👍 수정 완료: /images/ 추가
                     String fullPath = "/images/profile/" + post.getUserNo() + "/" + profileFileName;
                     post.setAuthorProfileUrl(fullPath); 
                 }
@@ -175,15 +174,11 @@ public class MarketService {
         return currentQuantity >= count;
     }
     
-    public Optional<MarketBuyDto> getSellBuyFormById(Long formId, Long userNo) {
-        Long sellerId = marketDao.findSellerByFormId(formId);
-
-        if (sellerId != null && sellerId.equals(userNo)) {
-            MarketBuyDto buyForm = marketDao.findPurchaseForm(formId);
-            return Optional.ofNullable(buyForm);
-        }
-        return Optional.empty();
+    public Optional<MarketBuyDto> getSellBuyFormById(Long formId) {
+        MarketBuyDto buyForm = marketDao.findPurchaseForm(formId);
+        return Optional.ofNullable(buyForm);
     }
+
 
     @Transactional
     public boolean deleteBuyForm(Long formId, Long userNo) {
