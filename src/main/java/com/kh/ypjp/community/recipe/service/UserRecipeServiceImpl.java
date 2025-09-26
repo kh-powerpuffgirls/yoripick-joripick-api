@@ -76,12 +76,12 @@ public class UserRecipeServiceImpl implements UserRecipeService {
         List<UserRecipeResponse> recipes = dao.selectRecipeList(params);
         for (UserRecipeResponse recipe : recipes) {
         	String imageUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
-	                .path("/images/")
+	                .path("/images/community/recipe/"+ recipe.getRcpNo()+"/")
 	                .path(recipe.getServerName())
 	                .toUriString();
         	recipe.setServerName(imageUrl);
         	String profileImageUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
-	                .path("/images/")
+	                .path("/images/profile/"+ recipe.getUserNo()+"/")
 	                .path(recipe.getUserProfileImage())
 	                .toUriString();
         	recipe.setUserProfileImage(profileImageUrl);
@@ -99,7 +99,7 @@ public class UserRecipeServiceImpl implements UserRecipeService {
         for (UserRecipeResponse recipe : rankingList) {
         	if(recipe.getServerName() != null && !recipe.getServerName().isEmpty()) {
         		// createFullUrl 메소드는 기존 ServiceImpl 클래스에 이미 존재합니다.
-        		recipe.setServerName(createFullUrl(recipe.getServerName()));
+        		recipe.setServerName(createFullUrl(recipe.getServerName())); 
         	}
         	if(recipe.getUserProfileImage() != null && !recipe.getUserProfileImage().isEmpty()) {
         		recipe.setUserProfileImage(createFullUrl(recipe.getUserProfileImage()));
@@ -288,7 +288,7 @@ public class UserRecipeServiceImpl implements UserRecipeService {
     private String createFullUrl(String serverName) {
     	
         return ServletUriComponentsBuilder.fromCurrentContextPath()
-                .path("/images/")
+                .path("/images/community/recipe/")
                 .path(serverName)
                 .toUriString();
     }
