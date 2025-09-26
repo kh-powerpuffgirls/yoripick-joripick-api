@@ -8,7 +8,6 @@ import org.springframework.web.multipart.MultipartFile;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.kh.ypjp.community.recipe.model.vo.CookingStep;
 import com.kh.ypjp.community.recipe.model.vo.RcpIngredient;
-import com.kh.ypjp.community.recipe.model.vo.Review;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -186,6 +185,38 @@ public class UserRecipeDto {
     public static class BookmarkResponse {
         private boolean isBookmarked;
         private int bookmarkCount;
+    }
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class OfficialRecipeResponse {
+        private long rcpNo;
+        private String rcpName;
+        private String serverName;
+        private int views;
+        private long userNo;
+        private String username;
+        private String sikBti;
+		private String userProfileImage;
+        
+        @JsonProperty("isOfficial")
+        private boolean isOfficial;
+        private int bookmarkCount;
+        
+        private Double avgStars; 
+        
+        
+        @JsonProperty("isBookmarked")
+        private boolean isBookmarked;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class OfficialRecipePage {
+        private List<OfficialRecipeResponse> recipes;
+        private int totalPages;
+        private long totalElements;
     }
 }
 
