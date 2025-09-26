@@ -148,4 +148,10 @@
 		WHERE L.USER_NO = #{userNo}
 	</select>
 
+	<delete id="deleteInactiveUsersOver90Days">
+		DELETE FROM USERS
+		WHERE STATUS = 'INACTIVE'
+		AND SYSDATE - INACTIVE_DATE > 90
+	</delete>
+
 </mapper>
