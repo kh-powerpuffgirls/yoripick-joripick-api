@@ -206,7 +206,7 @@ public class AdminDao {
 		return session.selectOne("admin.findReportCategory", reportNo);
 	}
 
-	public Long findRecipeTarget(Long reportNo) {
+	public ReportTargetDto findRecipeTarget(Long reportNo) {
 		return session.selectOne("admin.findRecipeTarget", reportNo);
 	}
 

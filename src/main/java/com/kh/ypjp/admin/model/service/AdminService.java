@@ -256,8 +256,7 @@ public class AdminService {
 	public ReportTargetDto getParentRep(Long reportNo) {
 		String category = dao.findReportCategory(reportNo);
 	    if ("REVIEW".equals(category)) {
-	        Long targetNo = dao.findRecipeTarget(reportNo);
-	        return new ReportTargetDto("RECIPE", targetNo);
+	    	return dao.findRecipeTarget(reportNo);
 	    } else if ("REPLY".equals(category)) {
 	    	ReportTargetDto reply = dao.findReplyTarget(reportNo);
 	        return new ReportTargetDto(reply.getCategory(), reply.getTargetNo());

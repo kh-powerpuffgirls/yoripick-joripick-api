@@ -621,12 +621,12 @@
         WHERE rep.REPORT_NO = #{reportNo}
     </select>
     
-    <select id="findRecipeTarget" resultType="long">
-        SELECT rec.RCP_NO
+    <select id="findRecipeTarget" resultType="com.kh.ypjp.admin.model.dto.AdminDto$ReportTargetDto">
+        SELECT rec.RCP_NO as targetNo, rec.APPROVAL as category
         FROM report rep
         JOIN report_type rt ON rep.REPORT_TYPE = rt.REPORT_TYPE
         JOIN review rv ON rep.REF_NO = rv.REVIEW_NO
-        JOIN recipe rec ON rv.RCP_SOURCE = rec.RCP_NO
+        JOIN recipe rec ON rv.REF_NO = rec.RCP_NO
         WHERE rep.REPORT_NO = #{reportNo}
           AND rt.CATEGORY = 'REVIEW'
     </select>
