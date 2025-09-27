@@ -14,6 +14,7 @@ import lombok.NoArgsConstructor;
 public class Review {
 	 private int reviewNo;
 	    private long userNo;
+	    private int rcpNo;
 	    private Date reviewDate;   
 	    private double stars;
 	    private String content;
