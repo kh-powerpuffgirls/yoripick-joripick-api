@@ -31,6 +31,7 @@
                 R.RCP_NO        AS rcpNo,
                 R.RCP_NAME      AS rcpName,
                 R.CREATED_AT    AS createdAt,
+                U.USER_NO       AS userNo,
                 U.USERNAME,
                 U.SIK_BTI       AS sikBti,
                 RI.SERVER_NAME   AS serverName,
@@ -50,9 +51,8 @@
 	               	AND DELETE_STATUS = 'N'
 	            ) AS reviewCount
             FROM RECIPE R
-            JOIN USERS U ON (R.USER_NO = U.USER_NO)
-            LEFT JOIN IMAGE RI ON (R.IMAGE_NO = RI.IMAGE_NO)
-            LEFT JOIN IMAGE UI ON (U.IMAGE_NO = UI.IMAGE_NO)
+		    LEFT JOIN USERS U ON (R.USER_NO = U.USER_NO) LEFT JOIN IMAGE RI ON (R.IMAGE_NO = RI.IMAGE_NO)
+		    LEFT JOIN IMAGE UI ON (U.IMAGE_NO = UI.IMAGE_NO)
             
             <include refid="recipeSearchCondition"/>
             
@@ -199,6 +199,7 @@
 	    <result property="createdAt" column="createdAt"/>
 	    <result property="views" column="VIEWS"/>
 	    <result property="tag" column="TAG"/>
+	    <result property="approval" column="approval"/>
 	    <result property="isOfficial" column="isOfficial"/>
 	    <result property="rcpMethod" column="rcpMethod"/>
 	    <result property="rcpSituation" column="rcpSituation"/>
@@ -233,6 +234,7 @@
 	        R.UPDATED_AT     AS updatedAt,
 	        R.VIEWS,
 	        R.TAG,
+	        R.APPROVAL       AS approval,
 	        CASE WHEN R.USER_NO IS NULL THEN 1 ELSE 0 END AS isOfficial,
 	        RM.RCP_METHOD    AS rcpMethod,
 	        RS.RCP_SITUATION AS rcpSituation,
@@ -401,6 +403,7 @@
 	    SELECT * FROM (
 	        SELECT
 	            R.REVIEW_NO,
+	            R.REF_NO AS rcpNo,
 	            R.USER_NO,
 	            R.REVIEW_DATE,
 	            R.STARS,
@@ -435,6 +438,7 @@
 	    SELECT
 	        R.REVIEW_NO, R.USER_NO, R.REVIEW_DATE, R.STARS, R.CONTENT, R.RCP_SOURCE, R.REF_NO,
 	        U.USERNAME,
+	        R.REF_NO AS rcpNo,
 	        U.SIK_BTI,
 	        UI.SERVER_NAME AS USER_PROFILE_IMAGE,
 	        RI.SERVER_NAME AS REVIEW_IMAGE_URL
@@ -621,6 +625,10 @@
 	            R.RCP_NO        AS rcpNo,
 	            R.RCP_NAME      AS rcpName,
 	            R.VIEWS         AS views,
+	            RM.RCP_METHOD    AS rcpMethod,
+		        RS.RCP_SITUATION AS rcpSituation,
+		        R.RCP_MTH_NO     AS rcpMethodId,
+		        R.RCP_STA_NO     AS rcpSituationId,
 	            I.SERVER_NAME   AS serverName,
 	            1               AS isOfficial,
 		        U.USER_NO        AS "userNo",
@@ -655,6 +663,8 @@
 	        LEFT JOIN USERS U ON R.USER_NO = U.USER_NO
 	        LEFT JOIN IMAGE I ON (R.IMAGE_NO = I.IMAGE_NO)
 	        LEFT JOIN IMAGE UI ON (U.IMAGE_NO = UI.IMAGE_NO)
+	        LEFT JOIN RCP_METHOD RM ON R.RCP_MTH_NO = RM.RCP_MTH_NO
+	    	LEFT JOIN RCP_SITUATION RS ON R.RCP_STA_NO = RS.RCP_STA_NO
 	        <include refid="officialRecipeSearchCondition"/>
 	        <choose>
 	            <when test="sort == 'views'">
@@ -683,10 +693,18 @@
 	            R.RCP_NAME      AS rcpName,
 	            I.SERVER_NAME   AS serverName,
 	            1               AS isOfficial,
+	            U.USER_NO       AS userNo,
 	            U.USERNAME      AS username,
 	            U.SIK_BTI       AS sikBti,
 	            UI.SERVER_NAME  AS userProfileImage,
-	            NVL(B.BOOKMARK_CNT, 0) AS bookmarkCount
+	            NVL(B.BOOKMARK_CNT, 0) AS bookmarkCount,
+	            NVL((
+					SELECT AVG(STARS) 
+	                FROM REVIEW 
+	                WHERE REF_NO = R.RCP_NO 
+	                AND RCP_SOURCE = 'COMM' 
+	                AND DELETE_STATUS = 'N'), 0
+	            ) AS avgStars
 	        FROM RECIPE R
 	        LEFT JOIN (
 	            SELECT REF_NO, COUNT(*) AS BOOKMARK_CNT

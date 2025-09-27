@@ -95,6 +95,7 @@ public class UserRecipeDto {
         private Date updatedAt; 
         private int views;
         private String tag;
+        private String approval;
         
         @JsonProperty("isOfficial")
         private boolean isOfficial;
@@ -174,6 +175,7 @@ public class UserRecipeDto {
     @Data
     public static class ReviewResponseDto {
         private int reviewNo;
+        private int rcpNo;
         private ReviewWriterDto userInfo; // ◀️ 프론트엔드가 원하는 userInfo 객체
         private double stars;
         private String content;
