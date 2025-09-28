@@ -152,11 +152,16 @@ public class AdminController {
 	public ResponseEntity<Void> banUsers(@PathVariable Long userNo, @PathVariable int banDur) {
 		Map<String, Object> param = new HashMap<>();
 		Date startDate = Calendar.getInstance().getTime();
-		Date endDate = new Date(startDate.getTime() + (1000L * 60 * 60 * 24 * banDur));
 		param.put("userNo", userNo);
 		param.put("startDate", startDate);
-		param.put("endDate", endDate);
-		service.banUsers(param);
+		if (service.findActiveBanByUser(param) > 0) {
+			param.put("banDur", banDur);
+			service.extendBan(param);
+		} else {
+			Date endDate = new Date(startDate.getTime() + (1000L * 60 * 60 * 24 * banDur));
+			param.put("endDate", endDate);
+			service.banUsers(param);
+		}
 		return ResponseEntity.ok().build();
 	}
 	

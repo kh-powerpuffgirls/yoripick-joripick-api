@@ -104,13 +104,13 @@ public class CkclassController {
             @RequestParam(value = "file", required = false) MultipartFile file,
             @AuthenticationPrincipal Long userNo,
             Authentication authentication) {
-
+    	
         if (userNo == null) {
             return new ResponseEntity<>("로그인 후 이용해주세요.", HttpStatus.UNAUTHORIZED);
         }
 
         ckclassDto.setUserNo(userNo.intValue());
-
+        
         if (ckclassDto.getPasscode() != null && ckclassDto.getPasscode().isEmpty()) {
             ckclassDto.setPasscode(null);
         }

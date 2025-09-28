@@ -57,7 +57,8 @@
 		            NULL            AS detail,
 		            NULL            AS content,
 		            NULL            AS reportedAt,
-		            'RECIPE'        AS type
+		            'RECIPE'        AS type,
+		            r.approval		AS approval
 		        FROM RECIPE r
 		        JOIN (
 		            SELECT ref_no
@@ -79,9 +80,11 @@
 		            rt.detail      AS detail,
 		            rep.content     AS content,
 		            rep.reported_at AS reportedAt,
-		            'REPORT'        AS type
+		            'REPORT'        AS type,
+		            r.approval		AS approval
 		        FROM REPORT rep
 		        JOIN REPORT_TYPE rt USING (report_type)
+		        JOIN RECIPE r ON rep.ref_no = r.rcp_no
 		        WHERE rep.resolved = 'N'
 		          AND rt.category = 'RECIPE'
 		    ) rcp
@@ -208,6 +211,20 @@
 		ORDER BY M.time
 	</select>
 	
+	<select id="findActiveBanByUser" resultType="int">
+        SELECT count(*)
+        FROM USER_BANNED
+        WHERE user_no = #{userNo}
+        	AND end_date >= SYSDATE
+    </select>
+    
+    <update id="extendBan">
+        UPDATE USER_BANNED
+        SET end_date = end_date + #{banDur}
+        WHERE user_no = #{userNo}
+        	AND end_date >= SYSDATE
+    </update>
+	
 	<insert id="banUsers">
 		INSERT INTO USER_BANNED VALUES
 		(SEQ_BAN_NO.NEXTVAL, #{userNo}, #{startDate}, #{endDate})
@@ -318,7 +335,7 @@
 				    WHERE rcp_source = 'COMM'
 				    GROUP BY ref_no
 				) B ON R.rcp_no = B.ref_no
-				ORDER BY R.rcp_no
+				ORDER BY 5 DESC, 7 DESC, 3 DESC
 			) u
 		) WHERE rnum BETWEEN #{offset} + 1 AND #{offset} + #{limit}
 	</select>
@@ -389,7 +406,7 @@
 		            WHERE ref_type = 'CHALLENGE'
 		            GROUP BY ref_no
 		        ) L ON C.challenge_no = L.ref_no
-		        ORDER BY 5, 2
+		        ORDER BY 5 DESC, 2 DESC
 		    ) T
 		)
 		WHERE rnum BETWEEN #{offset} + 1 AND #{offset} + #{limit}
@@ -414,7 +431,7 @@
 					FROM CLASS_ENROLL
 					GROUP BY room_no
 				) CE ON CK.room_no = CE.room_no
-				ORDER BY 5, 1
+				ORDER BY 5 DESC, 1 DESC
 			) T
 		)
 		WHERE rnum BETWEEN #{offset} + 1 AND #{offset} + #{limit}
@@ -484,25 +501,29 @@
 	</select>
 	
 	<select id="getCustomerServices" resultType="com.kh.ypjp.admin.model.dto.AdminDto$CSinfo">
-		SELECT
-		    room_no,
-		    user_no,
-		    username,
-		    time,
-		    content
-		FROM (
-		    SELECT
-		        C.room_no,
-		        C.user_no,
-		        U.username,
-		        M.time,
-		        M.content,
-		        ROW_NUMBER() OVER (PARTITION BY C.room_no ORDER BY M.time DESC) AS rn
-		    FROM CUSTOMER_SERVICE C
-		    JOIN USERS U ON C.user_no = U.user_no
-		    LEFT JOIN MESSAGE M ON C.message_no = M.message_no
-		)
-		WHERE rn = 1
+		SELECT * FROM (
+		    SELECT ROWNUM AS rnum, u.* FROM (
+				SELECT
+				    t.room_no,
+				    t.user_no,
+				    u.username,
+				    t.time,
+				    t.content
+				FROM (
+				    SELECT
+				        c.room_no,
+				        m.user_no,
+				        m.time,
+				        m.content,
+				        ROW_NUMBER() OVER (PARTITION BY c.room_no ORDER BY m.time DESC) AS rn
+				    FROM customer_service c
+				    JOIN message m ON c.room_no = m.ref_no
+				) t
+				JOIN users u ON t.user_no = u.user_no
+				WHERE t.rn = 1
+				ORDER BY 4 DESC, 1 DESC
+			) u 
+		) WHERE rnum BETWEEN #{offset} + 1 AND #{offset} + #{limit}
 	</select>
 	
 	<select id="countAnnouncements" resultType="long">
@@ -582,36 +603,53 @@
 	</delete>
 	
 	<select id="countIngredients" resultType="long">
-		SELECT
-			(SELECT count(*) FROM ING_METHOD)
-			+
-			(SELECT count(*) FROM ING_PAIR)
-		FROM DUAL
+		SELECT COUNT(*) AS total_count
+		FROM (
+	        SELECT
+	            M.ing_no,
+	            I.ing_name,
+	            C.ing_code_name
+	        FROM ING_METHOD M
+	        JOIN INGREDIENT I ON M.ing_no = I.ing_no
+	        JOIN ING_CODE C ON I.ing_code = C.ing_code
+	
+	        UNION
+	        
+	        SELECT
+	            M.ing_no,
+	            I.ing_name,
+	            C.ing_code_name
+	        FROM ING_PAIR M
+	        JOIN INGREDIENT I ON M.ing_no = I.ing_no
+	        JOIN ING_CODE C ON I.ing_code = C.ing_code
+	    )
 	</select>
 	
 	<select id="getIngredients" resultType="com.kh.ypjp.admin.model.dto.AdminDto$Ingredient">
 		SELECT * FROM (
-		    SELECT ROWNUM AS rnum, u.* FROM (
-				SELECT
-					M.ing_no,
-					I.ing_name,
-					C.ing_code_name
-				FROM ING_METHOD M
-				JOIN INGREDIENT I ON M.ing_no = I.ing_no
-				JOIN ING_CODE C ON I.ing_code = C.ing_code
-				
-				UNION ALL
-				
-				SELECT
-					M.ing_no,
-					I.ing_name,
-					C.ing_code_name
-				FROM ING_PAIR M
-				JOIN INGREDIENT I ON M.ing_no = I.ing_no
-				JOIN ING_CODE C ON I.ing_code = C.ing_code
-				ORDER BY 1
-			) u
-		) WHERE rnum BETWEEN #{offset} + 1 AND #{offset} + #{limit}
+		    SELECT ROWNUM AS rnum, u.* 
+		    FROM (
+		        SELECT
+		            M.ing_no,
+		            I.ing_name,
+		            C.ing_code_name
+		        FROM ING_METHOD M
+		        JOIN INGREDIENT I ON M.ing_no = I.ing_no
+		        JOIN ING_CODE C ON I.ing_code = C.ing_code
+		
+		        UNION
+		        
+		        SELECT
+		            M.ing_no,
+		            I.ing_name,
+		            C.ing_code_name
+		        FROM ING_PAIR M
+		        JOIN INGREDIENT I ON M.ing_no = I.ing_no
+		        JOIN ING_CODE C ON I.ing_code = C.ing_code
+		        ORDER BY 1
+		    ) u
+		) 
+		WHERE rnum BETWEEN #{offset} + 1 AND #{offset} + #{limit}
 	</select>
 	
 	<select id="findReportCategory" resultType="string">

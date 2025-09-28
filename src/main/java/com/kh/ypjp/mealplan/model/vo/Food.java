@@ -91,6 +91,8 @@ public class Food {
 	public static class Recipe {
 		private Long rcpNo;
 		private String rcpName;
+		private Long userNo;
+		private String approval;
 		private int energy;
 
 		private String serverName;

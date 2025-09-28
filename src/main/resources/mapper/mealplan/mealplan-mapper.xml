@@ -209,6 +209,8 @@
 		SELECT
 			r.rcp_no,
 			r.rcp_name,
+			r.user_no,
+			r.approval,
 			n.energy,
 			i.server_name
 		FROM BOOKMARK b
@@ -216,6 +218,5 @@
 		JOIN NUTRIENT n ON r.nutrient_no = n.nutrient_no
 		JOIN IMAGE i ON r.image_no = i.image_no
 		WHERE b.user_no = #{userNo}
-			AND b.rcp_source = 'COMM'
 	</select>
 </mapper>

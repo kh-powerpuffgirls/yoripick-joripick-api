@@ -214,4 +214,12 @@ public class AdminDao {
 		return session.selectOne("admin.findReplyTarget", reportNo);
 	}
 
+	public int findActiveBanByUser(Map<String, Object> param) {
+		return session.selectOne("admin.findActiveBanByUser", param);
+	}
+
+	public int extendBan(Map<String, Object> param) {
+		return session.update("admin.extendBan", param);
+	}
+
 }

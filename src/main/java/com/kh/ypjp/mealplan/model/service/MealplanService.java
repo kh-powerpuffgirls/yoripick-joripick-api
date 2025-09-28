@@ -105,10 +105,15 @@ public class MealplanService {
 			return null;
 		}
 		for (Recipe rcp : rcpList) {
-			String imageUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
-	                .path("/images/")
-	                .path(rcp.getServerName())
-	                .toUriString();
+			String imageUrl;
+			if (rcp.getUserNo() != null) {
+				imageUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
+		                .path("/images/community/recipe/"+ rcp.getRcpNo()+"/")
+		                .path(rcp.getServerName())
+		                .toUriString();
+			} else {
+				imageUrl = "http://www.foodsafetykorea.go.kr" + rcp.getServerName();      
+			}
 			rcp.setImgUrl(imageUrl);
 		}
 		return rcpList;

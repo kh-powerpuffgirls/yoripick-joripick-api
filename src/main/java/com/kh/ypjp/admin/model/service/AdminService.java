@@ -264,4 +264,12 @@ public class AdminService {
 	    return null;
 	}
 
+	public int findActiveBanByUser(Map<String, Object> param) {
+		return dao.findActiveBanByUser(param);
+	}
+
+	public int extendBan(Map<String, Object> param) {
+		return dao.extendBan(param);
+	}
+
 }

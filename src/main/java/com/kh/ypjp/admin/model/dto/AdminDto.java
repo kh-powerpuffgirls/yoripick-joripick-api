@@ -137,6 +137,7 @@ public class AdminDto {
 		private String detail;
 		private String content;
 		private String reportedAt;
+		private String approval;
 	}
 	
 	@Data
