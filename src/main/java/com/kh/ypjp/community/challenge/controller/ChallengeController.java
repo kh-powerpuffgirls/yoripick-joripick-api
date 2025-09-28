@@ -13,11 +13,14 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.security.Principal;
+import java.util.Arrays; // <--- Arrays import 추가
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import jakarta.servlet.http.Cookie; // <--- Cookie import 추가
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse; // <--- HttpServletResponse import 추가
 
 @CrossOrigin(origins = "http://localhost:5173")
 @RestController
@@ -46,14 +49,16 @@ public class ChallengeController {
         return ResponseEntity.ok(challengeList);
     }
 
-	 // 게시글 단건 조회
+	 // 게시글 단건 조회 (조회수 중복 방지 로직 적용)
     @GetMapping("/{id}")
     public ResponseEntity<ChallengeDto> getPost(
             @PathVariable Long id,
             @AuthenticationPrincipal Long userNo,
-            HttpServletRequest request) {
+            HttpServletRequest request,
+            HttpServletResponse response) { // <--- HttpServletResponse 추가
 
-        Optional<ChallengeDto> optionalPost = challengeService.getPostAndIncrementViews(id, userNo);
+        // 1. 게시글 순수 조회
+        Optional<ChallengeDto> optionalPost = challengeService.getPost(id); // <--- getPostAndIncrementViews -> getPost로 변경
         
         if (optionalPost.isPresent()) {
             ChallengeDto post = optionalPost.get();
@@ -65,7 +70,46 @@ public class ChallengeController {
                         .path(post.getServerName())
                         .toUriString();
                 post.setImageUrl(imageUrl);
-            }	
+            }
+            
+            // 2. 쿠키를 이용한 중복 조회 방지 로직 시작
+            String cookieName = "readChallengeNo";
+            String readChallengeNoCookie = null;
+            Cookie[] cookies = request.getCookies();
+            if (cookies != null) {
+                for (Cookie cookie : cookies) {
+                    if (cookie.getName().equals(cookieName)) {
+                        readChallengeNoCookie = cookie.getValue();
+                        break;
+                    }
+                }
+            }
+    
+            boolean increase = false;
+            if (readChallengeNoCookie == null) {
+                increase = true;
+                readChallengeNoCookie = String.valueOf(id);
+            } else if (!Arrays.asList(readChallengeNoCookie.split("/")).contains(String.valueOf(id))) {
+                increase = true;
+                readChallengeNoCookie += "/" + id;
+            }
+    
+            // 3. 조회수 증가 및 쿠키 설정
+            if (increase) {
+                // 서비스 계층의 조회수 증가 메서드 호출 (본인 조회 방지 로직 포함)
+                boolean isIncreased = challengeService.incrementViewsWithSelfCheck(id, userNo); // <--- 분리된 메서드 호출
+    
+                if (isIncreased) {
+                    post.setViews(post.getViews() + 1); // DTO 조회수 갱신
+    
+                    // 쿠키 설정 (24시간)
+                    Cookie newCookie = new Cookie(cookieName, readChallengeNoCookie);
+                    newCookie.setPath("/");
+                    newCookie.setMaxAge(60 * 60 * 24);
+                    response.addCookie(newCookie);
+                }
+            }
+
             return ResponseEntity.ok(post);
         } else {
             return ResponseEntity.notFound().build();

@@ -39,9 +39,8 @@ public class ChallengeService {
         return postList;
     }
 
-	 // 게시글 조회 및 조회수 증가
-	 @Transactional
-	 public Optional<ChallengeDto> getPostAndIncrementViews(Long id, Long userNo) {
+	 // 게시글 단건 조회 (순수 조회로 변경됨)
+	 public Optional<ChallengeDto> getPost(Long id) {
 	     ChallengeDto post = challengeDao.findByIdWithImage(id); 
 	     if (post == null) return Optional.empty();
 	
@@ -51,13 +50,26 @@ public class ChallengeService {
 	         post.setProfileImageServerName(imageUrl);
 	     }
 	     
-	     if (userNo == null || !userNo.equals(post.getUserNo())) {
-	         challengeDao.incrementViews(id);
-	         post.setViews(post.getViews() + 1);
-	     }
+	     // 조회수 증가 로직은 여기에서 제거되었습니다.
 	     return Optional.of(post);
 	 }
 
+    // 조회수 증가 및 본인 조회 방지 로직만 수행 (컨트롤러에서 호출)
+    @Transactional
+    public boolean incrementViewsWithSelfCheck(Long id, Long userNo) {
+        // 1. 게시글 작성자 정보 조회
+        Long authorNo = challengeDao.findUserNoById(id); // DAO에 해당 메서드가 있다고 가정
+        if (authorNo == null) return false;
+
+        // 2. 본인이 아닌 경우에만 조회수 증가
+        // userNo가 null이거나 (비로그인) 작성자가 아닌 경우
+        if (userNo == null || !userNo.equals(authorNo)) {
+            challengeDao.incrementViews(id);
+            return true;
+        }
+        return false;
+    }
+    
     // 이전/다음 게시글 번호 조회
     public Map<String, Long> getNavigation(Long challengeNo) {
         Map<String, Long> navigation = new HashMap<>();
