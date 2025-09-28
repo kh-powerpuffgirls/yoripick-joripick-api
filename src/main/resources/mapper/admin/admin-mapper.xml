@@ -496,26 +496,6 @@
 		ORDER BY M.time
 	</select>
 	
-	<!--<select id="getCSinfo" resultMap="ChatInfoResultMap">
-		SELECT
-			C.room_no,
-			U.username AS class_name,
-			M.message_no,
-			C.user_no,
-			UU.username,
-			M.content,
-			M.time,
-			M.hidden,
-			M.image_no
-		FROM CUSTOMER_SERVICE C
-		LEFT JOIN USERS U ON C.user_no = U.user_no
-		LEFT JOIN MESSAGE M ON C.room_no = M.ref_no
-		JOIN USERS UU ON M.user_no = UU.user_no
-		WHERE M.msg_type = 'CSERVICE'
-			AND C.room_no = #{roomNo}
-		ORDER BY M.time
-	</select>-->
-	
 	<select id="countCustomerServices" resultType="long">
 		SELECT count(*) FROM CUSTOMER_SERVICE
 	</select>

@@ -306,7 +306,6 @@ public class AdminController {
 			@RequestParam("endDate") String endDate,
 			@RequestPart(value = "upfile", required = false) MultipartFile upfile) {
 		Challenge challenge = new Challenge(chInfoNo, title, startDate, endDate, null, null);
-		System.out.println(challenge);
 		List<Challenge> challengeList = service.getChallengesExcept(challenge);
 		if (!challengeList.isEmpty()) {
 			return ResponseEntity.badRequest().build();

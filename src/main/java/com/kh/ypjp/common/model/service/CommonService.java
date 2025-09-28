@@ -23,10 +23,12 @@ public class CommonService {
 
 	public Challenge getTodayChallenge() {
 		Challenge challenge = dao.getTodayChallenge();
-		String serverName = utilService.getChangeName(challenge.getImageNo());
-		String imageUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
-				.path("/images/challenges/" + serverName).toUriString();
-		challenge.setImageUrl(imageUrl);
+		if (challenge != null) {
+			String serverName = utilService.getChangeName(challenge.getImageNo());
+			String imageUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
+					.path("/images/challenges/" + serverName).toUriString();
+			challenge.setImageUrl(imageUrl);
+		}
 		return challenge;
 	}
 

@@ -23,8 +23,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kh.ypjp.chat.model.dto.ChatDto.ChatRoomDto;
 import com.kh.ypjp.chat.model.dto.ChatDto.FaqMsgDto;
 import com.kh.ypjp.chat.model.dto.ChatDto.MessageDto;
@@ -46,7 +44,6 @@ public class ChatController {
 
 	@MessageMapping("/{roomNo}")
 	public void sendMessage(@DestinationVariable Long roomNo, MessageDto message) {
-		log.debug("mess {} ", message);
 		messagingTemplate.convertAndSend("/topic/" + roomNo, message);
 	}
 	
@@ -124,12 +121,8 @@ public class ChatController {
 
 	@PostMapping(value = "/messages/{type}/{classNo}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public ResponseEntity<? extends MessageDto> insertMessage(@PathVariable Long classNo, @PathVariable String type,
-			@RequestPart("message") MessageDto message, @RequestPart(value = "selectedFile", required = false) MultipartFile upfile
-			) throws JsonProcessingException {
-		ObjectMapper mapper = new ObjectMapper();
-		String json = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(message);
-		System.out.println(json);
-		
+			@RequestPart("message") FaqMsgDto message, @RequestPart(value = "selectedFile", required = false) MultipartFile upfile
+			) {
 		Long userNo = message.getUserNo();
 		if (userNo == null) {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null); // 401
@@ -166,6 +159,7 @@ public class ChatController {
 			faqMessage.setUserNo(message.getUserNo());
 			faqMessage.setUsername(message.getUsername());
 			faqMessage.setContent(message.getContent());
+			if (message.getButton() != null) faqMessage.setButton(message.getButton());
 			result = chatService.insertChatBot(faqMessage);
 		} else if (type.equals("admin")) {
 			message.setMsgType("CSERVICE");
