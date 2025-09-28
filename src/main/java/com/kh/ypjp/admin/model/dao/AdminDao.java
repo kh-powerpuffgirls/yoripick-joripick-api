@@ -222,4 +222,8 @@ public class AdminDao {
 		return session.update("admin.extendBan", param);
 	}
 
+	public ChatInfo getCSroom(Long roomNo) {
+		return session.selectOne("admin.getCSroom", roomNo);
+	}
+
 }

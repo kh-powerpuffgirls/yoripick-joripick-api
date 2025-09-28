@@ -4,6 +4,7 @@ import org.apache.ibatis.session.SqlSession;
 import org.springframework.stereotype.Repository;
 
 import com.kh.ypjp.admin.model.dto.AdminDto.Announcement;
+import com.kh.ypjp.admin.model.dto.AdminDto.Challenge;
 
 import lombok.RequiredArgsConstructor;
 
@@ -15,6 +16,10 @@ public class CommonDao {
 	
 	public Announcement getTodayAnnouncement() {
 		return session.selectOne("common.getTodayAnnouncement");
+	}
+
+	public Challenge getTodayChallenge() {
+		return session.selectOne("common.getTodayChallenge");
 	}
 
 }

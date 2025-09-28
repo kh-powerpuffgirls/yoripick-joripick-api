@@ -25,7 +25,10 @@ public class SbtiController {
 	@GetMapping("/sbti")
 	public ResponseEntity<List<SikBti>> getScoreMap() {
 		List<SikBti> scoreMap = service.getScoreMap();
-		return ResponseEntity.ok(scoreMap);
+		if (scoreMap != null) {
+			return ResponseEntity.ok().body(scoreMap); // 200
+		}
+		return ResponseEntity.notFound().build(); // 404
 	}
 	
 	@PatchMapping("/eatbti/{userNo}")
@@ -34,7 +37,10 @@ public class SbtiController {
 		Map<String, Object> param = new HashMap<>();
 		param.put("userNo", userNo);
 		param.put("sikBti", sikBti);
-		service.eatbtiResult(param);
-		return ResponseEntity.ok().build();
+		if (service.eatbtiResult(param) > 0) {
+			return ResponseEntity.ok().build(); // 201
+		} else {
+			return ResponseEntity.badRequest().build(); // 400
+		}
 	}
 }
