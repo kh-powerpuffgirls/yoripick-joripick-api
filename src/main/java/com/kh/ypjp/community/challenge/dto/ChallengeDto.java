@@ -18,9 +18,11 @@ public class ChallengeDto {
     private int likes;
     private String sik_bti;
 
-    // FreeDto와 동일하게 필드명 변경
     private String originName;
     private String serverName;
     private String imageUrl;
     private Integer imageNo;
+    
+    private String profileImageServerName;
+
 }

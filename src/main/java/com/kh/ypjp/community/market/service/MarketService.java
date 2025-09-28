@@ -23,20 +23,41 @@ public class MarketService {
     private final MarketDao marketDao;
     private final UtilService utilService;
 
+    private void setProfileInfoForPosts(List<MarketSellDto> posts) {
+    	if (posts == null) return;
+        
+        for (MarketSellDto post : posts) {
+            if (post.getUserNo() != null) {
+                
+                String profileFileName = marketDao.selectProfileFileNameByUserNo(post.getUserNo()); 
+                
+                if (profileFileName != null && !profileFileName.isEmpty()) {
+                    String fullPath = "/images/profile/" + post.getUserNo() + "/" + profileFileName;
+                    post.setAuthorProfileUrl(fullPath); 
+                }
+            }
+        }
+    }
+    
     public List<MarketSellDto> getAllPosts() {
-        return marketDao.getAllPosts();
+        List<MarketSellDto> posts = marketDao.getAllPosts();
+        setProfileInfoForPosts(posts); 
+        return posts;
     }
     
     public List<MarketSellDto> getPopularPosts() {
-        return marketDao.getPopularPosts();
+        List<MarketSellDto> posts = marketDao.getPopularPosts();
+        setProfileInfoForPosts(posts); 
+        return posts;
     }
     
     public List<MarketSellDto> getRecentPosts() {
-        return marketDao.getRecentPosts();
+        List<MarketSellDto> posts = marketDao.getRecentPosts();
+        setProfileInfoForPosts(posts); 
+        return posts;
     }
     
     public List<MarketSellDto> getMyPostsWithForms(Long userNo) {
-
         return marketDao.findMyPostsWithForms(userNo);
     }
     
@@ -44,10 +65,16 @@ public class MarketService {
         MarketSellDto post = marketDao.getPostDetail(productId);
 
         if (post != null) {
-            // SikBti 정보만 추가하고
             String sikBti = marketDao.selectSikBtiByUserNo(post.getUserNo().intValue());
             post.setSikBti(sikBti);
-
+            
+            if (post.getUserNo() != null) {
+                 String profileFileName = marketDao.selectProfileFileNameByUserNo(post.getUserNo());
+                 if (profileFileName != null && !profileFileName.isEmpty()) {
+                    String fullPath = "/images/profile/" + post.getUserNo() + "/" + profileFileName;
+                    post.setAuthorProfileUrl(fullPath);
+                 }
+            }
         }
 
         return Optional.ofNullable(post);
@@ -104,7 +131,6 @@ public class MarketService {
         marketSellDto.setProductId(productId);
 
         if (image != null && !image.isEmpty()) {
-            // 새 이미지로 업데이트
             String webPath = "market/" + userNo;
             String savedFileName = utilService.getChangeName(image, webPath);
             String serverName = webPath + "/" + savedFileName;
@@ -148,16 +174,11 @@ public class MarketService {
         return currentQuantity >= count;
     }
     
-    // 판매자용 구매 신청 폼 상세 조회 메서드
-    public Optional<MarketBuyDto> getSellBuyFormById(Long formId, Long userNo) {
-        Long sellerId = marketDao.findSellerByFormId(formId);
-
-        if (sellerId != null && sellerId.equals(userNo)) {
-            MarketBuyDto buyForm = marketDao.findPurchaseForm(formId);
-            return Optional.ofNullable(buyForm);
-        }
-        return Optional.empty();
+    public Optional<MarketBuyDto> getSellBuyFormById(Long formId) {
+        MarketBuyDto buyForm = marketDao.findPurchaseForm(formId);
+        return Optional.ofNullable(buyForm);
     }
+
 
     @Transactional
     public boolean deleteBuyForm(Long formId, Long userNo) {

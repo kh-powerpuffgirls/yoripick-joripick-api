@@ -4,7 +4,6 @@ import com.kh.ypjp.common.UtilService;
 import com.kh.ypjp.community.free.dao.FreeDao;
 import com.kh.ypjp.community.free.dto.FreeDto;
 import com.kh.ypjp.community.free.dto.ReplyDto;
-import com.kh.ypjp.community.free.dto.LikesDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -111,14 +110,17 @@ public class FreeService {
         return freeDao.incrementViews(boardNo);
     }
 
- // 좋아요 상태 설정 (LIKE, DISLIKE, COMMON)
     @Transactional
     public void setLikeStatus(int boardNo, int userNo, String likeStatus) {
-        if (!"LIKE".equals(likeStatus) && !"DISLIKE".equals(likeStatus) && !"COMMON".equals(likeStatus)) {
-            likeStatus = "COMMON";
+        String currentStatus = freeDao.findLikeStatus(userNo, boardNo);
+
+        if ("COMMON".equals(likeStatus) || (likeStatus != null && likeStatus.equals(currentStatus))) {
+            freeDao.deleteLike(userNo, boardNo);
+        } else {
+            freeDao.insertOrUpdateLike(userNo, boardNo, likeStatus);
         }
-        freeDao.insertOrUpdateLike(userNo, boardNo, likeStatus);
     }
+
 
     // 좋아요 상태 조회
     public boolean getLikeStatus(int boardNo, int userNo) {
@@ -131,14 +133,12 @@ public class FreeService {
         Integer count = freeDao.getLikesCount(boardNo);
         return count != null ? count : 0;
     }
- // FreeService.java
     public List<ReplyDto> selectAllRepliesByBoardNo(int boardNo) {
         List<ReplyDto> replies = freeDao.selectAllRepliesByBoardNo(boardNo);
         
         for (ReplyDto reply : replies) {
             String profileImageServerName = reply.getProfileImageServerName();
             if (profileImageServerName != null && !profileImageServerName.isEmpty()) {
-                // "profile/{userno}/{파일이름.확장자}" 형식으로 경로를 완성합니다.
                 String fullPath = "profile/" + reply.getUserNo() + "/" + profileImageServerName;
                 reply.setProfileImageServerName(fullPath);
             }

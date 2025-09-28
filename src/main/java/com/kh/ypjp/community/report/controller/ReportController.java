@@ -27,7 +27,7 @@ public class ReportController {
         }
 
         try {
-            reportDto.setUserNo(userNo.intValue());
+            reportDto.setUserNo(userNo.intValue()); 
             reportService.submitReport(reportDto);
             return new ResponseEntity<>("신고가 성공적으로 접수되었습니다.", HttpStatus.OK);
         } catch (Exception e) {
@@ -41,6 +41,20 @@ public class ReportController {
         try {
             List<ReportDto> types = reportService.getAllReportTypes();
             return new ResponseEntity<>(types, HttpStatus.OK);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    
+    @GetMapping("/target/{reportedUserNo}/profile")
+    public ResponseEntity<ReportDto> getReportTargetProfile(
+            @PathVariable("reportedUserNo") int reportedUserNo) {
+        try {
+            ReportDto profileInfo = reportService.getReportTargetProfile(reportedUserNo);
+            
+            return new ResponseEntity<>(profileInfo, HttpStatus.OK);
+
         } catch (Exception e) {
             e.printStackTrace();
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);

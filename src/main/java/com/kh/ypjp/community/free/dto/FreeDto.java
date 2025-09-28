@@ -21,4 +21,7 @@ public class FreeDto {
     private String imageUrl;
 
     private String sik_bti;
+    
+    private String profileImageServerName; 
+
 }
