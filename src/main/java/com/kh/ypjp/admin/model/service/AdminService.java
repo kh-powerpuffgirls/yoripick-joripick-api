@@ -272,4 +272,8 @@ public class AdminService {
 		return dao.extendBan(param);
 	}
 
+	public ChatInfo getCSroom(Long roomNo) {
+		return dao.getCSroom(roomNo);
+	}
+
 }

@@ -57,12 +57,13 @@ public class ChatController {
 	
 	@PatchMapping("/reads")
 	public ResponseEntity<Void> updateLastRead(
-			@RequestParam Long userNo, @RequestParam Long roomNo, @RequestParam Long messageNo) {
+			@RequestParam Long userNo, @RequestParam String type, @RequestParam Long roomNo, @RequestParam Long messageNo) {
 		if (userNo == null) {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null); // 401
 		}
 		Map <String, Object> param = new HashMap<>();
 		param.put("userNo", userNo);
+		param.put("type", type);
 		param.put("roomNo", roomNo);
 		param.put("messageNo", messageNo);
 		if (chatService.updateLastRead(param) > 0) {
@@ -71,14 +72,15 @@ public class ChatController {
 //		return ResponseEntity.badRequest().build(); // 400
 	}
 	
-	@GetMapping("/reads/{userNo}/{roomNo}")
+	@GetMapping("/reads/{userNo}/{type}/{roomNo}")
 	public ResponseEntity<Long> getLastRead(
-			@PathVariable Long userNo, @PathVariable Long roomNo) {
+			@PathVariable Long userNo, @PathVariable String type, @PathVariable Long roomNo) {
 		if (userNo == null) {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null); // 401
 		}
 		Map <String, Object> param = new HashMap<>();
 		param.put("userNo", userNo);
+		param.put("type", type);
 		param.put("roomNo", roomNo);
 		Long messageNo = chatService.getLastRead(param);
 //		if (messageNo == null) {
@@ -188,7 +190,7 @@ public class ChatController {
 		if (type.equals("admin")) {
 			roomNo = chatService.getAdminChatRoomNo(userNo);
 			if (roomNo == null) {
-				return ResponseEntity.notFound().build(); // 404
+//				return ResponseEntity.notFound().build(); // 404
 			}
 		}
 		return ResponseEntity.ok().body(roomNo);

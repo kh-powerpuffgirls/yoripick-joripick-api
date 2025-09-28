@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.kh.ypjp.admin.model.dto.AdminDto.Announcement;
+import com.kh.ypjp.admin.model.dto.AdminDto.Challenge;
 import com.kh.ypjp.admin.model.service.AdminService;
 import com.kh.ypjp.common.model.service.CommonService;
 
@@ -23,5 +24,12 @@ public class CommonController {
 		Announcement todayAnn = service.getTodayAnnouncement();
 		System.out.println(todayAnn);
 		return ResponseEntity.ok(todayAnn);
+	}
+	
+	@GetMapping("/challenges")
+	public ResponseEntity<Challenge> getTodayChallenge() {
+		Challenge todayChallenge = service.getTodayChallenge();
+		System.out.println(todayChallenge);
+		return ResponseEntity.ok(todayChallenge);
 	}
 }
