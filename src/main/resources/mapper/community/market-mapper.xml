@@ -17,12 +17,15 @@
         <result property="accountNo" column="ACCOUNT_NO" />
         <result property="views" column="VIEWS" />
         <result property="deleteStatus" column="DELETE_STATUS" />
+        <result property="alwaysOnSale" column="ALWAYS_ON_SALE" />
+        
         <result property="author" column="AUTHOR" />
         <result property="sikBti" column="SIK_BTI" />
         <result property="authorProfileUrl" column="AUTHOR_PROFILE_URL" />
         <result property="imageUrl" column="IMAGE_URL" />
         <result property="serverName" column="IMAGE_SERVER_NAME" />
-        <result property="alwaysOnSale" column="ALWAYS_ON_SALE" />
+        
+        <result property="isPurchased" column="IS_PURCHASED" />
         
         <collection property="buyForms" ofType="com.kh.ypjp.community.market.dto.MarketBuyDto" javaType="java.util.ArrayList">
             <id property="formNo" column="FORM_NO" />
@@ -34,6 +37,7 @@
             <result property="buyerPhone" column="BUYER_PHONE" />
             <result property="userNo" column="BUYER_USER_NO" />
             <result property="createdAt" column="FORM_CREATED_AT" />
+            <result property="buyerNickname" column="BUYER_NICKNAME" />
         </collection>
     </resultMap>
 
@@ -84,7 +88,8 @@
         SELECT *
         FROM (
             SELECT
-                mp.PRODUCT_ID, mp.QUANTITY, mp.TITLE, mp.CREATED_AT, mp.VIEWS,
+                mp.PRODUCT_ID, 
+                mp.USER_NO, mp.QUANTITY, mp.TITLE, mp.CREATED_AT, mp.VIEWS,
                 pi.SERVER_NAME AS IMAGE_SERVER_NAME, u.USERNAME AS AUTHOR, u.SIK_BTI AS SIK_BTI,
                 CONCAT('/images/', ui.SERVER_NAME) AS AUTHOR_PROFILE_URL,
                 CONCAT('/images/', pi.SERVER_NAME) AS IMAGE_URL
@@ -102,13 +107,28 @@
         SELECT SIK_BTI FROM USERS WHERE USER_NO = #{userNo}
     </select>
     
-    <select id="getPostDetail" resultMap="MarketSellDtoResultMap">
+    <select id="selectProfileFileNameByUserNo" resultType="string"> SELECT SERVER_NAME 
+        FROM IMAGE i
+        JOIN USERS u ON i.IMAGE_NO = u.IMAGE_NO
+        WHERE u.USER_NO = #{userNo}
+    </select>
+    
+<select id="getPostDetail" resultMap="MarketSellDtoResultMap">
         SELECT
             mp.PRODUCT_ID, mp.USER_NO, mp.TITLE, mp.IMAGE_NO, mp.NAME, mp.DETAIL, mp.PRICE,
             mp.QUANTITY, mp.CREATED_AT, mp.DEADLINE, mp.PHONE, mp.ACCOUNT_NO, mp.VIEWS, mp.DELETE_STATUS,
             u.USERNAME AS AUTHOR, u.SIK_BTI AS SIK_BTI,
             pi.SERVER_NAME AS IMAGE_SERVER_NAME, CONCAT('/images/', ui.SERVER_NAME) AS AUTHOR_PROFILE_URL,
-            CONCAT('/images/', pi.SERVER_NAME) AS IMAGE_URL
+            CONCAT('/images/', pi.SERVER_NAME) AS IMAGE_URL,
+            
+            (
+                SELECT CASE WHEN COUNT(f.FORM_NO) > 0 THEN 'Y' ELSE 'N' END
+                FROM MARKET_FORM f
+                WHERE f.PRODUCT_ID = mp.PRODUCT_ID
+                  AND f.DELETE_STATUS = 'N' 
+                  AND ROWNUM = 1 
+            ) AS IS_PURCHASED 
+            
         FROM MARKETPLACE mp
         JOIN USERS u ON mp.USER_NO = u.USER_NO
         LEFT JOIN IMAGE ui ON u.IMAGE_NO = ui.IMAGE_NO
@@ -185,26 +205,28 @@
         SELECT QUANTITY FROM MARKETPLACE WHERE PRODUCT_ID = #{productId}
     </select>
    
-    <select id="findMyPostsWithForms" resultMap="MarketSellDtoResultMap">
-        SELECT
-            mp.PRODUCT_ID, mp.USER_NO, mp.TITLE, mp.IMAGE_NO, mp.NAME, mp.DETAIL, mp.PRICE,
-            mp.QUANTITY, mp.CREATED_AT, mp.DEADLINE, mp.PHONE, mp.ACCOUNT_NO, mp.VIEWS, mp.DELETE_STATUS,
-            u.USERNAME AS AUTHOR, u.SIK_BTI AS SIK_BTI,
-            CONCAT('/images/', ui.SERVER_NAME) AS AUTHOR_PROFILE_URL,
-            CONCAT('/images/', pi.SERVER_NAME) AS IMAGE_URL,
-            f.FORM_NO AS FORM_NO, f.PRODUCT_ID AS FORM_PRODUCT_ID, f.USER_NO AS BUYER_USER_NO,
-            f.COUNT, f.BUYER_NAME, f.DLVR_NAME, f.ADDRESS, f.DETAIL_ADDRESS,
-            f.PHONE AS BUYER_PHONE, f.CREATED_AT AS FORM_CREATED_AT
-        FROM MARKETPLACE mp
-        JOIN USERS u ON mp.USER_NO = u.USER_NO
-        LEFT JOIN IMAGE ui ON u.IMAGE_NO = ui.IMAGE_NO
-        LEFT JOIN IMAGE pi ON mp.IMAGE_NO = pi.IMAGE_NO
-        LEFT JOIN MARKET_FORM f ON mp.PRODUCT_ID = f.PRODUCT_ID AND f.DELETE_STATUS = 'N'
-        WHERE 
-            mp.USER_NO = #{userNo}
-            AND mp.DELETE_STATUS = 'N'
-        ORDER BY mp.CREATED_AT DESC
-    </select>
+	<select id="findMyPostsWithForms" resultMap="MarketSellDtoResultMap">
+	    SELECT
+	        mp.PRODUCT_ID, mp.USER_NO, mp.TITLE, mp.IMAGE_NO, mp.NAME, mp.DETAIL, mp.PRICE,
+	        mp.QUANTITY, mp.CREATED_AT, mp.DEADLINE, mp.PHONE, mp.ACCOUNT_NO, mp.VIEWS, mp.DELETE_STATUS,
+	        u.USERNAME AS AUTHOR, u.SIK_BTI AS SIK_BTI,
+	        CONCAT('/images/', ui.SERVER_NAME) AS AUTHOR_PROFILE_URL,
+	        CONCAT('/images/', pi.SERVER_NAME) AS IMAGE_URL,
+	        f.FORM_NO AS FORM_NO, f.PRODUCT_ID AS FORM_PRODUCT_ID, f.USER_NO AS BUYER_USER_NO,
+	        f.COUNT, f.BUYER_NAME, f.DLVR_NAME, f.ADDRESS, f.DETAIL_ADDRESS,
+	        f.PHONE AS BUYER_PHONE, f.CREATED_AT AS FORM_CREATED_AT,        
+	        bu.USERNAME AS BUYER_NICKNAME 	        
+	    FROM MARKETPLACE mp
+	    JOIN USERS u ON mp.USER_NO = u.USER_NO
+	    LEFT JOIN IMAGE ui ON u.IMAGE_NO = ui.IMAGE_NO
+	    LEFT JOIN IMAGE pi ON mp.IMAGE_NO = pi.IMAGE_NO
+	    LEFT JOIN MARKET_FORM f ON mp.PRODUCT_ID = f.PRODUCT_ID AND f.DELETE_STATUS = 'N'
+	    LEFT JOIN USERS bu ON f.USER_NO = bu.USER_NO 	    
+	    WHERE 
+	        mp.USER_NO = #{userNo}
+	        AND mp.DELETE_STATUS = 'N'
+	    ORDER BY mp.CREATED_AT DESC
+	</select>
 
     <select id="findPurchaseForm" resultMap="MarketBuyDtoResultMap">
         SELECT

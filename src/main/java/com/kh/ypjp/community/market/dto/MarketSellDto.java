@@ -15,7 +15,7 @@ import java.util.List;
 public class MarketSellDto {
 
     private Long productId;
-    private Long userNo;
+    private Long userNo;        
     private String title;
     private Integer imageNo;
     private String name;
@@ -30,12 +30,15 @@ public class MarketSellDto {
     private String deleteStatus;
     private boolean alwaysOnSale;
     
-    private String author;
-    private String authorProfileUrl;
-    private String sikBti;
-    private String imageUrl;
-    private String serverName;
-    private String originName;
+    private String author;           
+    private String authorProfileUrl;    
+    private String sikBti;             
+    private String imageUrl;           
+    private String serverName;          
+    private String originName;         
+    
+    private String isPurchased; 
+    
     private Long formNo;
     private List<MarketBuyDto> buyForms;
 }

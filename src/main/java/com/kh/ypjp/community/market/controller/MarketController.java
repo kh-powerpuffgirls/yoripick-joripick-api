@@ -158,6 +158,13 @@ public class MarketController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 후 이용해주세요.");
         }
 
+        Optional<MarketSellDto> postCheck = marketService.getPost(id);
+        if (postCheck.isPresent() && "Y".equals(postCheck.get().getIsPurchased())) {
+            // 구매 요청이 하나라도 있으면 수정 거부
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body("이미 구매 신청이 접수되어 게시글을 수정할 수 없습니다.");
+        }
+
         boolean isAdmin = authentication.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
 
@@ -209,7 +216,6 @@ public class MarketController {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("상품 재고가 부족합니다.");
             }
 
-            // 🔥 로그인한 사용자 번호를 DTO에 세팅
             marketBuyDto.setUserNo(userNo);
 
             marketService.registerPurchaseForm(marketBuyDto);
@@ -222,14 +228,8 @@ public class MarketController {
     
     // 판매자용 구매 신청 폼 상세 조회 API
     @GetMapping("/sell-buy-form/{formId}")
-    public ResponseEntity<MarketBuyDto> getSellBuyForm(
-            @PathVariable Long formId,
-            @AuthenticationPrincipal Long userNo) { 
-        if (userNo == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
-        Optional<MarketBuyDto> optionalForm = marketService.getSellBuyFormById(formId, userNo);
+    public ResponseEntity<MarketBuyDto> getSellBuyForm(@PathVariable Long formId) {
+        Optional<MarketBuyDto> optionalForm = marketService.getSellBuyFormById(formId);
 
         if (optionalForm.isEmpty()) {
             return ResponseEntity.notFound().build();

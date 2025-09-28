@@ -22,5 +22,6 @@ public class MarketBuyDto {
     private String buyerPhone;
     private Long userNo;
     private Date createdAt;
-
+    
+    private String buyerNickname;
 }

@@ -178,9 +178,7 @@ public class CkclassController {
         if (userNo == null) {
             return new ResponseEntity<>("로그인 후 이용해주세요.", HttpStatus.UNAUTHORIZED);
         }
-
-        ckclassService.markMessagesAsRead(roomNo, userNo.intValue()); 
-        return ResponseEntity.ok("읽음 처리 완료");
+        return ResponseEntity.ok("읽음 처리 완료"); 
     }
     
     @GetMapping("/{roomNo}/members")
@@ -234,17 +232,6 @@ public class CkclassController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
     }
-
-      // 안 읽은 메시지를 읽음 처리
-//    @PutMapping("/read-count")
-//    public ResponseEntity<Void> markMessagesAsRead(@RequestBody CkclassDto ckclassDto) {
-//        try {
-//            ckclassService.markMessagesAsRead(ckclassDto.getRoomNo(), ckclassDto.getUserNo());
-//            return ResponseEntity.ok().build();
-//        } catch (Exception e) {
-//            return ResponseEntity.internalServerError().build();
-//        }
-//    }
     
     @DeleteMapping("/{roomNo}/kick/{userNo}")
     public ResponseEntity<String> kickMember(

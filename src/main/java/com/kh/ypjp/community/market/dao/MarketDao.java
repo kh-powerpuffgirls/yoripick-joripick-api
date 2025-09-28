@@ -12,7 +12,6 @@ import java.util.List;
 @Repository
 public interface MarketDao {
 
-    // 게시글 조회 관련 메서드
     List<MarketSellDto> getAllPosts();
     List<MarketSellDto> getPopularPosts();
     List<MarketSellDto> getRecentPosts();
@@ -35,12 +34,13 @@ public interface MarketDao {
 
     int getProductQuantity(Long productId);
     
-    // 판매자용 폼 상세 조회
+    public String selectProfileFileNameByUserNo(Long userNo);
+    
     MarketBuyDto findPurchaseForm(Long formId);
     
-    // 폼 ID를 통해 판매자 ID를 찾기
     Long findSellerByFormId(Long formId);
 
-    // 🔥 구매 폼 삭제 상태 업데이트
     int updateBuyFormDeleteStatus(@Param("formId") Long formId, @Param("status") String status);
+    
+    int countBuyFormsByProductId(@Param("productId") Long productId);
 }

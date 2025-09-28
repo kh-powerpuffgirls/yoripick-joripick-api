@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
-        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.kh.ypjp.community.report.dao.ReportDao">
 
@@ -29,4 +29,14 @@
         FROM REPORT_TYPE
     </select>
 
-</mapper>
+    <select id="selectReportTargetProfile" parameterType="int"
+            resultType="com.kh.ypjp.community.report.dto.ReportDto">
+        SELECT 
+               U.USER_NO AS reportedUserNo,                 
+               U.USERNAME AS reportedUserNickname,          
+               I.SERVER_NAME AS reportedUserProfileImageUrl 
+          FROM USERS U                                      
+          LEFT JOIN IMAGE I ON U.IMAGE_NO = I.IMAGE_NO      
+         WHERE U.USER_NO = #{reportedUserNo}
+    </select>
+    </mapper>

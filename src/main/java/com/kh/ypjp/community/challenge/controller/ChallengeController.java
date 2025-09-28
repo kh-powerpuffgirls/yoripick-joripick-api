@@ -27,8 +27,7 @@ import jakarta.servlet.http.HttpServletRequest;
 public class ChallengeController {
 
     private final ChallengeService challengeService;
-
-    // 전체 게시글 조회
+	
     @GetMapping
     public ResponseEntity<List<ChallengeDto>> getAllPosts(HttpServletRequest request) {
         List<ChallengeDto> challengeList = challengeService.getAllPosts();
@@ -42,12 +41,12 @@ public class ChallengeController {
                         .path(challenge.getServerName())
                         .toUriString();
                 challenge.setImageUrl(imageUrl);
-            }
+            }            
         }
         return ResponseEntity.ok(challengeList);
     }
 
-    // 게시글 단건 조회
+	 // 게시글 단건 조회
     @GetMapping("/{id}")
     public ResponseEntity<ChallengeDto> getPost(
             @PathVariable Long id,
@@ -58,14 +57,15 @@ public class ChallengeController {
         
         if (optionalPost.isPresent()) {
             ChallengeDto post = optionalPost.get();
+            String baseUrl = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort();
+
             if (post.getServerName() != null && !post.getServerName().isEmpty()) {
-                String baseUrl = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort();
                 String imageUrl = UriComponentsBuilder.fromUriString(baseUrl)
                         .path("/images/")
                         .path(post.getServerName())
                         .toUriString();
                 post.setImageUrl(imageUrl);
-            }
+            }	
             return ResponseEntity.ok(post);
         } else {
             return ResponseEntity.notFound().build();

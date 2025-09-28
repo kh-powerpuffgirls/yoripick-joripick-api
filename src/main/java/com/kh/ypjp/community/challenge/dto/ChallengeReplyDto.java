@@ -14,4 +14,6 @@ public class ChallengeReplyDto {
     private String content;
     private Date createdAt;
     private String profileImageServerName;
+    private Integer depth;
 }
+
