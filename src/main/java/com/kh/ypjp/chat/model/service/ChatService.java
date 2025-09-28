@@ -9,12 +9,14 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.kh.ypjp.chat.model.dao.ChatDao;
 import com.kh.ypjp.chat.model.dto.ChatDto.ChatMsgDto;
 import com.kh.ypjp.chat.model.dto.ChatDto.ChatRoomDto;
 import com.kh.ypjp.chat.model.dto.ChatDto.FaqMsgDto;
 import com.kh.ypjp.chat.model.dto.ChatDto.MessageDto;
+import com.kh.ypjp.community.ckclass.dto.CkclassDto;
 import com.kh.ypjp.security.model.dao.AuthDao;
 import com.kh.ypjp.security.model.dto.AuthDto.User;
 
@@ -37,6 +39,10 @@ public class ChatService {
 				param.put("msgType", "CCLASS");
 				List<ChatMsgDto> chatMessages = chatDao.getMessagesByRoom(param);
 				room.setMessages(new ArrayList<>(chatMessages));
+				
+				String imageUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
+						.path("/images/" + room.getImageUrl()).toUriString();
+				room.setImageUrl(imageUrl);
 			}
 		} else {
 			rooms = new ArrayList<>();
@@ -60,7 +66,7 @@ public class ChatService {
 		rooms.addAll(adminRooms);
 		if (chatDao.findFaqChat(userNo) > 0) {
 			List<FaqMsgDto> faqMessages = chatDao.getFaqByUser(userNo);
-			rooms.add(new ChatRoomDto(0L, "FAQ BOT, 요픽", "cservice", new ArrayList<>(faqMessages), "Y"));
+			rooms.add(new ChatRoomDto(0L, "FAQ BOT, 요픽", "cservice", new ArrayList<>(faqMessages), "Y", null, null, null, null, null));
 		}
 		Long csNo = chatDao.findAdminChat(userNo);
 		if (csNo != null) {
@@ -68,7 +74,7 @@ public class ChatService {
 			param.put("refNo", csNo);
 			param.put("msgType", "CSERVICE");
 			List<ChatMsgDto> adminMessages = chatDao.getMessagesByRoom(param);
-			rooms.add(new ChatRoomDto(csNo, "관리자 문의하기", "admin", new ArrayList<>(adminMessages), "Y"));
+			rooms.add(new ChatRoomDto(csNo, "관리자 문의하기", "admin", new ArrayList<>(adminMessages), "Y", null, null, null, null, null));
 		}
 		rooms.sort((r1, r2) -> {
 			Date r1Latest = r1.getMessages().isEmpty() ? new Date(0)
@@ -113,6 +119,10 @@ public class ChatService {
 
 	public Long getLastRead(Map<String, Object> param) {
 		return chatDao.getLastRead(param);
+	}
+
+	public Long getAdminChatRoomNo(Long userNo) {
+		return chatDao.findAdminChat(userNo);
 	}
 
 }

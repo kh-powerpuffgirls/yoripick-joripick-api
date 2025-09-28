@@ -19,6 +19,10 @@
     <result property="isNotificationOn" column="NOTIFICATION"/>
 </resultMap>
 
+<delete id="deleteImageByImageNo">
+	DELETE FROM IMAGE WHERE image_no = #{imageNo}
+</delete>
+
 <select id="selectMyClasses" resultMap="CkclassDtoResultMap" parameterType="int">
     SELECT
         t1.ROOM_NO,
@@ -117,6 +121,7 @@
         <if test="className != null">CLASS_NAME = #{className},</if>
         <if test="classInfo != null">CLASS_INFO = #{classInfo},</if>
         <if test="passcode != null">PASSCODE = #{passcode},</if>
+        <if test="passcode == null">PASSCODE = null,</if>
     </set>
     WHERE ROOM_NO = #{roomNo}
 </update>

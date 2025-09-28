@@ -137,6 +137,7 @@ public class AdminDto {
 		private String detail;
 		private String content;
 		private String reportedAt;
+		private String approval;
 	}
 	
 	@Data
@@ -150,6 +151,14 @@ public class AdminDto {
 		private Long refNo;
 		private String content;
 		private Date reportedAt;
+	}
+	
+	@Data
+	@NoArgsConstructor
+	@AllArgsConstructor
+	public static class ReportTargetDto {
+		private String category;
+	    private Long targetNo;
 	}
 	
 	@Data
