@@ -6,4 +6,10 @@
 		WHERE SYSDATE >= start_date
 			AND SYSDATE <![CDATA[<]]> (end_date + 1)
 	</select>
+	
+	<select id="getTodayChallenge" resultType="com.kh.ypjp.admin.model.dto.AdminDto$Challenge">
+		SELECT * FROM CHALLENGE_INFO
+		WHERE SYSDATE >= start_date
+			AND SYSDATE <![CDATA[<]]> (end_date + 1)
+	</select>
 </mapper>

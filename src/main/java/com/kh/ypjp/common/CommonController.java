@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.kh.ypjp.admin.model.dto.AdminDto.Announcement;
-import com.kh.ypjp.admin.model.service.AdminService;
+import com.kh.ypjp.admin.model.dto.AdminDto.Challenge;
 import com.kh.ypjp.common.model.service.CommonService;
 
 import lombok.RequiredArgsConstructor;
@@ -21,7 +21,18 @@ public class CommonController {
 	@GetMapping("/announcements")
 	public ResponseEntity<Announcement> getTodayAnnouncement() {
 		Announcement todayAnn = service.getTodayAnnouncement();
-		System.out.println(todayAnn);
-		return ResponseEntity.ok(todayAnn);
+		if (todayAnn != null) {
+			return ResponseEntity.ok().body(todayAnn); // 200
+		}
+		return ResponseEntity.notFound().build(); // 404
+	}
+	
+	@GetMapping("/challenges")
+	public ResponseEntity<Challenge> getTodayChallenge() {
+		Challenge todayChallenge = service.getTodayChallenge();
+		if (todayChallenge != null) {
+			return ResponseEntity.ok().body(todayChallenge); // 200
+		}
+		return ResponseEntity.notFound().build(); // 404
 	}
 }

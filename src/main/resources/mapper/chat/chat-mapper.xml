@@ -2,14 +2,25 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
 <mapper namespace="chat">
 	<update id="updateLastRead">
-		UPDATE CLASS_ENROLL
+		<if test="type == 'cclass'">
+			UPDATE CLASS_ENROLL
+		</if>
+		<if test="type == 'admin'">
+			UPDATE CUSTOMER_SERVICE
+		</if>
 		SET message_no = #{messageNo}
 		WHERE user_no = #{userNo}
 			AND room_no = #{roomNo}
 	</update>
 	
 	<select id="getLastRead" resultType="long">
-		SELECT message_no FROM CLASS_ENROLL
+		SELECT message_no 
+		<if test="type == 'cclass'">
+			FROM CLASS_ENROLL
+		</if>
+		<if test="type == 'admin'">
+			FROM CUSTOMER_SERVICE
+		</if>
 		WHERE user_no = #{userNo}
 			AND room_no = #{roomNo}
 	</select>
