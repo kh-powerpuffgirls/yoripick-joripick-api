@@ -14,4 +14,5 @@ public class ReplyDto {
     private String content;
     private Date createdAt;
     private String profileImageServerName;
+    private int depth;
 }

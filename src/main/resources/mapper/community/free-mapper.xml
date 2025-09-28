@@ -34,6 +34,7 @@
         <result property="sik_bti" column="sik_bti" />
         <result property="profileImageServerName" column="profileImageServerName" />
         <result property="category" column="category" />
+        <result property="depth" column="depth" />
     </resultMap>
 
 
@@ -195,7 +196,7 @@ SELECT
     </select>
 
     <!-- 게시글 댓글 전체 조회 -->
-    <select id="selectAllRepliesByBoardNo" resultMap="replyResultMap">
+<select id="selectAllRepliesByBoardNo" resultMap="replyResultMap">
         SELECT
             R.reply_no AS replyNo,
             R.ref_no AS refNo,
@@ -203,17 +204,15 @@ SELECT
             R.content,
             R.created_at AS createdAt,
             R.category AS category,
-            U.username,
+            LEVEL AS depth,  U.username,
             U.sik_bti,
             I.server_name AS profileImageServerName
         FROM REPLY R
         JOIN USERS U ON R.user_no = U.user_no
         LEFT JOIN IMAGE I ON U.image_no = I.image_no
-        START WITH R.category = 'BOARD' AND R.ref_no = #{boardNo}
-        CONNECT BY NOCYCLE PRIOR R.reply_no = R.ref_no
+        START WITH R.category = 'BOARD' AND R.ref_no = #{boardNo} CONNECT BY NOCYCLE PRIOR R.reply_no = R.ref_no
         ORDER SIBLINGS BY R.created_at ASC
     </select>
-
     <!-- 게시글 이미지 번호 조회 -->
     <select id="selectImageNoByBoardNo" parameterType="int" resultType="int">
         SELECT image_no FROM BOARD WHERE board_no = #{boardNo}

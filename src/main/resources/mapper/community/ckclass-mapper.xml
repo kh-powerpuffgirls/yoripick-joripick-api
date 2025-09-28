@@ -19,6 +19,10 @@
     <result property="isNotificationOn" column="NOTIFICATION"/>
 </resultMap>
 
+<delete id="deleteImageByImageNo">
+	DELETE FROM IMAGE WHERE image_no = #{imageNo}
+</delete>
+
 <select id="selectMyClasses" resultMap="CkclassDtoResultMap" parameterType="int">
     SELECT
         t1.ROOM_NO,
@@ -114,15 +118,12 @@
 <update id="updateClass" parameterType="com.kh.ypjp.community.ckclass.dto.CkclassDto">
     UPDATE COOKING_CLASS
     <set>
-		<if test="className != null">CLASS_NAME = #{className},</if>
-		        <if test="classInfo != null">CLASS_INFO = #{classInfo},</if>
-		        PASSCODE = 
-		        <choose>
-		            <when test="passcode == ''">NULL</when>
-		            <otherwise>#{passcode}</otherwise>
-		        </choose>
-		    </set>
-		    WHERE ROOM_NO = #{roomNo}
+        <if test="className != null">CLASS_NAME = #{className},</if>
+        <if test="classInfo != null">CLASS_INFO = #{classInfo},</if>
+        <if test="passcode != null">PASSCODE = #{passcode},</if>
+        <if test="passcode == null">PASSCODE = null,</if>
+    </set>
+    WHERE ROOM_NO = #{roomNo}
 </update>
 
 <update id="deleteClass" parameterType="int">
@@ -135,11 +136,18 @@
     DELETE FROM CLASS_ENROLL WHERE ROOM_NO = #{roomNo}
 </delete>
 
-<delete id="deleteImageByImageNo" parameterType="int">
-    DELETE FROM IMAGE
-    WHERE IMAGE_NO = #{imageNo}
-</delete>
-
+<!-- 읽음 처리(MESSAGE_NO 업데이트 기능)
+	<update id="markMessagesAsRead" parameterType="map">
+    UPDATE CLASS_ENROLL
+    SET MESSAGE_NO = (
+        SELECT NVL(MAX(MESSAGE_NO), 0)
+        FROM MESSAGE
+        WHERE REF_NO = #{roomNo}
+    )
+    WHERE USER_NO = #{userNo}
+      AND ROOM_NO = #{roomNo}
+</update>
+ -->
 
 <update id="toggleNotification" parameterType="map">
     UPDATE CLASS_ENROLL

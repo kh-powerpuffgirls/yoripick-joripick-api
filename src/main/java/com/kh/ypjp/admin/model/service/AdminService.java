@@ -21,6 +21,7 @@ import com.kh.ypjp.admin.model.dto.AdminDto.Ingredient;
 import com.kh.ypjp.admin.model.dto.AdminDto.Recipe;
 import com.kh.ypjp.admin.model.dto.AdminDto.RecipeInfo;
 import com.kh.ypjp.admin.model.dto.AdminDto.Report;
+import com.kh.ypjp.admin.model.dto.AdminDto.ReportTargetDto;
 import com.kh.ypjp.admin.model.dto.AdminDto.UserInfo;
 import com.kh.ypjp.chat.model.dao.ChatDao;
 import com.kh.ypjp.chat.model.dto.ChatDto.ChatMsgDto;
@@ -250,6 +251,25 @@ public class AdminService {
 
 	public List<Ingredient> getIngredients(Map<String, Object> param) {
 		return dao.getIngredients(param);
+	}
+
+	public ReportTargetDto getParentRep(Long reportNo) {
+		String category = dao.findReportCategory(reportNo);
+	    if ("REVIEW".equals(category)) {
+	    	return dao.findRecipeTarget(reportNo);
+	    } else if ("REPLY".equals(category)) {
+	    	ReportTargetDto reply = dao.findReplyTarget(reportNo);
+	        return new ReportTargetDto(reply.getCategory(), reply.getTargetNo());
+	    }
+	    return null;
+	}
+
+	public int findActiveBanByUser(Map<String, Object> param) {
+		return dao.findActiveBanByUser(param);
+	}
+
+	public int extendBan(Map<String, Object> param) {
+		return dao.extendBan(param);
 	}
 
 }

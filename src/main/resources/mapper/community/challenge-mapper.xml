@@ -52,6 +52,7 @@
         <result property="profileImageServerName" column="PROFILE_IMAGE_SERVER_NAME"/>
         <result property="category" column="CATEGORY"/>
         <result property="sik_bti" column="SIK_BTI"/>
+        <result property="depth" column="DEPTH"/>
     </resultMap>
 
     <!-- ===================== 챌린지 조회 ===================== -->
@@ -266,16 +267,24 @@
     </update>
 
     <!-- ===================== 댓글(Reply) 관련 ===================== -->
-    <select id="selectAllRepliesByChallengeId" parameterType="long" resultMap="ChallengeReplyResultMap">
-        SELECT R.REPLY_NO, R.REF_NO, R.USER_NO, R.CONTENT, R.CREATED_AT, R.CATEGORY,
-               U.USERNAME, U.SIK_BTI AS SIK_BTI, I.SERVER_NAME AS PROFILE_IMAGE_SERVER_NAME
-        FROM REPLY R
-        JOIN USERS U ON R.USER_NO = U.USER_NO
-        LEFT JOIN IMAGE I ON U.IMAGE_NO = I.IMAGE_NO
-        START WITH R.REF_NO = #{challengeNo} AND R.CATEGORY = 'CHALLENGE'
-        CONNECT BY PRIOR R.REPLY_NO = R.REF_NO
-        ORDER SIBLINGS BY R.CREATED_AT ASC
-    </select>
+	<select id="selectAllRepliesByChallengeId" parameterType="long" resultMap="ChallengeReplyResultMap">
+	        SELECT 
+	            R.REPLY_NO, 
+	            R.REF_NO, 
+	            R.USER_NO, 
+	            R.CONTENT, 
+	            R.CREATED_AT, 
+	            R.CATEGORY,
+	            LEVEL AS DEPTH, U.USERNAME, 
+	            U.SIK_BTI AS SIK_BTI, 
+	            I.SERVER_NAME AS PROFILE_IMAGE_SERVER_NAME
+	        FROM REPLY R
+	        JOIN USERS U ON R.USER_NO = U.USER_NO
+	        LEFT JOIN IMAGE I ON U.IMAGE_NO = I.IMAGE_NO
+	        START WITH R.REF_NO = #{challengeNo} AND R.CATEGORY = 'CHALLENGE'
+	        CONNECT BY NOCYCLE PRIOR R.REPLY_NO = R.REF_NO
+	        ORDER SIBLINGS BY R.CREATED_AT ASC
+	    </select>
 
     <insert id="insertReply" parameterType="com.kh.ypjp.community.challenge.dto.ChallengeReplyDto">
         <selectKey keyProperty="replyNo" resultType="Long" order="BEFORE">
