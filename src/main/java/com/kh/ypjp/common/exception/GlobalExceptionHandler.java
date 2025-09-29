@@ -15,7 +15,8 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, String>> handleAuth(AuthException ex) {
         return ResponseEntity.badRequest()
                 .body(Map.of(
-                        "errorCode", ex.getErrorCode()
+                        "errorCode", ex.getErrorCode(),
+                        "message", ex.getMessage()
                 ));
     }
 
