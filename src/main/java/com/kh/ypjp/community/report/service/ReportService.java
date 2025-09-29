@@ -29,27 +29,33 @@ public class ReportService {
     
     @Transactional(readOnly = true)
     public ReportDto getReportTargetProfile(int reportedUserNo) {
-        
+
+        // 1. DAO를 통해 DB 파일명 조회
         ReportDto reportInfo = reportDao.selectReportTargetProfile(reportedUserNo); 
-        
+
         if (reportInfo == null) {
+            // 사용자가 DB에 없는 경우 처리
             reportInfo = new ReportDto();
-            reportInfo.setReportedUserNo(reportedUserNo);
             reportInfo.setReportedUserNickname("알 수 없음"); 
-            reportInfo.setReportedUserProfileImageUrl("/resources/images/default-profile.png"); // 기본 이미지 URL
+            reportInfo.setReportedUserProfileImageUrl("/resources/images/default-profile.png"); 
         } else {
+            // 2. 파일명 추출 (DB에서 가져온 값, 예: "abc.jpg")
             String serverName = reportInfo.getReportedUserProfileImageUrl();
             
+            // 3. 파일명이 존재하는 경우에만 URL 가공 실행
             if (serverName != null && !serverName.isEmpty()) {
+                // 4. 챌린지 서비스와 동일한 규칙으로 URL 생성
                 String fullPath = "profile/" + reportedUserNo + "/" + serverName;
                 String imageUrl = "/images/" + fullPath;
                 
-                reportInfo.setReportedUserProfileImageUrl(imageUrl);
+                // 5. DTO 필드에 최종 웹 접근 URL을 덮어쓰기
+                reportInfo.setReportedUserProfileImageUrl(imageUrl); 
             } else {
+                // 파일명이 NULL이거나 빈 문자열인 경우 기본 이미지 설정
                 reportInfo.setReportedUserProfileImageUrl("/resources/images/default-profile.png");
             }
         }
         
-        return reportInfo;
+        return reportInfo; // 최종 URL이 담긴 DTO 반환
     }
 }

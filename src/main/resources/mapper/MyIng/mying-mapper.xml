@@ -18,11 +18,12 @@
 	<select id="selectMyIngs" resultMap="MyIngResult">
 		SELECT
 		    G.USER_NO, G.ING_NO, G.CREATED_AT, G.EXP_DATE, G.QUANTITY,
-		    I.ING_NAME, I.ING_CODE,
+		    I.ING_NAME, I.ING_CODE, IM.SERVER_NAME AS "imgUrl",
 		    C.ING_CODE_NAME
 		FROM GROCERY G
 		JOIN INGREDIENT I ON G.ING_NO = I.ING_NO
 		JOIN ING_CODE C ON I.ING_CODE = C.ING_CODE
+		LEFT JOIN IMAGE IM ON I.IMAGE_NO = IM.IMAGE_NO
 		WHERE G.USER_NO = #{userNo}
 		<if test="keyword != '' and keyword != null">
 			AND I.ING_NAME LIKE '%' || #{keyword} || '%'
@@ -44,11 +45,12 @@
 	<select id="selectMyIngDetail" resultMap="MyIngResult">
 		SELECT
 		    G.USER_NO, G.ING_NO, G.CREATED_AT, G.EXP_DATE, G.QUANTITY,
-		    I.ING_NAME, I.ING_CODE,
+		    I.ING_NAME, I.ING_CODE, IM.SERVER_NAME AS "imgUrl",
 		    C.ING_CODE_NAME
 		FROM GROCERY G
 		JOIN INGREDIENT I ON G.ING_NO = I.ING_NO
 		JOIN ING_CODE C ON I.ING_CODE = C.ING_CODE
+		LEFT JOIN IMAGE IM ON I.IMAGE_NO = IM.IMAGE_NO
 		WHERE G.USER_NO = #{userNo} AND G.ING_NO = #{ingNo}
 		ORDER BY I.ING_CODE, G.EXP_DATE
 	</select>

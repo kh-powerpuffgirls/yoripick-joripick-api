@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.kh.ypjp.common.PageInfo;
 import com.kh.ypjp.common.UtilService;
@@ -58,6 +59,17 @@ public class IngController {
 		param.put("endRow", endRow);
 		
 		List<IngDto.IngResponse> list = ingService.selectIngs(param);
+		
+		for (IngResponse ing : list) {
+			if (ing.getImgUrl() != null && !ing.getImgUrl().isEmpty()) {
+				String imageUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
+						.path("/images/")
+						.path(ing.getImgUrl())
+						.toUriString();
+				
+				ing.setImgUrl(imageUrl);
+			}
+		}
 		
 		IngListResponse response = new IngListResponse(list, pi);
 		
