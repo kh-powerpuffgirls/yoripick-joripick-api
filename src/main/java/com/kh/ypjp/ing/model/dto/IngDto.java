@@ -20,6 +20,7 @@ public class IngDto {
 		private String ingName;
 		private long ingCode;
 		private String ingCodeName;
+		private String imgUrl;
 	}
 	
 	@Data
