@@ -22,7 +22,9 @@ public interface FreeDao {
     int deleteImageByImageNo(int imageNo);
     int updateBoardImageNo(@Param("boardNo") int boardNo, @Param("imageNo") Integer imageNo);
 
- // Likes 관련
+    int updateBoardImageNoNull(@Param("boardNo") int boardNo);
+
+    // Likes 관련
     String findLikeStatus(@Param("userNo") int userNo, @Param("boardNo") int boardNo);
     int checkIfLiked(@Param("userNo") int userNo, @Param("boardNo") int boardNo);
     void insertOrUpdateLike(@Param("userNo") int userNo,

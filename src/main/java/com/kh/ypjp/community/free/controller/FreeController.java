@@ -128,6 +128,7 @@ public class FreeController {
             @RequestParam(value = "subheading", required = false) String subheading,
             @RequestParam("content") String content,
             @RequestParam(value = "file", required = false) MultipartFile file,
+            @RequestParam(value = "isImageDeleted", required = false, defaultValue = "false") boolean isImageDeleted,
             @AuthenticationPrincipal Long userNo,
             Authentication authentication) {
 
@@ -145,8 +146,8 @@ public class FreeController {
         freeDto.setContent(content);
         freeDto.setUserNo(userNo.intValue());
 
-        int result = freeService.updateBoard(freeDto, file, userNo.intValue(), isAdmin);
-        
+        int result = freeService.updateBoard(freeDto, file, userNo.intValue(), isAdmin, isImageDeleted);
+
         if (result > 0) {
             return new ResponseEntity<>("게시글이 성공적으로 수정되었습니다.", HttpStatus.OK);
         } else {
@@ -176,7 +177,7 @@ public class FreeController {
         }
     }
     
- // 좋아요 / 싫어요 설정
+    // 좋아요 / 싫어요 설정
     @PostMapping("/{boardNo}/likes")
     public ResponseEntity<String> setLikeStatus(
             @PathVariable int boardNo,
