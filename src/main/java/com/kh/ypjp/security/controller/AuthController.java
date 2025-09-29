@@ -247,7 +247,7 @@ public class AuthController {
 		}
 
 		if (authService.findUserByEmail(email).isEmpty()) {
-			throw new AuthException("EMAIL_NOT_FOUND");
+			throw new AuthException("WRONG_EMAIL");
 		}
 
 		emailService.createAndSendCode(email);
