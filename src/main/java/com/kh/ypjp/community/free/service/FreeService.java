@@ -63,14 +63,23 @@ public class FreeService {
         return result;
     }
 
-    // 게시글 수정 + 이미지 처리
     @Transactional
-    public int updateBoard(FreeDto freeDto, MultipartFile file, int userNo, boolean isAdmin) {
+    public int updateBoard(FreeDto freeDto, MultipartFile file, int userNo, boolean isAdmin, boolean isImageDeleted) {
         FreeDto existingPost = freeDao.selectBoardByNo(freeDto.getBoardNo());
         if (existingPost == null || (existingPost.getUserNo() != userNo && !isAdmin)) return 0;
 
         int result = freeDao.updateBoard(freeDto);
 
+        // 이미지 삭제 요청이 있을 때
+        if (isImageDeleted) {
+            Integer oldImageNo = freeDao.selectImageNoByBoardNo(freeDto.getBoardNo());
+            if (oldImageNo != null) {
+                freeDao.deleteImageByImageNo(oldImageNo);
+                freeDao.updateBoardImageNoNull(freeDto.getBoardNo());
+            }
+        }
+
+        // 새로운 이미지 업로드 시
         if (file != null && !file.isEmpty()) {
             Integer oldImageNo = freeDao.selectImageNoByBoardNo(freeDto.getBoardNo());
             if (oldImageNo != null) freeDao.deleteImageByImageNo(oldImageNo);
