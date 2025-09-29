@@ -18,6 +18,7 @@ public class MyIngDto {
 		private Date createdAt;
 		private Date expDate;
 		private String quantity;		
+		private String imgUrl;		
 		
 //		INGREDIENT
 		private String ingName;

@@ -14,7 +14,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import com.kh.ypjp.ingpedia.model.dto.IngPediaDto.IngPediaMainResponse;
 import com.kh.ypjp.mying.model.dto.MyIngDto;
 import com.kh.ypjp.mying.model.dto.MyIngDto.MyIngPost;
 import com.kh.ypjp.mying.model.dto.MyIngDto.MyIngPut;
@@ -41,7 +43,16 @@ public class MyIngController {
 			){
 		
 		List<MyIngDto.MyIngResponse> list = myingService.selectMyIngs(param);
-		
+		for (MyIngResponse ing : list) {
+			if (ing.getImgUrl() != null && !ing.getImgUrl().isEmpty()) {
+				String imageUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
+						.path("/images/")
+						.path(ing.getImgUrl())
+						.toUriString();
+				
+				ing.setImgUrl(imageUrl);
+			}
+		}
 		
 		return ResponseEntity.ok(list);
 	}
@@ -57,6 +68,15 @@ public class MyIngController {
 		param.put("userNo", userNo);
 		
 		MyIngResponse myIng = myingService.selectMyIngDetail(param);
+		
+		if (myIng.getImgUrl() != null && !myIng.getImgUrl().isEmpty()) {
+			String imageUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
+					.path("/images/")
+					.path(myIng.getImgUrl())
+					.toUriString();
+			
+			myIng.setImgUrl(imageUrl);
+		}
 		
 		if(myIng == null) {
 			return ResponseEntity.notFound().build();
