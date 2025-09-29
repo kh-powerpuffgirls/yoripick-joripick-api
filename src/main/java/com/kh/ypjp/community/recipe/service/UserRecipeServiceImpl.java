@@ -529,11 +529,11 @@ public class UserRecipeServiceImpl implements UserRecipeService {
             // 새 이미지가 있다면, 저장하고 새로운 imageNo를 받습니다 (createRecipe와 동일).
             String webPath = "community/recipe/" + rcpNo;
             String changeName = utilService.getChangeName(mainImageFile, webPath);
-            String serverNameForDb = webPath + "/" + changeName;
+//            String serverNameForDb = webPath + "/" + changeName;
             
             Map<String, Object> imageParam = new HashMap<>();
             imageParam.put("originName", mainImageFile.getOriginalFilename());
-            imageParam.put("serverName", serverNameForDb);
+            imageParam.put("serverName", changeName);
             
             utilService.insertImage(imageParam);
             mainImageNo = utilService.getImageNo(imageParam);
@@ -589,11 +589,11 @@ public class UserRecipeServiceImpl implements UserRecipeService {
                 if (stepImgFile != null && !stepImgFile.isEmpty()) {
                     String webPath = "community/recipe/" + rcpNo;
                     String changeName = utilService.getChangeName(stepImgFile, webPath);
-                    String serverNameForDb = webPath + "/" + changeName;
+//                    String serverNameForDb = webPath + "/" + changeName;
                     
                     Map<String, Object> imageParam = new HashMap<>();
                     imageParam.put("originName", stepImgFile.getOriginalFilename());
-                    imageParam.put("serverName", serverNameForDb);
+                    imageParam.put("serverName", changeName);
                     
                     utilService.insertImage(imageParam);
                     long stepImageNo = utilService.getImageNo(imageParam);
