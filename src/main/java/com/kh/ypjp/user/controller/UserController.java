@@ -41,10 +41,10 @@ public class UserController {
 	@PostMapping("/profiles")
 	public ResponseEntity<String> getProfileImageUrl(@RequestBody User user) {
 		Long imageNo = user.getImageNo();
-		System.out.println(imageNo);
 		String changeName = utilService.getChangeName(imageNo);
 		String imageUrl = ServletUriComponentsBuilder.fromCurrentContextPath().path("/images/")
 				.path("profile/" + user.getUserNo() + "/" + changeName).toUriString();
+		System.out.println(imageUrl);
 		return ResponseEntity.ok(imageUrl);
 	}
 
@@ -62,6 +62,7 @@ public class UserController {
 			body.put("sikbti", user.getSikbti());
 			body.put("profile", user.getProfile());
 			body.put("provider", user.getProvider());
+			body.put("imageNo", user.getImageNo());
 			return ResponseEntity.ok(body);
 		}).orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
 				.body(Map.of("success", false, "message", "유저를 찾을 수 없습니다.")));

@@ -1,5 +1,6 @@
 package com.kh.ypjp.security.model.service;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
@@ -99,7 +100,12 @@ public class AuthService {
     	if("INACTIVE".equalsIgnoreCase(user.getStatus())) {
     		throw new AuthException("INACTIVE_USER");
     	}
-
+    	Date endDate = authDao.checkBannedStatus(user);
+    	if(endDate != null) {
+    		AuthException aex = new AuthException("BANNED_USER");
+    		aex.setMessage(endDate.toString());
+    		throw aex;
+    	}
         return issueTokens(user);
     }
 

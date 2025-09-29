@@ -15,9 +15,10 @@
 		SELECT
 		    I.USER_NO, I.ING_NO,
 		    I.ING_NAME, I.ING_CODE,
-		    C.ING_CODE_NAME
+		    C.ING_CODE_NAME, IM.SERVER_NAME AS "imgUrl"
 		FROM INGREDIENT I
 		JOIN ING_CODE C ON I.ING_CODE = C.ING_CODE
+		LEFT JOIN IMAGE IM ON I.IMAGE_NO = IM.IMAGE_NO
 		<where>
 			<if test="ingCode != 0">
 				AND I.ING_CODE = #{ingCode}

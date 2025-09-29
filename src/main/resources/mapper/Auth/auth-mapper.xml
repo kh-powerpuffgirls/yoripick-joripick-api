@@ -37,6 +37,13 @@
 		LEFT JOIN USER_IDENTITIES I ON U.USER_NO = I.USER_ID
 		WHERE UPPER(U.EMAIL) = UPPER(#{email})
 	</select>
+	
+	<select id="checkBannedStatus" resultType="date">
+		SELECT end_date
+			FROM (SELECT * FROM USER_BANNED 
+			    WHERE end_date >= SYSDATE)
+			WHERE user_no = #{userNo}
+	</select>
 
 	<insert id="insertUser">
 		<selectKey keyProperty="userNo" resultType="long" order="BEFORE">
