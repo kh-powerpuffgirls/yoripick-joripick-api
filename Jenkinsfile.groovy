@@ -43,17 +43,12 @@ pipeline {
         stage('Deploy Production') {
             steps {
                 sshagent(credentials: ['SSH-PrivateKey']) {
-                    sh "ssh -o StrictHostKeyChecking=no ec2-user@ docker container rm -f ypjp-api"
-                    sh "ssh -o StrictHostKeyChecking=no ec2-user@ docker container run \
+                    sh "ssh -o StrictHostKeyChecking=no ec2-user@3.38.213.177 docker container rm -f ypjp-api"
+                    sh "ssh -o StrictHostKeyChecking=no ec2-user@3.38.213.177 docker container run \
                         -d \
-                        -p 8081:10000  \
+                        -p 8081:8081  \
                         --name=ypjp-api \
-                        -e MYSQL_IP=172.31.0.120 \
-                        -e MYSQL_PORT=3306 \
-                        -e MYSQL_DATABASE=guestbook \
-                        -e MYSQL_USER=guestbook \
-                        -e MYSQL_PASSWORD=education \
-                        530hyelim/cicd_guestbook:1.0 "
+                        ${strDockerImage}"
                 }
             }
         }
