@@ -99,7 +99,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://43.203.124.138:80"));
+        config.setAllowedOrigins(List.of("http://43.203.124.138"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE"));
         config.setAllowedHeaders(List.of("*"));
         config.setExposedHeaders(List.of("Location", "Authorization"));
