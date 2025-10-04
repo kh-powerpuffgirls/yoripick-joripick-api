@@ -76,7 +76,7 @@ public class AuthController {
 		AuthResult result = authService.login(email, password);
 
 		ResponseCookie refreshCookie = ResponseCookie.from(REFRESH_COOKIE, result.getRefreshToken()).httpOnly(true)
-				.secure(false).path("/").sameSite("Lax").maxAge(Duration.ofDays(7)).build();
+				.secure(false).path("/").sameSite("None").maxAge(Duration.ofDays(7)).build();
 
 		return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, refreshCookie.toString()).body(result);
 	}
@@ -100,7 +100,7 @@ public class AuthController {
 		AuthResult result = authService.enroll(email, username, password);
 
 		ResponseCookie refreshCookie = ResponseCookie.from(REFRESH_COOKIE, result.getRefreshToken()).httpOnly(true)
-				.secure(false).path("/").sameSite("Lax").maxAge(Duration.ofDays(7)).build();
+				.secure(false).path("/").sameSite("None").maxAge(Duration.ofDays(7)).build();
 
 		return ResponseEntity.status(HttpStatus.CREATED).header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
 				.body(result);
@@ -172,7 +172,7 @@ public class AuthController {
 				Date endDate = authDao.checkBannedStatus(user);
 		    	if(endDate != null) {
 		    		ResponseCookie rc = ResponseCookie.from(REFRESH_COOKIE, "").httpOnly(true).secure(false).path("/")
-		    				.sameSite("Lax").maxAge(0).build();
+		    				.sameSite("None").maxAge(0).build();
 		    		return ResponseEntity.noContent().header(HttpHeaders.SET_COOKIE, rc.toString()).build();
 		    	}
 			}
@@ -196,7 +196,7 @@ public class AuthController {
 		}
 
 		ResponseCookie refreshCookie = ResponseCookie.from(REFRESH_COOKIE, "").httpOnly(true).secure(false).path("/")
-				.sameSite("Lax").maxAge(0).build();
+				.sameSite("None").maxAge(0).build();
 		return ResponseEntity.noContent().header(HttpHeaders.SET_COOKIE, refreshCookie.toString()).build();
 	}
 
