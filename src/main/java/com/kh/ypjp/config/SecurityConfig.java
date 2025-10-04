@@ -104,7 +104,7 @@ public class SecurityConfig {
         config.setAllowedOrigins(List.of("http://43.203.124.138", "http://localhost:5173"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE"));
         config.setAllowedHeaders(List.of("*"));
-        config.setExposedHeaders(List.of("Location", "Authorization"));
+        config.setExposedHeaders(List.of("Location", "Authorization", "Set-Cookie"));
         config.setAllowCredentials(true);
         config.setMaxAge(3600L);
 

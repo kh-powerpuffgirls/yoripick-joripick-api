@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import org.springframework.security.core.Authentication;
@@ -61,11 +62,10 @@ public class FreeController {
         if (board == null) return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 
         if (board.getServerName() != null && !board.getServerName().isEmpty()) {
-            String baseUrl = "http://localhost:8081";
-            String imageUrl = UriComponentsBuilder.fromUriString(baseUrl)
-                                                .path("/images/")
-                                                .path(board.getServerName())
-                                                .toUriString();
+        	String imageUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
+	                .path("/images/")
+	                .path(board.getServerName())
+	                .toUriString();
             board.setImageUrl(imageUrl);
         }
 

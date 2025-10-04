@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -169,7 +170,11 @@ public class CkclassService {
                     dto.setUsername(user.getUsername());
                     dto.setServerName(user.getServerName());
                     if (user.getServerName() != null) {
-                        dto.setImageUrl("http://localhost:8081/images/" + user.getServerName());
+                    	String imageUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
+        		                .path("/images/")
+        		                .path(user.getServerName())
+        		                .toUriString();
+                    	dto.setImageUrl(imageUrl);
                     }
                     return dto;
                 })
