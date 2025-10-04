@@ -15,8 +15,8 @@ public class UserCleanupScheduler {
         this.userDao = userDao;
     }
 
-//    @Scheduled(cron = "0 0 0 * * *", zone = "Asia/Seoul")
-    @Scheduled(cron = "0 * * * * *", zone = "Asia/Seoul")
+    @Scheduled(cron = "0 0 0 * * *", zone = "Asia/Seoul")
+//    @Scheduled(cron = "0 * * * * *", zone = "Asia/Seoul")
     @Transactional
     public void deleteInactiveUsers() {
         int deleted = userDao.deleteInactiveUsersOver90Days();
