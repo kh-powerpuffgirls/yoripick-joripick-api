@@ -47,6 +47,8 @@ pipeline {
                     sh "ssh -o StrictHostKeyChecking=no ec2-user@3.38.213.177 docker container run \
                         -d \
                         -p 8081:8081 -p 8443:8443 \
+                        -v /app/upload:/app/upload \
+                        -v /app/keystore.p12:/app/keystore.p12 \
                         --name=ypjp-api \
                         ${strDockerImage}"
                 }
