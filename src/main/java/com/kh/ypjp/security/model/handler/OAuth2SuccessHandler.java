@@ -69,7 +69,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler{
 	    response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 
 	    String redirect = UriComponentsBuilder
-	            .fromUriString("http://localhost:5173/oauth2/success")
+	            .fromUriString("https://front.ypjp.store/oauth2/success")
 	            .queryParam("accessToken", accessToken)
 	            .build().toUriString();
 
