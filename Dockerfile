@@ -11,10 +11,17 @@ LABEL maintainer="powerpuffgirls" \
       description="This image is Yoripick Joripick Api service"
       
 ENV APP_HOME /app
-EXPOSE 8081
+EXPOSE 8081 8443
 VOLUME /app/upload
 
 #컨테이너 실행시 호출할 명령어
 WORKDIR $APP_HOME
 ENTRYPOINT ["java"]
-CMD ["-jar", "yoripick-joripick-api.jar"]
+
+CMD ["-jar", "yoripick-joripick-api.jar",
+     "--server.port=8443",
+     "--server.ssl.key-store=/app/keystore.p12",
+     "--server.ssl.key-store-password=changeit",
+     "--server.ssl.key-store-type=PKCS12",
+     "--server.ssl.key-alias=springboot"]
+     
