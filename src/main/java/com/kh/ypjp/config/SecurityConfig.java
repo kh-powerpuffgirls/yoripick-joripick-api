@@ -87,9 +87,9 @@ public class SecurityConfig {
             // OAuth2 로그인 핸들러
             .oauth2Login(oauth2 -> oauth2
                 .successHandler(OAuth2SuccessHandler)
-                .authorizationEndpoint(a -> a.baseUri("/oauth2/authorize"))
-                .redirectionEndpoint(r -> r.baseUri("/oauth2/callback/*"))
                 .failureHandler(OAuth2FailureHandler)
+                .authorizationEndpoint(a -> a.baseUri("/oauth2/authorization"))
+                .redirectionEndpoint(r -> r.baseUri("/login/oauth2/code/*"))
             );
 
         // 필터 순서 지정
