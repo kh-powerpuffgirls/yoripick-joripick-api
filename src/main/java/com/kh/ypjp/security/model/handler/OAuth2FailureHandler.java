@@ -29,7 +29,7 @@ public class OAuth2FailureHandler implements AuthenticationFailureHandler {
 
         // 리디렉션할 URL 설정
         String redirectUrl = UriComponentsBuilder
-                .fromUriString("https://front.ypjp.store/oauth2/failure")
+                .fromUriString("http://localhost:5173/oauth2/failure")
                 .queryParam("error", exception.getMessage())
                 .build().toUriString();
 

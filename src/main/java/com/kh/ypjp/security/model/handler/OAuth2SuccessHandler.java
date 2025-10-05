@@ -43,7 +43,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler{
 	        String providerUserId = String.valueOf(oauthUser.getAttributes().get("id"));
 
 	        String redirect = UriComponentsBuilder
-	                .fromUriString("https://front.ypjp.store/oauth2/username")
+	                .fromUriString("http://localhost:5173/oauth2/username")
 	                .queryParam("email", email)
 	                .queryParam("provider", "kakao")
 	                .queryParam("providerUserId", providerUserId)
@@ -60,16 +60,15 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler{
 
 	    ResponseCookie cookie = ResponseCookie.from(AuthController.REFRESH_COOKIE, refreshToken)
 	            .httpOnly(true)
-	            .secure(true)
-	            .domain(".ypjp.store")
-	            .sameSite("None")
+	            .secure(false)
+	            .sameSite("Lax")
 	            .path("/")
 	            .maxAge(Duration.ofDays(7))
 	            .build();
 	    response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 
 	    String redirect = UriComponentsBuilder
-	            .fromUriString("https://front.ypjp.store/oauth2/success")
+	            .fromUriString("http://localhost:5173/oauth2/success")
 	            .queryParam("accessToken", accessToken)
 	            .build().toUriString();
 
