@@ -46,7 +46,7 @@ pipeline {
                     sh "ssh -o StrictHostKeyChecking=no ec2-user@3.38.213.177 docker container rm -f ypjp-api"
                     sh "ssh -o StrictHostKeyChecking=no ec2-user@3.38.213.177 docker container run \
                         -d \
-                        -p 8081:8081  \
+                        -p 8081:8081 -p 8443:8443 \
                         --name=ypjp-api \
                         ${strDockerImage}"
                 }
