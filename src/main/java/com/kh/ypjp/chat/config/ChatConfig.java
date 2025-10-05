@@ -13,7 +13,7 @@ public class ChatConfig implements WebSocketMessageBrokerConfigurer {
 	@Override
 	public void registerStompEndpoints(StompEndpointRegistry registry) {
 		registry.addEndpoint("/ws")
-				.setAllowedOriginPatterns("http://43.203.124.138", "http://localhost:5173").withSockJS();
+				.setAllowedOriginPatterns("https://front.ypjp.store", "http://localhost:5173").withSockJS();
 	}
 
 	@Override
