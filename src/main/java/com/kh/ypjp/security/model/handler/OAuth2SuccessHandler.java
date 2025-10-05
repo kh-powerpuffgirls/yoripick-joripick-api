@@ -43,7 +43,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler{
 	        String providerUserId = String.valueOf(oauthUser.getAttributes().get("id"));
 
 	        String redirect = UriComponentsBuilder
-	                .fromUriString("http://localhost:5173/oauth2/username")
+	                .fromUriString("https://front.ypjp.store/oauth2/username")
 	                .queryParam("email", email)
 	                .queryParam("provider", "kakao")
 	                .queryParam("providerUserId", providerUserId)
