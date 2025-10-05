@@ -17,9 +17,9 @@ VOLUME /app/upload
 #컨테이너 실행시 호출할 명령어
 WORKDIR $APP_HOME
 ENTRYPOINT ["java","-jar","/app/yoripick-joripick-api.jar"]
-CMD ["--server.port=8081", \
-     "--server.ssl.enabled=true", \
-     "--server.ssl.key-store=/app/keystore.p12", \
-     "--server.ssl.key-store-password=changeit", \
-     "--server.ssl.key-store-type=PKCS12", \
-     "--server.ssl.key-alias=springboot"]
+# CMD ["--server.port=8081", \
+#      "--server.ssl.enabled=true", \
+#      "--server.ssl.key-store=/app/keystore.p12", \
+#      "--server.ssl.key-store-password=changeit", \
+#      "--server.ssl.key-store-type=PKCS12", \
+#      "--server.ssl.key-alias=springboot"]
