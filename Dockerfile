@@ -26,6 +26,6 @@
 
 FROM openjdk:17-jdk-alpine
 WORKDIR /app
-COPY target/backend-app.jar app.jar
+COPY target/yoripick-joripick-api-0.0.1-SNAPSHOT.jar /app/yoripick-joripick-api.jar
 EXPOSE 81
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-jar", "/app/yoripick-joripick-api.jar"]
